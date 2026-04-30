@@ -1,0 +1,80 @@
+# transfer.sh deployment stack
+#
+# Usage:
+#   cp .env.example .env       # then edit .env
+#   docker compose up -d
+#
+# Reverse-proxy (TLS termination) is expected to live OUTSIDE this compose file
+# and forward to the `transfersh` service on the shared network.
+
+services:
+  transfersh:
+    image: ${TRANSFERSH_IMAGE:-ghcr.io/OWNER/REPO:latest}
+    container_name: transfersh
+    restart: unless-stopped
+    depends_on:
+      clamav:
+        condition: service_healthy
+    environment:
+      LISTENER: ":8080"
+      BASEDIR: "/data"
+      TEMP_PATH: "/tmp/transfersh"
+      PURGE_DAYS: "${PURGE_DAYS:-360}"
+      PURGE_INTERVAL: "${PURGE_INTERVAL:-24}"
+      MAX_UPLOAD_SIZE: "${MAX_UPLOAD_SIZE:-5242880}"   # in KB, default 5 GB
+      RATE_LIMIT: "${RATE_LIMIT:-0}"
+      RANDOM_TOKEN_LENGTH: "${RANDOM_TOKEN_LENGTH:-10}"
+      CLAMAV_HOST: "clamav:3310"
+      PERFORM_CLAMAV_PRESCAN: "${PERFORM_CLAMAV_PRESCAN:-true}"
+      HTTP_AUTH_HTPASSWD: "/etc/transfersh/htpasswd"
+      HTTP_AUTH_IP_WHITELIST: "${HTTP_AUTH_IP_WHITELIST:-}"
+      IP_WHITELIST: "${IP_WHITELIST:-}"
+      IP_BLACKLIST: "${IP_BLACKLIST:-}"
+      CORS_DOMAINS: "${CORS_DOMAINS:-}"
+      PROXY_PATH: "${PROXY_PATH:-}"
+      PROXY_PORT: "${PROXY_PORT:-}"
+      EMAIL_CONTACT: "${EMAIL_CONTACT:-}"
+    volumes:
+      - transfersh-data:/data
+      - ./htpasswd:/etc/transfersh/htpasswd:ro
+    networks:
+      - transfersh
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health.html"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: ${TRANSFERSH_MEMORY_LIMIT:-512M}
+
+  clamav:
+    image: clamav/clamav:stable
+    container_name: transfersh-clamav
+    restart: unless-stopped
+    networks:
+      - transfersh
+    volumes:
+      - clamav-db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 5m
+    deploy:
+      resources:
+        limits:
+          memory: ${CLAMAV_MEMORY_LIMIT:-2G}
+
+volumes:
+  transfersh-data:
+  clamav-db:
+
+networks:
+  transfersh:
+    driver: bridge

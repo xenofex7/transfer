@@ -6,19 +6,15 @@ bin/
 *.pyc
 *.egg-info/
 .idea/
+.vscode/
 
 .tmp
-.vagrant
+tmp/
 
-bower_components/
-node_modules/
+# Local deployment secrets and runtime data
+.env
+htpasswd
 
-transfersh-server/run.sh
-.elasticbeanstalk/
-
-# Elastic Beanstalk Files
-.elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
-
-!.github/build/
+# Local helper scripts and editor swap files
+*.local.sh
+*.save
