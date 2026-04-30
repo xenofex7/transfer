@@ -350,8 +350,8 @@ func (s *Server) previewHandler(w http.ResponseWriter, r *http.Request) {
 		hostname,
 		webAddress,
 		contentLength,
-		s.gaKey,
-		s.userVoiceKey,
+		"",
+		"",
 		qrCode,
 	}
 
@@ -395,8 +395,8 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		hostname,
 		webAddress,
 		s.emailContact,
-		s.gaKey,
-		s.userVoiceKey,
+		"",
+		"",
 		purgeTime,
 		maxUploadSize,
 		token(s.randomTokenLength),
@@ -1290,37 +1290,9 @@ func commonHeader(w http.ResponseWriter, filename string) {
 	w.Header().Set("Cache-Control", "no-store")
 }
 
-// RedirectHandler handles redirect
+// RedirectHandler is a no-op pass-through. TLS termination is handled by the reverse proxy.
 func (s *Server) RedirectHandler(h http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !s.forceHTTPS {
-			// we don't want to enforce https
-		} else if r.URL.Path == "/health.html" {
-			// health check url won't redirect
-		} else if strings.HasSuffix(ipAddrFromRemoteAddr(r.Host), ".onion") {
-			// .onion addresses cannot get a valid certificate, so don't redirect
-		} else if r.Header.Get("X-Forwarded-Proto") == "https" {
-		} else if r.TLS != nil {
-		} else {
-			u := getURL(r, s.proxyPort)
-			u.Scheme = "https"
-			if len(s.proxyPort) == 0 && len(s.TLSListenerString) > 0 {
-				_, port, err := net.SplitHostPort(s.TLSListenerString)
-				if err != nil || port == "443" {
-					port = ""
-				}
-
-				if len(port) > 0 {
-					u.Host = net.JoinHostPort(u.Hostname(), port)
-				} else {
-					u.Host = u.Hostname()
-				}
-			}
-
-			http.Redirect(w, r, u.String(), http.StatusPermanentRedirect)
-			return
-		}
-
 		h.ServeHTTP(w, r)
 	}
 }

@@ -25,16 +25,12 @@ THE SOFTWARE.
 package server
 
 import (
-	"context"
 	cryptoRand "crypto/rand"
-	"crypto/tls"
 	"encoding/binary"
-	"errors"
 	"log"
 	"math/rand"
 	"mime"
 	"net/http"
-	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"os/signal"
@@ -50,7 +46,6 @@ import (
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/tg123/go-htpasswd"
-	"golang.org/x/crypto/acme/autocert"
 
 	web "github.com/dutchcoders/transfer.sh-web"
 	"github.com/dutchcoders/transfer.sh/server/storage"
@@ -80,13 +75,6 @@ func PerformClamavPrescan(b bool) OptionFn {
 	}
 }
 
-// VirustotalKey sets virus total key
-func VirustotalKey(s string) OptionFn {
-	return func(srvr *Server) {
-		srvr.VirusTotalKey = s
-	}
-}
-
 // Listener set listener
 func Listener(s string) OptionFn {
 	return func(srvr *Server) {
@@ -107,36 +95,6 @@ func CorsDomains(s string) OptionFn {
 func EmailContact(emailContact string) OptionFn {
 	return func(srvr *Server) {
 		srvr.emailContact = emailContact
-	}
-}
-
-// GoogleAnalytics sets GA key
-func GoogleAnalytics(gaKey string) OptionFn {
-	return func(srvr *Server) {
-		srvr.gaKey = gaKey
-	}
-}
-
-// UserVoice sets UV key
-func UserVoice(userVoiceKey string) OptionFn {
-	return func(srvr *Server) {
-		srvr.userVoiceKey = userVoiceKey
-	}
-}
-
-// TLSListener sets TLS listener and option
-func TLSListener(s string, t bool) OptionFn {
-	return func(srvr *Server) {
-		srvr.TLSListenerString = s
-		srvr.TLSListenerOnly = t
-	}
-
-}
-
-// ProfileListener sets profile listener
-func ProfileListener(s string) OptionFn {
-	return func(srvr *Server) {
-		srvr.ProfileListenerString = s
 	}
 }
 
@@ -230,64 +188,10 @@ func Purge(days, interval int) OptionFn {
 	}
 }
 
-// ForceHTTPS sets forcing https
-func ForceHTTPS() OptionFn {
-	return func(srvr *Server) {
-		srvr.forceHTTPS = true
-	}
-}
-
-// EnableProfiler sets enable profiler
-func EnableProfiler() OptionFn {
-	return func(srvr *Server) {
-		srvr.profilerEnabled = true
-	}
-}
-
 // UseStorage set storage to use
 func UseStorage(s storage.Storage) OptionFn {
 	return func(srvr *Server) {
 		srvr.storage = s
-	}
-}
-
-// UseLetsEncrypt set letsencrypt usage
-func UseLetsEncrypt(hosts []string) OptionFn {
-	return func(srvr *Server) {
-		cacheDir := "./cache/"
-
-		m := autocert.Manager{
-			Prompt: autocert.AcceptTOS,
-			Cache:  autocert.DirCache(cacheDir),
-			HostPolicy: func(_ context.Context, host string) error {
-				found := false
-
-				for _, h := range hosts {
-					found = found || strings.HasSuffix(host, h)
-				}
-
-				if !found {
-					return errors.New("acme/autocert: host not configured")
-				}
-
-				return nil
-			},
-		}
-
-		srvr.tlsConfig = m.TLSConfig()
-		srvr.tlsConfig.GetCertificate = m.GetCertificate
-	}
-}
-
-// TLSConfig sets TLS config
-func TLSConfig(cert, pk string) OptionFn {
-	certificate, err := tls.LoadX509KeyPair(cert, pk)
-	return func(srvr *Server) {
-		srvr.tlsConfig = &tls.Config{
-			GetCertificate: func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-				return &certificate, err
-			},
-		}
 	}
 }
 
@@ -344,10 +248,6 @@ type Server struct {
 
 	logger *log.Logger
 
-	tlsConfig *tls.Config
-
-	profilerEnabled bool
-
 	locks sync.Map
 
 	maxUploadSize     int64
@@ -358,13 +258,10 @@ type Server struct {
 
 	storage storage.Storage
 
-	forceHTTPS bool
-
 	randomTokenLength int
 
 	ipFilterOptions *IPFilterOptions
 
-	VirusTotalKey        string
 	ClamAVDaemonHost     string
 	performClamavPrescan bool
 
@@ -374,19 +271,9 @@ type Server struct {
 	proxyPath    string
 	proxyPort    string
 	emailContact string
-	gaKey        string
-	userVoiceKey string
 
-	TLSListenerOnly bool
-
-	CorsDomains           string
-	ListenerString        string
-	TLSListenerString     string
-	ProfileListenerString string
-
-	Certificate string
-
-	LetsEncryptCache string
+	CorsDomains    string
+	ListenerString string
 }
 
 // New is the factory fot Server
@@ -416,16 +303,6 @@ func init() {
 // Run starts Server
 func (s *Server) Run() {
 	listening := false
-
-	if s.profilerEnabled {
-		listening = true
-
-		go func() {
-			s.logger.Println("Profiled listening at: :6060")
-
-			_ = http.ListenAndServe(":6060", nil)
-		}()
-	}
 
 	r := mux.NewRouter()
 
@@ -519,7 +396,6 @@ func (s *Server) Run() {
 	r.HandleFunc("/{token}/{filename}", getHandlerFn).Methods("GET")
 	r.HandleFunc("/{action:(?:download|get|inline)}/{token}/{filename}", getHandlerFn).Methods("GET")
 
-	r.HandleFunc("/{filename}/virustotal", s.virusTotalHandler).Methods("PUT")
 	r.HandleFunc("/{filename}/scan", s.scanHandler).Methods("PUT")
 	r.HandleFunc("/put/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
 	r.HandleFunc("/upload/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
@@ -560,38 +436,19 @@ func (s *Server) Run() {
 		nil,
 	)
 
-	if !s.TLSListenerOnly {
-		listening = true
-		s.logger.Printf("starting to listen on: %v\n", s.ListenerString)
+	listening = true
+	s.logger.Printf("starting to listen on: %v\n", s.ListenerString)
 
-		go func() {
-			srvr := &http.Server{
-				Addr:    s.ListenerString,
-				Handler: h,
-			}
+	go func() {
+		srvr := &http.Server{
+			Addr:    s.ListenerString,
+			Handler: h,
+		}
 
-			if err := srvr.ListenAndServe(); err != nil {
-				s.logger.Fatal(err)
-			}
-		}()
-	}
-
-	if s.TLSListenerString != "" {
-		listening = true
-		s.logger.Printf("starting to listen for TLS on: %v\n", s.TLSListenerString)
-
-		go func() {
-			srvr := &http.Server{
-				Addr:      s.TLSListenerString,
-				Handler:   h,
-				TLSConfig: s.tlsConfig,
-			}
-
-			if err := srvr.ListenAndServeTLS("", ""); err != nil {
-				s.logger.Fatal(err)
-			}
-		}()
-	}
+		if err := srvr.ListenAndServe(); err != nil {
+			s.logger.Fatal(err)
+		}
+	}()
 
 	s.logger.Printf("---------------------------")
 
