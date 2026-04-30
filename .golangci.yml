@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 10m
   issues-exit-code: 1
@@ -5,10 +7,10 @@ run:
 
 output:
   formats:
-    - format: colored-line-number
+    text:
       path: stdout
-  print-issued-lines: true
-  print-linter-name: true
+      print-issued-lines: true
+      print-linter-name: true
 
 linters:
   disable:
@@ -17,5 +19,3 @@ linters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  new: false
-  exclude-use-default: false
