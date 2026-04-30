@@ -8,626 +8,306 @@
   Easy and fast file sharing from the command line.
 </p>
 
-This repository contains the server you need to run your own instance.
-
-<br />
-
----
-
-<br />
-
-## Disclaimer
-
-@stefanbenten happens to be a maintainer of this repository _and_ the person who host a well known public installation of the software in the repo.
-
-The two are anyway unrelated, and the repo is not the place to direct requests and issues for any of the pubblic installation.
-
-No third-party public installation of the software in the repo will be advertised or mentioned in the repo itself, for security reasons.
-
-The official position of me, @aspacca, as maintainer of the repo, is that if you want to use the software you should host your own installation.
-
-<br />
+<p align="center">
+  <a href="https://github.com/xenofex7/transfer.sh/actions/workflows/test.yml">
+    <img src="https://github.com/xenofex7/transfer.sh/actions/workflows/test.yml/badge.svg?branch=main" alt="Build Status">
+  </a>
+  <a href="https://github.com/xenofex7/transfer.sh/pkgs/container/transfer.sh">
+    <img src="https://img.shields.io/badge/container-ghcr.io-2496ED?logo=docker" alt="Container">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT">
+  </a>
+</p>
 
 ---
 
-<br />
+## About this fork
+
+This repository is a **fork of [dutchcoders/transfer.sh](https://github.com/dutchcoders/transfer.sh)**
+that has been deliberately slimmed down for a single, focused use case:
+
+> a small, self-hosted file-drop service that runs as a container behind a
+> reverse proxy, stores files on the local filesystem, scans uploads with
+> ClamAV and lives behind HTTP basic auth.
+
+The fork is **actively maintained** — see [ROADMAP.md](ROADMAP.md) for what's
+on the table and what's coming next. Pull requests, ideas and bug reports are
+welcome.
+
+### What's different from upstream
+
+| Area | Upstream | This fork |
+|---|---|---|
+| Storage backends | local · S3 · Google Drive · Storj | **local only** |
+| TLS termination | built-in (Let's Encrypt + manual certs) | **delegated to a reverse proxy** |
+| Virus scanning | ClamAV + VirusTotal | **ClamAV only** |
+| Profiler / pprof | optional flag | **removed** |
+| Frontend keys | Google Analytics, UserVoice | **removed** |
+| Container registry | Docker Hub | **GHCR** with semver tags |
+| Default purge | off | **360 days** with a 24 h sweep |
+
+The result is a noticeably smaller dependency tree, a faster build and a tiny
+runtime image.
+
+---
+
+## Quick start
+
+Pull the published container image and run it with a local data directory:
+
+```bash
+docker run --rm \
+  -p 8080:8080 \
+  -v $(pwd)/data:/data \
+  ghcr.io/xenofex7/transfer.sh:latest
+```
+
+Then, in another shell:
+
+```bash
+curl --upload-file ./hello.txt http://127.0.0.1:8080/hello.txt
+```
+
+The response body is the download URL. The `X-Url-Delete` response header
+contains the deletion URL — keep both.
+
+### Image tags
+
+| Tag | What you get |
+|---|---|
+| `latest` | latest commit on `main` |
+| `edge` | same as `latest`, alternative name |
+| `1.0.0`, `1.0`, `1` | released versions (semver) |
+| `sha-<short>` | exact commit |
+
+Multi-arch images are built for **`linux/amd64`** and **`linux/arm64`**.
+
+---
+
+## Self-hosting with docker compose
+
+A complete stack with a ClamAV sidecar lives in [`docker-compose.yml`](docker-compose.yml).
+
+```bash
+# 1. Configuration template
+cp .env.example .env
+$EDITOR .env
+
+# 2. Auth file (one entry per allowed user)
+htpasswd -B -c htpasswd alice
+htpasswd -B    htpasswd bob
+
+# 3. Up
+docker compose up -d
+```
+
+The transfer.sh container exposes port 8080 only inside the compose network —
+TLS and the public hostname are expected to be handled by your reverse proxy
+of choice (nginx, Caddy, Traefik). Pass standard proxy headers
+(`X-Forwarded-Host`, `X-Forwarded-Proto`) and set `client_max_body_size` to at
+least the value of `MAX_UPLOAD_SIZE`.
+
+---
 
 ## Usage
-
-This section outlines how to use transfer.sh
-
-<br />
 
 ### Upload
 
 ```bash
-$ curl -v --upload-file ./hello.txt https://transfer.sh/hello.txt
+curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt
 ```
 
-<br />
-
-### Encrypt & Upload
+### Download
 
 ```bash
-$ gpg --armor --symmetric --output - /tmp/hello.txt | curl --upload-file - https://transfer.sh/test.txt
+curl https://your-instance.example.com/<token>/hello.txt -o hello.txt
 ```
 
-<br />
-
-### Download & Decrypt
+### Delete
 
 ```bash
-$ curl https://transfer.sh/1lDau/test.txt | gpg --decrypt --output /tmp/hello.txt
+curl -X DELETE https://your-instance.example.com/<token>/hello.txt/<delete-token>
 ```
 
-<br />
+The `<delete-token>` is returned in the `X-Url-Delete` response header on
+upload.
 
-### Upload to Virustotal
+### Encrypt + upload (client-side)
 
 ```bash
-$ curl -X PUT --upload-file nhgbhhj https://transfer.sh/test.txt/virustotal
+gpg --armor --symmetric --output - ./hello.txt \
+  | curl --upload-file - https://your-instance.example.com/hello.txt
 ```
 
-<br />
-
-### Deleting
+### Download + decrypt
 
 ```bash
-$ curl -X DELETE <X-Url-Delete Response Header URL>
+curl https://your-instance.example.com/<token>/hello.txt | gpg --decrypt --output ./hello.txt
 ```
 
-<br />
+### Per-upload limits
+
+```bash
+# Auto-delete after N days (overrides the server default)
+curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt \
+  -H "Max-Days: 7"
+
+# Cap the download count
+curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt \
+  -H "Max-Downloads: 1"
+```
+
+### Link aliases
+
+Direct download (skip the preview page):
+
+```
+https://your-instance.example.com/<token>/hello.txt
+→ https://your-instance.example.com/get/<token>/hello.txt
+```
+
+Inline (open in browser instead of download):
+
+```
+https://your-instance.example.com/<token>/hello.txt
+→ https://your-instance.example.com/inline/<token>/hello.txt
+```
+
+### Bulk archive download
+
+```bash
+curl https://your-instance.example.com/(<token1>/file1,<token2>/file2).zip -o files.zip
+curl https://your-instance.example.com/(<token1>/file1,<token2>/file2).tar
+curl https://your-instance.example.com/(<token1>/file1,<token2>/file2).tar.gz
+```
+
+More examples in [`examples.md`](examples.md).
 
 ---
 
-<br />
+## Configuration
 
-## Request Headers
+All flags can be set via CLI args or the matching environment variable.
 
-This section explains how to handle request headers with curl:
+### Network
 
-<br />
+| Flag | Env | Default | Description |
+|---|---|---|---|
+| `--listener` | `LISTENER` | `127.0.0.1:8080` | Address the HTTP server binds to |
+| `--proxy-path` | `PROXY_PATH` | — | Path prefix when behind a reverse proxy |
+| `--proxy-port` | `PROXY_PORT` | — | External port of the reverse proxy |
+| `--cors-domains` | `CORS_DOMAINS` | — | Comma-separated list of CORS origins |
 
-### Max-Downloads
+### Storage
 
-```bash
-$ curl --upload-file ./hello.txt https://transfer.sh/hello.txt -H "Max-Downloads: 1" # Limit the number of downloads
-```
+| Flag | Env | Default | Description |
+|---|---|---|---|
+| `--basedir` | `BASEDIR` | *required* | Path to the local storage directory |
+| `--temp-path` | `TEMP_PATH` | OS temp | Path used for in-flight uploads |
 
-<br />
+### Lifecycle
 
-### Max-Days
+| Flag | Env | Default | Description |
+|---|---|---|---|
+| `--purge-days` | `PURGE_DAYS` | `360` | Days after which uploads are purged |
+| `--purge-interval` | `PURGE_INTERVAL` | `24` | Hours between purge runs |
+| `--max-upload-size` | `MAX_UPLOAD_SIZE` | unlimited | Per-file limit in KB |
+| `--rate-limit` | `RATE_LIMIT` | `0` | Requests per minute (0 = off) |
+| `--random-token-length` | `RANDOM_TOKEN_LENGTH` | `10` | URL token length |
 
-```bash
-$ curl --upload-file ./hello.txt https://transfer.sh/hello.txt -H "Max-Days: 1" # Set the number of days before deletion
-```
+### Authentication & access control
 
-<br />
+| Flag | Env | Description |
+|---|---|---|
+| `--http-auth-user` / `--http-auth-pass` | `HTTP_AUTH_USER` / `HTTP_AUTH_PASS` | Single-user basic auth |
+| `--http-auth-htpasswd` | `HTTP_AUTH_HTPASSWD` | Path to a htpasswd file (multi-user) |
+| `--http-auth-ip-whitelist` | `HTTP_AUTH_IP_WHITELIST` | CIDRs that may upload without auth |
+| `--ip-whitelist` | `IP_WHITELIST` | CIDRs allowed at the connection level |
+| `--ip-blacklist` | `IP_BLACKLIST` | CIDRs denied at the connection level |
 
-### X-Encrypt-Password
+### Antivirus
 
-#### Beware, use this feature only on your self-hosted server: trusting a third-party service for server side encryption is at your own risk
-```bash
-$ curl --upload-file ./hello.txt https://your-transfersh-instance.tld/hello.txt -H "X-Encrypt-Password: test" # Encrypt the content server side with AES256 using "test" as password
-```
+| Flag | Env | Description |
+|---|---|---|
+| `--clamav-host` | `CLAMAV_HOST` | clamd host:port (e.g. `clamav:3310`) |
+| `--perform-clamav-prescan` | `PERFORM_CLAMAV_PRESCAN` | Refuse uploads that fail the prescan |
 
-<br />
+### Frontend / misc
 
-### X-Decrypt-Password
-#### Beware, use this feature only on your self-hosted server: trusting a third-party service for server side encryption is at your own risk
-
-```bash
-$ curl https://your-transfersh-instance.tld/BAYh0/hello.txt -H "X-Decrypt-Password: test" # Decrypt the content server side with AES256 using "test" as password
-```
-
-<br />
-
----
-
-<br />
-
-## Response Headers
-
-This section explains how to handle response headers:
-
-<br />
-
-### X-Url-Delete
-
-The URL used to request the deletion of a file and returned as a response header:
-
-```bash
-curl -sD - --upload-file ./hello.txt https://transfer.sh/hello.txt | grep -i -E 'transfer\.sh|x-url-delete'
-x-url-delete: https://transfer.sh/hello.txt/BAYh0/hello.txt/PDw0NHPcqU
-https://transfer.sh/hello.txt/BAYh0/hello.txt
-```
-
-<br />
+| Flag | Env | Description |
+|---|---|---|
+| `--web-path` | `WEB_PATH` | Override the bundled web frontend directory |
+| `--email-contact` | `EMAIL_CONTACT` | Address rendered in the "Contact" link |
+| `--log` | `LOG` | Log file path (defaults to stderr) |
 
 ---
-
-<br />
-
-## Examples
-
-See good usage examples on [examples.md](examples.md)
-
-<br />
-
-## Link aliases
-
-Create direct download link:
-
-https://transfer.sh/1lDau/test.txt --> https://transfer.sh/get/1lDau/test.txt
-
-Inline file:
-
-https://transfer.sh/1lDau/test.txt --> https://transfer.sh/inline/1lDau/test.txt
-
-<br />
-
----
-
-<br />
-
-## Usage
-
-Parameter | Description                                                                             | Value                         | Env                         
---- |-----------------------------------------------------------------------------------------------|-------------------------------|-------------------------------|
-listener | port to use for http (:80)                                                               |                               | LISTENER                      |
-profile-listener | port to use for profiler (:6060)                                                 |                               | PROFILE_LISTENER              |
-force-https | redirect to https                                                                     | false                         | FORCE_HTTPS                   |
-tls-listener | port to use for https (:443)                                                         |                               | TLS_LISTENER                  |
-tls-listener-only | flag to enable tls listener only                                                |                               | TLS_LISTENER_ONLY             |
-tls-cert-file | path to tls certificate                                                             |                               | TLS_CERT_FILE                 |
-tls-private-key | path to tls private key                                                           |                               | TLS_PRIVATE_KEY               |
-http-auth-user | user for basic http auth on upload                                                 |                               | HTTP_AUTH_USER                |
-http-auth-pass | pass for basic http auth on upload                                                 |                               | HTTP_AUTH_PASS                |
-http-auth-htpasswd | htpasswd file path for basic http auth on upload                               |                               | HTTP_AUTH_HTPASSWD            |
-http-auth-ip-whitelist | comma separated list of allowed ips to upload without auth challenge       |                               | HTTP_AUTH_IP_WHITELIST        |
-virustotal-key | VirusTotal API key                                                                 |                               | VIRUSTOTAL_KEY                |
-ip-whitelist | comma separated list of ips allowed to connect to the service                        |                               | IP_WHITELIST                  |
-ip-blacklist | comma separated list of ips not allowed to connect to the service                    |                               | IP_BLACKLIST                  |
-temp-path | path to temp folder                                                                     | system temp                   | TEMP_PATH                     |
-web-path | path to static web files (for development or custom front end)                           |                               | WEB_PATH                      |
-proxy-path | path prefix when service is run behind a proxy (a `/` prefix will be trimmed)          |                               | PROXY_PATH                    |
-proxy-port | port of the proxy when the service is run behind a proxy                               |                               | PROXY_PORT                    |
-email-contact | email contact for the front end                                                     |                               | EMAIL_CONTACT                 |
-ga-key | google analytics key for the front end                                                     |                               | GA_KEY                        |
-provider | which storage provider to use                                                            | (s3, storj, gdrive or local)  |                               |
-uservoice-key | user voice key for the front end                                                    |                               | USERVOICE_KEY                 |
-aws-access-key | aws access key                                                                     |                               | AWS_ACCESS_KEY                |
-aws-secret-key | aws access key                                                                     |                               | AWS_SECRET_KEY                |
-bucket | aws bucket                                                                                 |                               | BUCKET                        |
-s3-endpoint | Custom S3 endpoint.                                                                   |                               | S3_ENDPOINT                   |
-s3-region | region of the s3 bucket                                                                 | eu-west-1                     | S3_REGION                     |
-s3-no-multipart | disables s3 multipart upload                                                      | false                         | S3_NO_MULTIPART               |
-s3-path-style | Forces path style URLs, required for Minio.                                         | false                         | S3_PATH_STYLE                 |
-storj-access | Access for the project                                                               |                               | STORJ_ACCESS                  |
-storj-bucket | Bucket to use within the project                                                     |                               | STORJ_BUCKET                  |
-basedir | path storage for local/gdrive provider                                                    |                               | BASEDIR                       |
-gdrive-client-json-filepath | path to oauth client json config for gdrive provider                  |                               | GDRIVE_CLIENT_JSON_FILEPATH   |
-gdrive-local-config-path | path to store local transfer.sh config cache for gdrive provider         |                               | GDRIVE_LOCAL_CONFIG_PATH      |
-gdrive-chunk-size | chunk size for gdrive upload in megabytes, must be lower than available memory (8 MB) |                         | GDRIVE_CHUNK_SIZE             |
-lets-encrypt-hosts | hosts to use for lets encrypt certificates (comma separated)                   |                               | HOSTS                         |
-log | path to log file                                                                              |                               | LOG                           |
-cors-domains | comma separated list of domains for CORS, setting it enable CORS                     |                               | CORS_DOMAINS                  |
-clamav-host | host for clamav feature                                                               |                               | CLAMAV_HOST                   |
-perform-clamav-prescan | prescan every upload using clamav (clamav-host must be local clamd unix socket)    |                       | PERFORM_CLAMAV_PRESCAN        |
-rate-limit | request per minute                                                                     |                               | RATE_LIMIT                    |
-max-upload-size | max upload size in kilobytes                                                      |                               | MAX_UPLOAD_SIZE               |
-purge-days | number of days after the uploads are purged automatically                              |                               | PURGE_DAYS                    |   
-purge-interval | interval (hours) to run automatic purge for (excluding S3 and Storj)               |                               | PURGE_INTERVAL                |   
-random-token-length | length of random token for upload path (double the size for delete path)      | 6                             | RANDOM_TOKEN_LENGTH           |   
-
-If you want to use TLS using lets encrypt certificates, set lets-encrypt-hosts to your domain, set tls-listener to :443 and enable force-https.
-
-If you want to use TLS using your own certificates, set tls-listener to :443, force-https, tls-cert-file and tls-private-key.
-
-<br />
-
----
-
-<br />
 
 ## Development
 
-Switched to GO111MODULE
+Requires Go 1.23+.
 
 ```bash
-go run main.go --provider=local --listener :8080 --temp-path=/tmp/ --basedir=/tmp/
+git clone git@github.com:xenofex7/transfer.sh.git
+cd transfer.sh
+go run . --listener 127.0.0.1:8080 --basedir ./tmp/storage --temp-path ./tmp
 ```
 
-<br />
+Or, for a production-style binary:
+
+```bash
+go build -tags netgo \
+  -ldflags "-X github.com/dutchcoders/transfer.sh/cmd.Version=dev -s -w" \
+  -o transfersh ./
+```
+
+Run the tests and the linter:
+
+```bash
+go test -race ./...
+golangci-lint run --config .golangci.yml
+```
+
+CI runs both on every push (see `.github/workflows/test.yml`).
 
 ---
 
-<br />
+## Shell helper
 
-## Build
-
-```bash
-$ git clone git@github.com:dutchcoders/transfer.sh.git
-$ cd transfer.sh
-$ go build -o transfersh main.go
-```
-
-<br />
-
----
-
-<br />
-
-## Docker
-
-For easy deployment, we've created an official Docker container. There are two variants, differing only by which user runs the process.
-
-The default one will run as `root`:
-
-> [!WARNING]
-> It is discouraged to use `latest` tag for WatchTower or similar tools. The `latest` tag can reference unreleased developer, test builds, and patch releases for older versions. Use an actual version tag until transfer.sh supports major or minor version tags.
+A minimal `transfer` function for `~/.bashrc` or `~/.zshrc`:
 
 ```bash
-docker run --publish 8080:8080 dutchcoders/transfer.sh:latest --provider local --basedir /tmp/
-```
-
-<br />
-
-### No root
-
-The `-noroot` tags indicate image builds that run with least priviledge to reduce the attack surface might an application get compromised.
-
-> [!NOTE]
-> Using `-noroot` is **recommended**
-
-<br />
-
-The one tagged with the suffix `-noroot` will use `5000` as both UID and GID:
-
-```bash
-docker run --publish 8080:8080 dutchcoders/transfer.sh:latest-noroot --provider local --basedir /tmp/
-```
-
-<br />
-
-> [!NOTE]
-> Development history details at:
-> - https://github.com/dutchcoders/transfer.sh/pull/418
-
-<br />
-
-### Tags
-
-Name | Usage
---|--
-latest| Latest CI build, can be nightly, at commit, at tag, etc.
-latest-noroot| Latest CI build, can be nightly, at commit, at tag, etc. using [no root]
-nightly| Scheduled CI build every midnight UTC
-nightly-noroot| Scheduled CI build every midnight UTC using [no root]
-edge| Latest CI build after every commit on `main`
-edge-noroot| Latest CI build after every commit on `main` using [no root]
-v`x.y.z`| CI build after tagging a release
-v`x.y.z`-noroot| CI build after tagging a release using [no root]
-
-<br />
-
-### Building the Container
-
-You can also build the container yourself. This allows you to choose which UID/GID will be used, e.g. when using NFS mounts:
-
-```bash
-# Build arguments:
-# * RUNAS: If empty, the container will run as root.
-#          Set this to anything to enable UID/GID selection.
-# * PUID:  UID of the process. Needs RUNAS != "". Defaults to 5000.
-# * PGID:  GID of the process. Needs RUNAS != "". Defaults to 5000.
-
-docker build -t transfer.sh-noroot --build-arg RUNAS=doesntmatter --build-arg PUID=1337 --build-arg PGID=1338 .
-```
-
-<br />
-
----
-
-<br />
-
-## S3 Usage
-
-For the usage with a AWS S3 Bucket, you just need to specify the following options:
-- provider `--provider s3`
-- aws-access-key _(either via flag or environment variable `AWS_ACCESS_KEY`)_
-- aws-secret-key _(either via flag or environment variable `AWS_SECRET_KEY`)_
-- bucket _(either via flag or environment variable `BUCKET`)_
-- s3-region _(either via flag or environment variable `S3_REGION`)_
-
-If you specify the s3-region, you don't need to set the endpoint URL since the correct endpoint will used automatically.
-
-<br />
-
-### Custom S3 providers
-
-To use a custom non-AWS S3 provider, you need to specify the endpoint as defined from your cloud provider.
-
-<br />
-
----
-
-<br />
-
-## Storj Network Provider
-
-To use the Storj Network as a storage provider you need to specify the following flags:
-- provider `--provider storj`
-- storj-access _(either via flag or environment variable STORJ_ACCESS)_
-- storj-bucket _(either via flag or environment variable STORJ_BUCKET)_
-
-<br />
-
-### Creating Bucket and Scope
-
-You need to create an access grant (or copy it from the uplink configuration) and a bucket in preparation.
-
-To get started, log in to your account and go to the Access Grant Menu and start the Wizard on the upper right.
-
-Enter your access grant name of choice, hit *Next* and restrict it as necessary/preferred.
-Afterwards continue either in CLI or within the Browser. Next, you'll be asked for a Passphrase used as Encryption Key.
-**Make sure to save it in a safe place. Without it, you will lose the ability to decrypt your files!**
-
-Afterwards, you can copy the access grant and then start the startup of the transfer.sh endpoint. 
-It is recommended to provide both the access grant and the bucket name as ENV Variables for enhanced security.
-
-Example:
-
-```
-export STORJ_BUCKET=<BUCKET NAME>
-export STORJ_ACCESS=<ACCESS GRANT>
-transfer.sh --provider storj
-```
-
-<br />
-
----
-
-<br />
-
-## Google Drive Usage
-
-For the usage with Google drive, you need to specify the following options:
-- provider
-- gdrive-client-json-filepath
-- gdrive-local-config-path
-- basedir
-
-<br />
-
-### Creating Gdrive Client Json
-
-You need to create an OAuth Client id from console.cloud.google.com, download the file, and place it into a safe directory.
-
-<br />
-
-### Usage example
-
-```go run main.go --provider gdrive --basedir /tmp/ --gdrive-client-json-filepath /[credential_dir] --gdrive-local-config-path [directory_to_save_config] ```
-
-<br />
-
----
-
-<br />
-
-## Shell functions
-
-### Bash, ash and zsh (multiple files uploaded as zip archive)
-##### Add this to .bashrc or .zshrc or its equivalent
-```bash
-transfer() (if [ $# -eq 0 ]; then printf "No arguments specified.\nUsage:\n transfer <file|directory>\n ... | transfer <file_name>\n">&2; return 1; fi; file_name=$(basename "$1"); if [ -t 0 ]; then file="$1"; if [ ! -e "$file" ]; then echo "$file: No such file or directory">&2; return 1; fi; if [ -d "$file" ]; then cd "$file" || return 1; file_name="$file_name.zip"; set -- zip -r -q - .; else set -- cat "$file"; fi; else set -- cat; fi; url=$("$@" | curl --silent --show-error --progress-bar --upload-file "-" "https://transfer.sh/$file_name"); echo "$url"; )
-```
-
-<br />
-
-#### Now you can use transfer function
-```
-$ transfer hello.txt
-```
-
-<br />
-
-### Bash and zsh (with delete url, delete token output and prompt before uploading)
-##### Add this to .bashrc or .zshrc or its equivalent
-
-<details><summary>Expand</summary><p>
-
-```bash
-transfer()
-{
-    local file
-    declare -a file_array
-    file_array=("${@}")
-
-    if [[ "${file_array[@]}" == "" || "${1}" == "--help" || "${1}" == "-h" ]]
-    then
-        echo "${0} - Upload arbitrary files to \"transfer.sh\"."
-        echo ""
-        echo "Usage: ${0} [options] [<file>]..."
-        echo ""
-        echo "OPTIONS:"
-        echo "  -h, --help"
-        echo "      show this message"
-        echo ""
-        echo "EXAMPLES:"
-        echo "  Upload a single file from the current working directory:"
-        echo "      ${0} \"image.img\""
-        echo ""
-        echo "  Upload multiple files from the current working directory:"
-        echo "      ${0} \"image.img\" \"image2.img\""
-        echo ""
-        echo "  Upload a file from a different directory:"
-        echo "      ${0} \"/tmp/some_file\""
-        echo ""
-        echo "  Upload all files from the current working directory. Be aware of the webserver's rate limiting!:"
-        echo "      ${0} *"
-        echo ""
-        echo "  Upload a single file from the current working directory and filter out the delete token and download link:"
-        echo "      ${0} \"image.img\" | awk --field-separator=\": \" '/Delete token:/ { print \$2 } /Download link:/ { print \$2 }'"
-        echo ""
-        echo "  Show help text from \"transfer.sh\":"
-        echo "      curl --request GET \"https://transfer.sh\""
-        return 0
-    else
-        for file in "${file_array[@]}"
-        do
-            if [[ ! -f "${file}" ]]
-            then
-                echo -e "\e[01;31m'${file}' could not be found or is not a file.\e[0m" >&2
-                return 1
-            fi
-        done
-        unset file
-    fi
-
-    local upload_files
-    local curl_output
-    local awk_output
-
-    du -c -k -L "${file_array[@]}" >&2
-    # be compatible with "bash"
-    if [[ "${ZSH_NAME}" == "zsh" ]]
-    then
-        read $'upload_files?\e[01;31mDo you really want to upload the above files ('"${#file_array[@]}"$') to "transfer.sh"? (Y/n): \e[0m'
-    elif [[ "${BASH}" == *"bash"* ]]
-    then
-        read -p $'\e[01;31mDo you really want to upload the above files ('"${#file_array[@]}"$') to "transfer.sh"? (Y/n): \e[0m' upload_files
-    fi
-
-    case "${upload_files:-y}" in
-        "y"|"Y")
-            # for the sake of the progress bar, execute "curl" for each file.
-            # the parameters "--include" and "--form" will suppress the progress bar.
-            for file in "${file_array[@]}"
-            do
-                # show delete link and filter out the delete token from the response header after upload.
-                # it is important to save "curl's" "stdout" via a subshell to a variable or redirect it to another command,
-                # which just redirects to "stdout" in order to have a sane output afterwards.
-                # the progress bar is redirected to "stderr" and is only displayed,
-                # if "stdout" is redirected to something; e.g. ">/dev/null", "tee /dev/null" or "| <some_command>".
-                # the response header is redirected to "stdout", so redirecting "stdout" to "/dev/null" does not make any sense.
-                # redirecting "curl's" "stderr" to "stdout" ("2>&1") will suppress the progress bar.
-                curl_output=$(curl --request PUT --progress-bar --dump-header - --upload-file "${file}" "https://transfer.sh/")
-                awk_output=$(awk \
-                    'gsub("\r", "", $0) && tolower($1) ~ /x-url-delete/ \
-                    {
-                        delete_link=$2;
-                        print "Delete command: curl --request DELETE " "\""delete_link"\"";
-
-                        gsub(".*/", "", delete_link);
-                        delete_token=delete_link;
-                        print "Delete token: " delete_token;
-                    }
-
-                    END{
-                        print "Download link: " $0;
-                    }' <<< "${curl_output}")
-
-                # return the results via "stdout", "awk" does not do this for some reason.
-                echo -e "${awk_output}\n"
-
-                # avoid rate limiting as much as possible; nginx: too many requests.
-                if (( ${#file_array[@]} > 4 ))
-                then
-                    sleep 5
-                fi
-            done
-            ;;
-
-        "n"|"N")
-            return 1
-            ;;
-
-        *)
-            echo -e "\e[01;31mWrong input: '${upload_files}'.\e[0m" >&2
-            return 1
-    esac
+transfer() {
+  if [ $# -eq 0 ]; then
+    echo "Usage: transfer <file>"
+    return 1
+  fi
+  curl --progress-bar --upload-file "$1" \
+    "https://your-instance.example.com/$(basename "$1")"
 }
 ```
 
-</p></details>
+Then:
 
-#### Sample output
 ```bash
-$ ls -lh
-total 20M
--rw-r--r-- 1 <some_username> <some_username> 10M Apr  4 21:08 image.img
--rw-r--r-- 1 <some_username> <some_username> 10M Apr  4 21:08 image2.img
-$ transfer image*
-10240K  image2.img
-10240K  image.img
-20480K  total
-Do you really want to upload the above files (2) to "transfer.sh"? (Y/n):
-######################################################################################################################################################################################################################################## 100.0%
-Delete command: curl --request DELETE "https://transfer.sh/wJw9pz/image2.img/mSctGx7pYCId"
-Delete token: mSctGx7pYCId
-Download link: https://transfer.sh/wJw9pz/image2.img
-
-######################################################################################################################################################################################################################################## 100.0%
-Delete command: curl --request DELETE "https://transfer.sh/ljJc5I/image.img/nw7qaoiKUwCU"
-Delete token: nw7qaoiKUwCU
-Download link: https://transfer.sh/ljJc5I/image.img
-
-$ transfer "image.img" | awk --field-separator=": " '/Delete token:/ { print $2 } /Download link:/ { print $2 }'
-10240K  image.img
-10240K  total
-Do you really want to upload the above files (1) to "transfer.sh"? (Y/n):
-######################################################################################################################################################################################################################################## 100.0%
-tauN5dE3fWJe
-https://transfer.sh/MYkuqn/image.img
+transfer hello.txt
 ```
 
-<br />
+---
+
+## Roadmap
+
+The current state and the planned work are tracked in [ROADMAP.md](ROADMAP.md).
+The repository is a small, opinionated rewrite — feedback and PRs are welcome.
 
 ---
 
-<br />
+## Credits
 
-## Contributions
+Built on top of the original work by:
 
-Contributions are welcome.
+- **Remco Verhoef** & **Uvis Grinfelds** — original creators of `transfer.sh`
+- **Andrea Spacca** & **Stefan Benten** — long-time upstream maintainers
 
-<br />
-
----
-
-<br />
-
-## Creators
-
-**Remco Verhoef**
-- <https://twitter.com/remco_verhoef>
-- <https://twitter.com/dutchcoders>
-
-**Uvis Grinfelds**
-
-<br />
-
----
-
-<br />
-
-## Maintainers
-
-- **Andrea Spacca**
-- **Stefan Benten**
-
-<br />
-
----
-
-<br />
-
-## Copyright and License
-
-Code and documentation copyright 2011-2018 Remco Verhoef.
-Code and documentation copyright 2018-2020 Andrea Spacca.
-Code and documentation copyright 2020- Andrea Spacca and Stefan Benten.
-
-Code released under [the MIT license](LICENSE).
+This fork keeps the upstream copyright notice intact and ships under the same
+[MIT license](LICENSE).

@@ -73,14 +73,14 @@ Storage-Volume, ClamAV-Sidecar laufen sauber zusammen.
 
 ## Phase 3 — README & Dokumentation
 
-Die alte 24 KB README ist voll mit s3/gdrive/Let's-Encrypt-Beispielen, die für
-diesen Use-Case irrelevant sind und Verwirrung stiften.
-
-- [ ] README auf das tatsächliche Feature-Set kürzen
-- [ ] Disclaimer aus Upstream entfernen (oder durch eigenen ersetzen)
-- [ ] Beispiel-curl-Befehle behalten, andere Abschnitte streichen
-- [ ] Setup-Anleitung für den schlanken Stack ergänzen
-- [ ] examples.md prüfen, was relevant bleibt
+- [x] README auf das tatsächliche Feature-Set gekürzt (633 → 313 Zeilen)
+- [x] Disclaimer aus Upstream entfernt
+- [x] Beispiel-curl-Befehle behalten, andere Abschnitte gestrichen
+- [x] Setup-Anleitung für den schlanken Stack ergänzt
+- [x] Fork-Notice + "What's different from upstream"-Tabelle ergänzt
+- [x] Konfigurations-Tabelle nach Themen gruppiert
+- [x] Build-Status, GHCR und Lizenz-Badges
+- [ ] examples.md prüfen — was bleibt relevant nach Phase 1?
 
 ---
 
