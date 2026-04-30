@@ -1,16 +1,18 @@
 # transfer.sh deployment stack
 #
 # Usage:
-#   cp .env.example .env       # then edit .env
+#   cp .env.example .env             # then edit .env
+#   htpasswd -B -c htpasswd <user>   # create the auth file BEFORE first start
 #   docker compose up -d
 #
 # Reverse-proxy (TLS termination) is expected to live OUTSIDE this compose file
-# and forward to the `transfersh` service on the shared network.
+# and forward to the `transfersh` service over the shared network.
+
+name: transfersh
 
 services:
   transfersh:
     image: ${TRANSFERSH_IMAGE:-ghcr.io/OWNER/REPO:latest}
-    container_name: transfersh
     restart: unless-stopped
     depends_on:
       clamav:
@@ -21,7 +23,7 @@ services:
       TEMP_PATH: "/tmp/transfersh"
       PURGE_DAYS: "${PURGE_DAYS:-360}"
       PURGE_INTERVAL: "${PURGE_INTERVAL:-24}"
-      MAX_UPLOAD_SIZE: "${MAX_UPLOAD_SIZE:-5242880}"   # in KB, default 5 GB
+      MAX_UPLOAD_SIZE: "${MAX_UPLOAD_SIZE:-5242880}"   # in KB, default 5 GiB
       RATE_LIMIT: "${RATE_LIMIT:-0}"
       RANDOM_TOKEN_LENGTH: "${RANDOM_TOKEN_LENGTH:-10}"
       CLAMAV_HOST: "clamav:3310"
@@ -36,25 +38,26 @@ services:
       EMAIL_CONTACT: "${EMAIL_CONTACT:-}"
     volumes:
       - transfersh-data:/data
-      - ./htpasswd:/etc/transfersh/htpasswd:ro
+      - type: bind
+        source: ./htpasswd
+        target: /etc/transfersh/htpasswd
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - transfersh
-    expose:
-      - "8080"
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health.html"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: ${TRANSFERSH_MEMORY_LIMIT:-512M}
+    mem_limit: ${TRANSFERSH_MEMORY_LIMIT:-512M}
+    security_opt:
+      - no-new-privileges:true
 
   clamav:
-    image: clamav/clamav:stable
-    container_name: transfersh-clamav
+    image: clamav/clamav:1.4
     restart: unless-stopped
     networks:
       - transfersh
@@ -66,10 +69,9 @@ services:
       timeout: 10s
       retries: 5
       start_period: 5m
-    deploy:
-      resources:
-        limits:
-          memory: ${CLAMAV_MEMORY_LIMIT:-2G}
+    mem_limit: ${CLAMAV_MEMORY_LIMIT:-2G}
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   transfersh-data:
