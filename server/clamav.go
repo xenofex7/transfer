@@ -32,6 +32,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dutchcoders/go-clamd"
@@ -75,8 +76,18 @@ func (s *Server) scanHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprintf(w, "%v\n", status)
 }
 
+// clamavAddress returns the configured ClamAV host with a transport scheme.
+// go-clamd defaults to a Unix socket when no scheme is present, which silently
+// breaks "host:port" style configuration. Treat such addresses as TCP.
+func clamavAddress(host string) string {
+	if strings.Contains(host, "://") {
+		return host
+	}
+	return "tcp://" + host
+}
+
 func (s *Server) performScan(path string) (string, error) {
-	c := clamd.NewClamd(s.ClamAVDaemonHost)
+	c := clamd.NewClamd(clamavAddress(s.ClamAVDaemonHost))
 
 	responseCh := make(chan chan *clamd.ScanResult)
 	errCh := make(chan error)

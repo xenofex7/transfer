@@ -30,7 +30,7 @@ services:
       MAX_UPLOAD_SIZE: "${MAX_UPLOAD_SIZE:-5242880}"   # in KB, default 5 GiB
       RATE_LIMIT: "${RATE_LIMIT:-0}"
       RANDOM_TOKEN_LENGTH: "${RANDOM_TOKEN_LENGTH:-10}"
-      CLAMAV_HOST: "clamav:3310"
+      CLAMAV_HOST: "tcp://clamav:3310"
       PERFORM_CLAMAV_PRESCAN: "${PERFORM_CLAMAV_PRESCAN:-true}"
       HTTP_AUTH_HTPASSWD: "/etc/transfersh/htpasswd"
       HTTP_AUTH_IP_WHITELIST: "${HTTP_AUTH_IP_WHITELIST:-}"
