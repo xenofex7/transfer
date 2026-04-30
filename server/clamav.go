@@ -87,12 +87,21 @@ func clamavAddress(host string) string {
 }
 
 func (s *Server) performScan(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
 	c := clamd.NewClamd(clamavAddress(s.ClamAVDaemonHost))
+
+	abort := make(chan bool)
+	defer close(abort)
 
 	responseCh := make(chan chan *clamd.ScanResult)
 	errCh := make(chan error)
 	go func(responseCh chan chan *clamd.ScanResult, errCh chan error) {
-		response, err := c.ScanFile(path)
+		response, err := c.ScanStream(f, abort)
 		if err != nil {
 			errCh <- err
 			return
