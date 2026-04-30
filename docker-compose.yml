@@ -6,13 +6,17 @@
 #   docker compose up -d
 #
 # Reverse-proxy (TLS termination) is expected to live OUTSIDE this compose file
-# and forward to the `transfersh` service over the shared network.
+# and forward to the `transfersh` service over the shared `proxy` network.
+#
+# By default the stack joins an EXTERNAL bridge network called `proxy`.
+# Override with the PROXY_NETWORK variable in .env if your reverse-proxy lives
+# on a network with a different name.
 
 name: transfersh
 
 services:
   transfersh:
-    image: ${TRANSFERSH_IMAGE:-ghcr.io/OWNER/REPO:latest}
+    image: ${TRANSFERSH_IMAGE:-ghcr.io/xenofex7/transfer.sh:latest}
     restart: unless-stopped
     depends_on:
       clamav:
@@ -45,7 +49,8 @@ services:
         bind:
           create_host_path: false
     networks:
-      - transfersh
+      - internal
+      - proxy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health.html"]
       interval: 30s
@@ -60,7 +65,7 @@ services:
     image: clamav/clamav:1.4
     restart: unless-stopped
     networks:
-      - transfersh
+      - internal
     volumes:
       - clamav-db:/var/lib/clamav
     healthcheck:
@@ -78,5 +83,8 @@ volumes:
   clamav-db:
 
 networks:
-  transfersh:
+  internal:
     driver: bridge
+  proxy:
+    name: ${PROXY_NETWORK:-proxy}
+    external: true

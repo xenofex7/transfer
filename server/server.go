@@ -409,6 +409,12 @@ func (s *Server) Run() {
 
 	_ = mime.AddExtensionType(".md", "text/x-markdown")
 
+	if s.tempPath != "" {
+		if err := os.MkdirAll(s.tempPath, 0o755); err != nil {
+			s.logger.Fatalf("could not create temp folder %s: %v", s.tempPath, err)
+		}
+	}
+
 	s.logger.Printf("Transfer.sh server started.\nusing temp folder: %s\nusing storage provider: %s", s.tempPath, s.storage.Type())
 
 	var cors func(http.Handler) http.Handler
