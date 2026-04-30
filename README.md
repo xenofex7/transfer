@@ -1,8 +1,14 @@
-# transfer.sh [![Go Report Card](https://goreportcard.com/badge/github.com/dutchcoders/transfer.sh)](https://goreportcard.com/report/github.com/dutchcoders/transfer.sh) [![Docker pulls](https://img.shields.io/docker/pulls/dutchcoders/transfer.sh.svg)](https://hub.docker.com/r/dutchcoders/transfer.sh/) [![Build Status](https://github.com/dutchcoders/transfer.sh/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/dutchcoders/transfer.sh/actions/workflows/test.yml?query=branch%3Amain)
+<p align="center">
+  <img src="assets/logo.png" alt="transfer.sh" width="180">
+</p>
 
-Easy and fast file sharing from the command-line. This code contains the server with everything you need to create your own instance.
+<h1 align="center">transfer.sh</h1>
 
-Transfer.sh currently supports the s3 (Amazon S3), gdrive (Google Drive), storj (Storj) providers, and local file system (local).
+<p align="center">
+  Easy and fast file sharing from the command line.
+</p>
+
+This repository contains the server you need to run your own instance.
 
 <br />
 
