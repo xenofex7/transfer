@@ -1,44 +1,59 @@
-# Default to Go 1.24
+# syntax=docker/dockerfile:1.7
+
 ARG GO_VERSION=1.24
-FROM golang:${GO_VERSION}-alpine as build
+ARG ALPINE_VERSION=3.20
 
-# Necessary to run 'go get' and to compile the linked binary
-RUN apk add git musl-dev mailcap
+FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
 
-WORKDIR /go/src/github.com/dutchcoders/transfer.sh
+ARG VERSION=dev
+
+RUN apk add --no-cache git ca-certificates mailcap
+
+WORKDIR /src
 
 COPY go.mod go.sum ./
-
 RUN go mod download
 
 COPY . .
 
-# build & install server
-RUN CGO_ENABLED=0 go build -tags netgo -ldflags "-X github.com/dutchcoders/transfer.sh/cmd.Version=$(git describe --tags) -a -s -w -extldflags '-static'" -o /go/bin/transfersh
+RUN CGO_ENABLED=0 go build \
+    -tags netgo \
+    -ldflags "-X github.com/dutchcoders/transfer.sh/cmd.Version=${VERSION} -s -w -extldflags '-static'" \
+    -o /out/transfersh \
+    ./
 
-ARG PUID=5000 \
-    PGID=5000 \
-    RUNAS
+FROM alpine:${ALPINE_VERSION} AS final
 
-RUN mkdir -p /tmp/useradd /tmp/empty && \
-    if [ ! -z "$RUNAS" ]; then \
-    echo "${RUNAS}:x:${PUID}:${PGID}::/nonexistent:/sbin/nologin" >> /tmp/useradd/passwd && \
-    echo "${RUNAS}:!:::::::" >> /tmp/useradd/shadow && \
-    echo "${RUNAS}:x:${PGID}:" >> /tmp/useradd/group && \
-    echo "${RUNAS}:!::" >> /tmp/useradd/groupshadow; else touch /tmp/useradd/unused; fi
+ARG VERSION=dev
+ARG VCS_REF=unknown
+ARG BUILD_DATE
 
-FROM scratch AS final
-LABEL maintainer="Andrea Spacca <andrea.spacca@gmail.com>"
-ARG RUNAS
+LABEL org.opencontainers.image.title="transfer.sh" \
+      org.opencontainers.image.description="Easy file sharing from the command line" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.licenses="MIT"
 
-COPY --from=build /etc/mime.types /etc/mime.types
-COPY --from=build /tmp/empty /tmp
-COPY --from=build /tmp/useradd/* /etc/
-COPY --from=build --chown=${RUNAS}  /go/bin/transfersh /go/bin/transfersh
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+RUN apk add --no-cache ca-certificates mailcap tzdata wget && \
+    addgroup -S -g 65532 transfersh && \
+    adduser -S -D -H -u 65532 -G transfersh transfersh && \
+    mkdir -p /data && chown transfersh:transfersh /data
 
-USER ${RUNAS}
+COPY --from=build /out/transfersh /usr/local/bin/transfersh
 
-ENTRYPOINT ["/go/bin/transfersh", "--listener", ":8080"]
+USER transfersh:transfersh
+
+ENV LISTENER=":8080" \
+    BASEDIR="/data" \
+    TEMP_PATH="/tmp" \
+    PURGE_DAYS="360" \
+    PURGE_INTERVAL="24"
 
 EXPOSE 8080
+VOLUME ["/data"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/health.html || exit 1
+
+ENTRYPOINT ["/usr/local/bin/transfersh"]
