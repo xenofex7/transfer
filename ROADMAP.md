@@ -1,7 +1,8 @@
-# Roadmap — drop.pac-build.ch
+# Roadmap
 
-Tracking & Planung des Forks. Hosting-Ziel: eigene Instanz im Keller-Docker-Stack
-hinter nginx auf `drop.pac-build.ch`. Team: 2–3 Personen, Auth via htpasswd.
+Tracking & Planung dieses Forks. Ziel: schlanke, selbst-gehostete
+transfer.sh-Variante mit lokalem Storage, ClamAV-Virenscan, htpasswd-Auth und
+Reverse-Proxy davor.
 
 Legende: `[x]` erledigt · `[ ]` offen · `[~]` in Arbeit
 
@@ -11,67 +12,74 @@ Legende: `[x]` erledigt · `[ ]` offen · `[~]` in Arbeit
 
 - [x] Cloud-Storage-Backends entfernt (S3, GDrive, Storj)
 - [x] VirusTotal-Integration entfernt
-- [x] Eingebauter TLS-Stack + Let's Encrypt entfernt (nginx terminiert TLS)
+- [x] Eingebauter TLS-Stack + Let's Encrypt entfernt (Reverse-Proxy terminiert TLS)
 - [x] pprof-Profiler entfernt
 - [x] Google Analytics + UserVoice Frontend-Keys entfernt
 - [x] Vagrantfile, Bower-Config, manifest.json entfernt
 - [x] cmd.go auf local-only mit sinnvollen Defaults reduziert
-- [x] `go mod tidy` — ~30 Transitive-Deps weg
+- [x] `go mod tidy` — diverse Transitive-Deps weg
 - [x] Build, `go vet`, Tests, Smoke-Test (Upload/Download/Delete/TTL) grün
-- [x] In 6 logische Commits aufgeteilt
-
-Resultat: 13 Dateien geändert, 36 Insertions, 1580 Deletions.
+- [x] In logische Commits aufgeteilt
 
 ---
 
 ## Phase 2 — Deployment-Setup
 
-Ziel: Stack ist auf dem Keller-Server reproduzierbar mit `docker compose up -d`
-deploybar. Auth, Storage-Volume, ClamAV-Sidecar laufen sauber zusammen.
+Ziel: Stack ist mit `docker compose up -d` reproduzierbar deploybar. Auth,
+Storage-Volume, ClamAV-Sidecar laufen sauber zusammen.
 
 ### 2.1 Dockerfile prüfen & anpassen
-- [ ] Alte Dockerfile-Annahmen mit dem neuen Code abgleichen (PUID/PGID-Logik
+- [x] Alte Dockerfile-Annahmen mit dem neuen Code abgleichen (PUID/PGID-Logik
       vereinfachen, alte Args entrümpeln)
-- [ ] Image-Größe prüfen, Multi-Stage-Build sauber halten
-- [ ] Image-Tag-Strategie festlegen (`:dev`, `:latest`, `:v0.x.0`)
+- [x] Multi-Stage-Build, Alpine-Final, Non-Root-User, OCI-Labels, HEALTHCHECK
+- [x] Image-Tag-Strategie festlegen (semver, `:latest`, `:edge`, `:sha-<short>`)
+- [ ] Image-Größe nach erstem Build verifizieren
 
 ### 2.2 docker-compose.yml schreiben
-- [ ] Service `transfersh` mit Volume für `basedir`
-- [ ] Service `clamav` als Sidecar, transfersh redet via `--clamav-host` mit ihm
-- [ ] Restart-Policy, Healthcheck (`/health.html`), Resource-Limits
-- [ ] `.env.example` mit allen sinnvollen ENV-Vars
-- [ ] In bestehenden Keller-Stack einfügen (Netzwerk, Reverse-Proxy-Labels)
+- [x] Service `transfersh` mit Volume für `basedir`
+- [x] Service `clamav` als Sidecar, transfersh redet via `--clamav-host` mit ihm
+- [x] Restart-Policy, Healthcheck (`/health.html`), Resource-Limits
+- [x] `.env.example` mit allen sinnvollen ENV-Vars
+- [ ] Auf Zielserver deployen und Smoke-Test fahren
 
 ### 2.3 Auth einrichten
-- [ ] `htpasswd`-Datei mit den 2–3 Team-Usern erzeugen
+- [ ] `htpasswd`-Datei mit den Team-Usern erzeugen
 - [ ] Volume-Mount für die Datei in den Container
 - [ ] `--http-auth-htpasswd` als ENV verdrahten
-- [ ] Optional: `--http-auth-ip-whitelist` für Heimnetz (Upload ohne Login)
+- [ ] Optional: `--http-auth-ip-whitelist` für vertrauenswürdige Netze
 
-### 2.4 nginx-Vhost für drop.pac-build.ch
-- [ ] HTTPS-Cert vorhanden / via Let's Encrypt im Reverse-Proxy
+### 2.4 Reverse-Proxy
+- [ ] HTTPS-Termination am Reverse-Proxy
 - [ ] Proxy-Pass auf transfersh-Container
 - [ ] `client_max_body_size` passend zur `--max-upload-size` setzen
 - [ ] `proxy_request_buffering off` für Streaming-Uploads
 - [ ] Proxy-Header: `X-Forwarded-Host`, `X-Forwarded-Proto`
 
 ### 2.5 Sinnvolle Limits setzen
-- [ ] `--max-upload-size` festlegen (z. B. 5 GB)
+- [ ] `--max-upload-size` festlegen
 - [ ] `--rate-limit` (Requests pro Minute)
 - [ ] Default `--purge-days` (aktuell 360) bestätigen oder anpassen
 - [ ] `--random-token-length` ggf. erhöhen
+
+### 2.6 Container-Builds in CI
+- [x] GitHub Actions Workflow für GHCR-Build (semver-Tags, edge, sha)
+- [x] Multi-Arch (amd64 + arm64)
+- [x] Bestehenden Docker-Hub-Workflow ablösen
+- [x] Binary-Release-Workflow entfernen (wir liefern nur Container)
+- [x] test.yml modernisiert (aktuelle Action-Versionen, race-Tests, Cache)
+- [ ] Erstes Tag (`v0.1.0`) setzen, Workflow real durchlaufen lassen
 
 ---
 
 ## Phase 3 — README & Dokumentation
 
 Die alte 24 KB README ist voll mit s3/gdrive/Let's-Encrypt-Beispielen, die für
-unseren Use-Case irrelevant sind und Verwirrung stiften.
+diesen Use-Case irrelevant sind und Verwirrung stiften.
 
 - [ ] README auf das tatsächliche Feature-Set kürzen
 - [ ] Disclaimer aus Upstream entfernen (oder durch eigenen ersetzen)
 - [ ] Beispiel-curl-Befehle behalten, andere Abschnitte streichen
-- [ ] Setup-Anleitung für unseren Stack ergänzen (docker-compose, nginx, htpasswd)
+- [ ] Setup-Anleitung für den schlanken Stack ergänzen
 - [ ] examples.md prüfen, was relevant bleibt
 
 ---
@@ -82,11 +90,11 @@ Web-Assets sind als Go-bindata embedded aus dem Submodul
 `dutchcoders/transfer.sh-web`. Branding heißt: eigenen Web-Fork pflegen oder
 Patches/Overrides legen.
 
-- [ ] Entscheiden: eigenen Web-Fork oder Override via `--web-path`?
+- [ ] Entscheiden: eigener Web-Fork oder Override via `--web-path`?
 - [ ] Logo + Favicon ersetzen
-- [ ] Farbschema (drop.pac-build.ch Identität) anpassen
+- [ ] Farbschema anpassen
 - [ ] Title-Tag, Meta-Beschreibung, OG-Tags
-- [ ] Preview-Seite leicht entrümpeln (DutchCoders-Branding entfernen oder
+- [ ] Preview-Seite leicht entrümpeln (Upstream-Branding entfernen oder
       Footer-Zeile umschreiben)
 - [ ] QR-Code-Logo auswechseln (falls eingebrannt)
 
@@ -96,7 +104,7 @@ Patches/Overrides legen.
 
 ### 5.1 Mini-Dashboard für File-Übersicht
 Aktuell weiß man nach einem Upload nur die URL — wenn man die verliert, ist die
-Datei "weg" (kein Listing). Für ein 3er-Team ggf. unpraktisch.
+Datei "weg" (kein Listing). Für ein kleines Team ggf. unpraktisch.
 
 - [ ] Endpoint `/admin/files` (hinter htpasswd) der `basedir` listet
 - [ ] Anzeige: Upload-Datum, Größe, verbleibende TTL, Download-URL,
@@ -109,18 +117,18 @@ Datei "weg" (kein Listing). Für ein 3er-Team ggf. unpraktisch.
 - [ ] Storage-Quota pro User (htpasswd-User aus Auth-Header)
 
 ### 5.3 Notifications
-- [ ] Webhook bei neuem Upload (z. B. Slack/Telegram für's Team)
+- [ ] Webhook bei neuem Upload (z. B. Chat-Integration)
 - [ ] E-Mail-Benachrichtigung bei Download (optional pro Upload)
 
 ---
 
 ## Phase 6 — Production-Go-Live
 
-- [ ] Deploy auf Keller-Server
-- [ ] DNS-Record `drop.pac-build.ch` → Keller-Server
+- [ ] Deploy auf Zielserver
+- [ ] DNS-Record auf Zielserver
 - [ ] HTTPS-Cert verifizieren (SSL Labs Test)
-- [ ] End-to-End-Test mit Team
-- [ ] Backup-Strategie für `basedir` (rsync? snapshots?)
+- [ ] End-to-End-Test
+- [ ] Backup-Strategie für `basedir`
 - [ ] Monitoring (Container-Health, Disk-Usage, ClamAV-Updates)
 - [ ] Log-Rotation
 
@@ -129,7 +137,7 @@ Datei "weg" (kein Listing). Für ein 3er-Team ggf. unpraktisch.
 ## Phase 7 — Maintenance / Backlog
 
 - [ ] Upstream-Updates beobachten und cherry-picken
-- [ ] Go-Version regelmäßig hochziehen (aktuell `1.24` im Dockerfile)
+- [ ] Go-Version regelmäßig hochziehen
 - [ ] Dependabot für Go-Module aktivieren
 - [ ] CI-Workflow im Fork: build + test + golangci-lint
 - [ ] golangci-lint Config (`.golangci.yml`) prüfen, ggf. strenger setzen
