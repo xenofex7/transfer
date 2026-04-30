@@ -11,6 +11,10 @@ bin/
 .tmp
 tmp/
 
+# OS-generated files
+.DS_Store
+Thumbs.db
+
 # Local deployment secrets and runtime data
 .env
 htpasswd
