@@ -124,11 +124,14 @@ Datei "weg" (kein Listing). Für ein kleines Team ggf. unpraktisch.
 
 ## Phase 6 — Production-Go-Live
 
-- [ ] Deploy auf Zielserver
-- [ ] DNS-Record auf Zielserver
-- [ ] HTTPS-Cert verifizieren (SSL Labs Test)
-- [ ] End-to-End-Test
-- [ ] Backup-Strategie für `basedir`
+- [x] Deploy auf Zielserver
+- [x] DNS-Record auf Zielserver
+- [x] HTTPS-Cert ausgestellt (Let's Encrypt via Reverse-Proxy)
+- [x] End-to-End-Test (curl Upload + Download, ClamAV-Prescan grün)
+- [x] Backup-Strategie für `basedir` (deckt der bestehende Hyper-Backup-Job
+      des Host-Volumes ab; ClamAV-Signatures werden bei Container-Start
+      neu via freshclam geladen, kein Backup nötig)
+- [ ] HTTPS-Cert mit SSL Labs gegentesten (nice-to-have)
 - [ ] Monitoring (Container-Health, Disk-Usage, ClamAV-Updates)
 - [ ] Log-Rotation
 
@@ -152,5 +155,5 @@ Datei "weg" (kein Listing). Für ein kleines Team ggf. unpraktisch.
 - **Mini-Dashboard:** Ja/Nein? Falls ja: read-only Listing oder mit Delete-Funktion?
 - **Public oder nur LAN?** Aktuell geplant: public mit Auth. Falls Abuse-Risiko
   steigt, wäre IP-Whitelist eine Option.
-- **Backups:** Wie wichtig sind hochgeladene Files? Wegwerf-Transfer (kein Backup)
-  oder semi-persistent (mit Backup)?
+- **Backups:** Wegwerf-Transfer-Charakter, aber Bind-Mount liegt im
+  Host-Backup-Pfad → semi-persistent als Nebenprodukt erledigt.
