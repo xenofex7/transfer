@@ -27,6 +27,7 @@ package server
 import (
 	cryptoRand "crypto/rand"
 	"encoding/binary"
+	iofs "io/fs"
 	"log"
 	"math/rand"
 	"mime"
@@ -47,9 +48,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/tg123/go-htpasswd"
 
-	web "github.com/dutchcoders/transfer.sh-web"
 	"github.com/dutchcoders/transfer.sh/server/storage"
-	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/dutchcoders/transfer.sh/web"
 )
 
 // parse request with maximum memory of _24Kilobits
@@ -306,47 +306,49 @@ func (s *Server) Run() {
 
 	r := mux.NewRouter()
 
-	var fs http.FileSystem
+	var fileSys http.FileSystem
 
 	if s.webPath != "" {
 		s.logger.Println("Using static file path: ", s.webPath)
 
-		fs = http.Dir(s.webPath)
+		fileSys = http.Dir(s.webPath)
 
 		htmlTemplates, _ = htmlTemplates.ParseGlob(filepath.Join(s.webPath, "*.html"))
 		textTemplates, _ = textTemplates.ParseGlob(filepath.Join(s.webPath, "*.txt"))
 	} else {
-		fs = &assetfs.AssetFS{
-			Asset:    web.Asset,
-			AssetDir: web.AssetDir,
-			AssetInfo: func(path string) (os.FileInfo, error) {
-				return os.Stat(path)
-			},
-			Prefix: web.Prefix,
-		}
+		fileSys = http.FS(web.FS)
 
-		for _, path := range web.AssetNames() {
-			bytes, err := web.Asset(path)
+		err := iofs.WalkDir(web.FS, ".", func(path string, d iofs.DirEntry, err error) error {
 			if err != nil {
-				s.logger.Panicf("Unable to parse: path=%s, err=%s", path, err)
+				return err
+			}
+			if d.IsDir() {
+				return nil
+			}
+
+			bytes, err := iofs.ReadFile(web.FS, path)
+			if err != nil {
+				return err
 			}
 
 			if strings.HasSuffix(path, ".html") {
-				_, err = htmlTemplates.New(stripPrefix(path)).Parse(string(bytes))
-				if err != nil {
-					s.logger.Println("Unable to parse html template", err)
+				if _, e := htmlTemplates.New(path).Parse(string(bytes)); e != nil {
+					s.logger.Println("Unable to parse html template", e)
 				}
 			}
 			if strings.HasSuffix(path, ".txt") {
-				_, err = textTemplates.New(stripPrefix(path)).Parse(string(bytes))
-				if err != nil {
-					s.logger.Println("Unable to parse text template", err)
+				if _, e := textTemplates.New(path).Parse(string(bytes)); e != nil {
+					s.logger.Println("Unable to parse text template", e)
 				}
 			}
+			return nil
+		})
+		if err != nil {
+			s.logger.Panicf("Unable to walk embedded web assets: %s", err)
 		}
 	}
 
-	staticHandler := http.FileServer(fs)
+	staticHandler := http.FileServer(fileSys)
 
 	r.PathPrefix("/images/").Handler(staticHandler).Methods("GET")
 	r.PathPrefix("/styles/").Handler(staticHandler).Methods("GET")

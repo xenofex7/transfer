@@ -8,8 +8,6 @@ require (
 	github.com/PuerkitoBio/ghost v0.0.0-20160324114900-206e6e460e14
 	github.com/VojtechVitek/ratelimit v0.0.0-20160722140851-dc172bc0f6d2
 	github.com/dutchcoders/go-clamd v0.0.0-20170520113014-b970184f4d9e
-	github.com/dutchcoders/transfer.sh-web v0.0.0-20221119114740-ca3a2621d2a6
-	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/fatih/color v1.14.1
 	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f
 	github.com/gorilla/handlers v1.5.1

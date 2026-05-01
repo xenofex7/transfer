@@ -61,7 +61,6 @@ import (
 	"github.com/tg123/go-htpasswd"
 	"github.com/tomasen/realip"
 
-	web "github.com/dutchcoders/transfer.sh-web"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 	blackfriday "github.com/russross/blackfriday/v2"
@@ -78,10 +77,6 @@ var (
 	htmlTemplates = initHTMLTemplates()
 	textTemplates = initTextTemplates()
 )
-
-func stripPrefix(path string) string {
-	return strings.ReplaceAll(path, web.Prefix+"/", "")
-}
 
 func initTextTemplates() *textTemplate.Template {
 	templateMap := textTemplate.FuncMap{"format": formatNumber}

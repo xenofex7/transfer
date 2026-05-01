@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Hostname}}</title>
+  <meta name="description" content="Easy and fast file sharing from the command line.">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <img class="logo" src="/images/logo.png" alt="">
+      <h1 class="hostname">{{.Hostname}}</h1>
+      <p class="tagline">Easy and fast file sharing from the command line.</p>
+    </header>
+
+    <section class="card snippet">
+      <pre><code><span class="comment"># Upload with curl</span>
+$ curl --upload-file ./hello.txt {{.WebAddress}}hello.txt
+{{.WebAddress}}{{.SampleToken}}/hello.txt
+
+<span class="comment"># Upload from the shell helper (see README)</span>
+$ transfer hello.txt
+{{.WebAddress}}{{.SampleToken2}}/hello.txt
+
+<span class="comment"># Drag a file into the box below</span>
+</code></pre>
+    </section>
+
+    <section class="card dropzone" id="dropzone" tabindex="0" aria-label="Drop files to upload">
+      <input type="file" id="fileinput" multiple hidden>
+      <p class="dropzone-prompt">
+        <span class="dropzone-default">Drop files here, or <button type="button" class="link" id="browse">browse</button></span>
+        <span class="dropzone-active" hidden>Release to upload</span>
+      </p>
+      <ul class="uploads" id="uploads" hidden></ul>
+    </section>
+
+    <section class="meta">
+      <div class="meta-row"><span class="meta-label">Max upload size</span><span class="meta-value">{{if .MaxUploadSize}}{{.MaxUploadSize}}{{else}}unlimited{{end}}</span></div>
+      <div class="meta-row"><span class="meta-label">Files retained for</span><span class="meta-value">{{if .PurgeTime}}{{.PurgeTime}}{{else}}as long as you like{{end}}</span></div>
+    </section>
+
+    <footer class="footer">
+      <a href="https://github.com/xenofex7/transfer.sh">source on github</a>
+      {{if .EmailContact}}<span class="dot">&middot;</span><a href="mailto:{{.EmailContact}}">contact</a>{{end}}
+    </footer>
+  </main>
+
+  <script src="/scripts/main.js" defer></script>
+</body>
+</html>

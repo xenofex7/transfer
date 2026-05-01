@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Filename}} &middot; {{.Hostname}}</title>
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body>
+  <main class="page">
+    <header class="preview-head">
+      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="/images/logo.png" alt=""></a>
+      <h1 class="filename">{{.Filename}}</h1>
+      <p class="meta-inline">
+        <span class="content-type">{{.ContentType}}</span>
+        <span class="dot">&middot;</span>
+        <span class="size">{{.ContentLength}} bytes</span>
+      </p>
+    </header>
+
+    <section class="card actions">
+      <a class="button primary" href="{{.URLGet}}" download>Download</a>
+      <a class="button" href="{{.URL}}" target="_blank" rel="noopener">Open in new tab</a>
+    </section>
+
+    <section class="card qr">
+      <img class="qr-image" alt="QR code for the download URL" src="data:image/png;base64,{{.QRCode}}">
+      <p class="qr-caption">Scan to download on another device</p>
+    </section>
+
+    <section class="card url-box">
+      <p class="url-label">Direct URL</p>
+      <code class="url-value">{{.URL}}</code>
+    </section>
+
+    <footer class="footer">
+      <a href="/">{{.Hostname}}</a>
+    </footer>
+  </main>
+</body>
+</html>

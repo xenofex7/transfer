@@ -1,0 +1,25 @@
+{{.Hostname}}
+Easy and fast file sharing from the command line.
+
+Upload a file:
+
+  $ curl --upload-file ./hello.txt {{.WebAddress}}hello.txt
+  {{.WebAddress}}{{.SampleToken}}/hello.txt
+
+Per-upload limits via headers:
+
+  curl -H "Max-Days: 7"      ...      # auto-delete after N days
+  curl -H "Max-Downloads: 1" ...      # cap the download count
+
+Download:
+
+  $ curl {{.WebAddress}}<token>/<filename> -o <filename>
+
+Delete (token returned in X-Url-Delete response header):
+
+  $ curl -X DELETE {{.WebAddress}}<token>/<filename>/<delete-token>
+
+{{if .MaxUploadSize}}Max upload size: {{.MaxUploadSize}}
+{{end}}{{if .PurgeTime}}Files retained for: {{.PurgeTime}}
+{{end}}
+Source: https://github.com/xenofex7/transfer.sh

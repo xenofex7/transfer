@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Filename}} &middot; {{.Hostname}}</title>
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body>
+  <main class="page">
+    <header class="preview-head">
+      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="/images/logo.png" alt=""></a>
+      <h1 class="filename">{{.Filename}}</h1>
+      <p class="meta-inline">
+        <span class="content-type">{{.ContentType}}</span>
+        <span class="dot">&middot;</span>
+        <span class="size">{{.ContentLength}} bytes</span>
+      </p>
+    </header>
+
+    <section class="card preview-media">
+      <video controls preload="metadata" src="{{.URLGet}}">
+        Your browser does not support the video element.
+        <a href="{{.URLGet}}" download>Download {{.Filename}}</a>
+      </video>
+    </section>
+
+    <section class="card actions">
+      <a class="button primary" href="{{.URLGet}}" download>Download</a>
+    </section>
+
+    <footer class="footer">
+      <a href="/">{{.Hostname}}</a>
+    </footer>
+  </main>
+</body>
+</html>
