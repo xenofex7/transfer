@@ -80,7 +80,7 @@ Storage-Volume, ClamAV-Sidecar laufen sauber zusammen.
 - [x] Fork-Notice + "What's different from upstream"-Tabelle ergänzt
 - [x] Konfigurations-Tabelle nach Themen gruppiert
 - [x] Build-Status, GHCR und Lizenz-Badges
-- [ ] examples.md prüfen — was bleibt relevant nach Phase 1?
+- [x] examples.md getrimmt: VirusTotal raus, Hostnames generisch, 345 -> 190 Zeilen
 
 ---
 
