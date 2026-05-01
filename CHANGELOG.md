@@ -7,6 +7,24 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-05-01
+
+### Added
+- Table of contents in README for easier navigation
+- `SECURITY.md` with vulnerability disclosure policy and `llms.txt` for LLM crawlers
+- govulncheck job in CI to scan dependencies for known vulnerabilities
+- Security headers (CSP, X-Frame-Options, Referrer-Policy) and cache-control headers on responses
+- `noindex` meta tag to prevent search engine indexing of the web UI
+
+### Changed
+- Improved accessibility with `focus-visible` outlines and `prefers-reduced-motion` support
+
+### Removed
+- `extras/` directory dropped as part of repository cleanup
+
+### Fixed
+- Critical findings from the project audit addressed
+
 ## [1.0.2] - 2026-05-01
 
 ### Added
