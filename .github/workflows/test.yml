@@ -58,7 +58,9 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.24'
+          # govulncheck v1.3+ requires Go 1.25; keep this independent
+          # of the test matrix so it can move forward on its own.
+          go-version: '1.25'
           check-latest: true
           cache: true
 
