@@ -7,7 +7,9 @@
 package web
 
 import (
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"io/fs"
 )
 
@@ -18,10 +20,34 @@ var content embed.FS
 // the "public/" prefix).
 var FS fs.FS
 
+// Version is a short fingerprint of the embedded assets. It changes whenever
+// any file under public/ changes and is intended to be appended to static
+// asset URLs as a cache-busting query parameter.
+var Version string
+
 func init() {
 	sub, err := fs.Sub(content, "public")
 	if err != nil {
 		panic(err)
 	}
 	FS = sub
+	Version = computeVersion()
+}
+
+func computeVersion() string {
+	h := sha256.New()
+	_ = fs.WalkDir(FS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		b, readErr := fs.ReadFile(FS, path)
+		if readErr != nil {
+			return readErr
+		}
+		_, _ = h.Write([]byte(path))
+		_, _ = h.Write([]byte{0})
+		_, _ = h.Write(b)
+		return nil
+	})
+	return hex.EncodeToString(h.Sum(nil))[:12]
 }

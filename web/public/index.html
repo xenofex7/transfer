@@ -6,7 +6,7 @@
   <title>{{.Hostname}}</title>
   <meta name="description" content="Easy and fast file sharing from the command line.">
   <link rel="icon" type="image/png" href="/images/logo.png">
-  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
 </head>
 <body>
   <main class="page">
@@ -49,6 +49,6 @@ $ transfer hello.txt
     </footer>
   </main>
 
-  <script src="/scripts/main.js" defer></script>
+  <script src="{{asset "/scripts/main.js"}}" defer></script>
 </body>
 </html>

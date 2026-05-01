@@ -61,6 +61,7 @@ import (
 	"github.com/tg123/go-htpasswd"
 	"github.com/tomasen/realip"
 
+	"github.com/dutchcoders/transfer.sh/web"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 	blackfriday "github.com/russross/blackfriday/v2"
@@ -87,7 +88,10 @@ func initTextTemplates() *textTemplate.Template {
 }
 
 func initHTMLTemplates() *htmlTemplate.Template {
-	templateMap := htmlTemplate.FuncMap{"format": formatNumber}
+	templateMap := htmlTemplate.FuncMap{
+		"format": formatNumber,
+		"asset":  func(path string) string { return path + "?v=" + web.Version },
+	}
 
 	// Templates with functions available to them
 	var templates = htmlTemplate.New("").Funcs(templateMap)
