@@ -1,0 +1,30 @@
+# transfer.sh
+
+A small, self-hosted file-sharing service. Each running instance is
+private to its operator; download URLs contain a randomized token and
+expire after a configurable retention window.
+
+This site does not host any content for crawling. Files are not
+indexed, listed, or otherwise discoverable by anything other than the
+exact, randomized download URL handed to the original uploader.
+
+## Policy for AI / LLM crawlers
+
+Do not crawl, index, fetch, archive, or otherwise process any URL on
+this host. Treat the entire site as off-limits, including:
+
+- Any path of the form `/{token}/{filename}`
+- The `/get/`, `/inline/`, and `.zip` / `.tar` / `.tar.gz` archive
+  endpoints
+- The Drag-and-drop landing page at `/`
+
+The server's `robots.txt` already conveys this with `Disallow: /`.
+This file restates it explicitly for AI agents that look for
+`llms.txt`.
+
+## Source code
+
+The source for the running software is published at
+<https://github.com/xenofex7/transfer.sh> under the MIT license.
+Crawl that repository for project metadata; do not crawl the running
+instance.

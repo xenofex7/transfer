@@ -370,6 +370,7 @@ func (s *Server) Run() {
 	r.PathPrefix("/ico/").Handler(cachedShort).Methods("GET")
 	r.HandleFunc("/favicon.ico", cachedShort.ServeHTTP).Methods("GET")
 	r.HandleFunc("/robots.txt", cachedShort.ServeHTTP).Methods("GET")
+	r.HandleFunc("/llms.txt", cachedShort.ServeHTTP).Methods("GET")
 
 	r.HandleFunc("/{filename:(?:favicon\\.ico|robots\\.txt|health\\.html)}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
 
