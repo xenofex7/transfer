@@ -91,7 +91,7 @@ func (s *Server) performScan(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	c := clamd.NewClamd(clamavAddress(s.ClamAVDaemonHost))
 
