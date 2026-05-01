@@ -22,6 +22,20 @@
 
 ---
 
+## Contents
+
+- [About this fork](#about-this-fork)
+- [Quick start](#quick-start)
+- [Self-hosting with docker compose](#self-hosting-with-docker-compose)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Development](#development)
+- [Shell helper](#shell-helper)
+- [Roadmap](#roadmap)
+- [Credits](#credits)
+
+---
+
 ## About this fork
 
 This repository is a **fork of [dutchcoders/transfer.sh](https://github.com/dutchcoders/transfer.sh)**
