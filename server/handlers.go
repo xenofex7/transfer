@@ -1296,6 +1296,21 @@ func (s *Server) RedirectHandler(h http.Handler) http.HandlerFunc {
 	}
 }
 
+// securityHeaders adds defense-in-depth response headers to every request.
+// The reverse proxy may already set similar headers; setting them here too
+// keeps things sane when the app is hit directly.
+func securityHeaders(h http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		// SAMEORIGIN rather than DENY because the sandboxed preview pages
+		// frame /get/ URLs from the same host.
+		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+		w.Header().Set("Referrer-Policy", "same-origin")
+		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()")
+		h.ServeHTTP(w, r)
+	}
+}
+
 // LoveHandler Create a log handler for every request it receives.
 func LoveHandler(h http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

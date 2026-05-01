@@ -350,13 +350,26 @@ func (s *Server) Run() {
 
 	staticHandler := http.FileServer(fileSys)
 
-	r.PathPrefix("/images/").Handler(staticHandler).Methods("GET")
-	r.PathPrefix("/styles/").Handler(staticHandler).Methods("GET")
-	r.PathPrefix("/scripts/").Handler(staticHandler).Methods("GET")
-	r.PathPrefix("/fonts/").Handler(staticHandler).Methods("GET")
-	r.PathPrefix("/ico/").Handler(staticHandler).Methods("GET")
-	r.HandleFunc("/favicon.ico", staticHandler.ServeHTTP).Methods("GET")
-	r.HandleFunc("/robots.txt", staticHandler.ServeHTTP).Methods("GET")
+	// Long-lived cache for fingerprinted asset bundles. The HTML templates
+	// append a content hash via {{asset ...}} so cache invalidation is
+	// transparent across releases. Robots/favicon are linked without a
+	// cache-buster, so use a shorter max-age there.
+	cachedAssets := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		staticHandler.ServeHTTP(w, r)
+	})
+	cachedShort := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		staticHandler.ServeHTTP(w, r)
+	})
+
+	r.PathPrefix("/images/").Handler(cachedAssets).Methods("GET")
+	r.PathPrefix("/styles/").Handler(cachedAssets).Methods("GET")
+	r.PathPrefix("/scripts/").Handler(cachedAssets).Methods("GET")
+	r.PathPrefix("/fonts/").Handler(cachedAssets).Methods("GET")
+	r.PathPrefix("/ico/").Handler(cachedShort).Methods("GET")
+	r.HandleFunc("/favicon.ico", cachedShort.ServeHTTP).Methods("GET")
+	r.HandleFunc("/robots.txt", cachedShort.ServeHTTP).Methods("GET")
 
 	r.HandleFunc("/{filename:(?:favicon\\.ico|robots\\.txt|health\\.html)}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
 
@@ -432,16 +445,18 @@ func (s *Server) Run() {
 		}
 	}
 
-	h := handlers.PanicHandler(
-		ipFilterHandler(
-			handlers.LogHandler(
-				LoveHandler(
-					s.RedirectHandler(cors(r))),
-				handlers.NewLogOptions(s.logger.Printf, "_default_"),
+	h := securityHeaders(
+		handlers.PanicHandler(
+			ipFilterHandler(
+				handlers.LogHandler(
+					LoveHandler(
+						s.RedirectHandler(cors(r))),
+					handlers.NewLogOptions(s.logger.Printf, "_default_"),
+				),
+				s.ipFilterOptions,
 			),
-			s.ipFilterOptions,
+			nil,
 		),
-		nil,
 	)
 
 	listening = true
