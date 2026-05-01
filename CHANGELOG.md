@@ -7,6 +7,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-05-01
+
+### Added
+- Deploy script and `/deploy` command for releasing new versions
+- CHANGELOG file to track project history
+
+### Changed
+- Embedded CSS and JS assets are now cache-busted via content hash
+
 ## [1.0.1] - 2026-05-01
 
 ### Added
