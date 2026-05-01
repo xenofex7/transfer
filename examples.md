@@ -1,345 +1,262 @@
-# Table of Contents
+# Examples
 
-* [Aliases](#aliases)
-* [Uploading and downloading](#uploading-and-downloading)
-* [Archiving and backups](#archiving-and-backups)
-* [Encrypting and decrypting](#encrypting-and-decrypting)
-* [Scanning for viruses](#scanning-for-viruses)
-* [Uploading and copy download command](#uploading-and-copy-download-command)
-* [Uploading and displaying URL and deletion token](#uploading-and-displaying-url-and-deletion-token)
+A collection of patterns beyond the quick-start in [`README.md`](README.md).
+All snippets assume an instance reachable at `https://your-instance.example.com`
+- swap that for whatever hostname your fork is deployed under.
 
-## Aliases
-<a name="aliases"/>
+## Table of Contents
 
-## Add alias to .bashrc or .zshrc
+- [Shell helpers](#shell-helpers)
+- [Other upload clients](#other-upload-clients)
+- [Archives and backups](#archives-and-backups)
+- [Encryption](#encryption)
+- [Virus scanning](#virus-scanning)
+- [Capturing the URL and delete token](#capturing-the-url-and-delete-token)
 
-### Using curl
+---
+
+## Shell helpers
+
+### Bash / Zsh
+
 ```bash
 transfer() {
-    curl --progress-bar --upload-file "$1" https://transfer.sh/$(basename "$1") | tee /dev/null;
+    if [ $# -eq 0 ]; then
+        echo "Usage: transfer <file>"
+        return 1
+    fi
+    curl --progress-bar --upload-file "$1" \
+        "https://your-instance.example.com/$(basename "$1")"
     echo
 }
-
-alias transfer=transfer
 ```
 
-### Using wget
-```bash
-transfer() {
-    wget -t 1 -qO - --method=PUT --body-file="$1" --header="Content-Type: $(file -b --mime-type "$1")" https://transfer.sh/$(basename "$1");
-    echo
-}
+### Fish
 
-alias transfer=transfer
-```
-
-## Add alias for fish-shell
-
-### Using curl
 ```fish
-function transfer --description 'Upload a file to transfer.sh'
-    if [ $argv[1] ]
-        # write to output to tmpfile because of progress bar
-        set -l tmpfile ( mktemp -t transferXXXXXX )
-        curl --progress-bar --upload-file "$argv[1]" https://transfer.sh/(basename $argv[1]) >> $tmpfile
-        cat $tmpfile
-        command rm -f $tmpfile
-    else
-        echo 'usage: transfer FILE_TO_TRANSFER'
+function transfer --description 'Upload a file'
+    if test (count $argv) -eq 0
+        echo "Usage: transfer FILE"
+        return 1
     end
+    curl --progress-bar --upload-file $argv[1] \
+        "https://your-instance.example.com/"(basename $argv[1])
+    echo
 end
-
 funcsave transfer
 ```
 
-### Using wget
-```fish
-function transfer --description 'Upload a file to transfer.sh'
-    if [ $argv[1] ]
-        wget -t 1 -qO - --method=PUT --body-file="$argv[1]" --header="Content-Type: (file -b --mime-type $argv[1])" https://transfer.sh/(basename $argv[1])
-    else
-        echo 'usage: transfer FILE_TO_TRANSFER'
-    end
-end
+### Windows (CMD + PowerShell)
 
-funcsave transfer
-```
+Save as `transfer.cmd` in your `PATH`:
 
-Now run it like this:
-```bash
-$ transfer test.txt
-```
-
-## Add alias on Windows
-
-Put a file called `transfer.cmd` somewhere in your PATH with this inside it:
 ```cmd
 @echo off
 setlocal
-:: use env vars to pass names to PS, to avoid escaping issues
 set FN=%~nx1
 set FULL=%1
-powershell -noprofile -command "$(Invoke-Webrequest -Method put -Infile $Env:FULL https://transfer.sh/$Env:FN).Content"
+powershell -noprofile -command "$(Invoke-WebRequest -Method PUT -InFile $Env:FULL https://your-instance.example.com/$Env:FN).Content"
 ```
 
-## Uploading and Downloading
-<a name="uploading-and-downloading"/>
+---
 
-### Uploading with wget
+## Other upload clients
+
+### wget
+
 ```bash
-$ wget --method PUT --body-file=/tmp/file.tar https://transfer.sh/file.tar -O - -nv 
+wget --method PUT --body-file=/tmp/file.tar \
+     -O - -nv \
+     https://your-instance.example.com/file.tar
 ```
 
-### Uploading with PowerShell
-```posh
-PS H:\> invoke-webrequest -method put -infile .\file.txt https://transfer.sh/file.txt 
+### PowerShell
+
+```powershell
+Invoke-WebRequest -Method Put -InFile .\file.txt `
+                  -Uri https://your-instance.example.com/file.txt
 ```
 
-### Upload using HTTPie
+### HTTPie
+
 ```bash
-$ http https://transfer.sh/ -vv < /tmp/test.log 
+http PUT https://your-instance.example.com/test.log < /tmp/test.log
 ```
 
-### Uploading a filtered text file
+### Pipe arbitrary stdout
+
 ```bash
-$ grep 'pound' /var/log/syslog | curl --upload-file - https://transfer.sh/pound.log 
+grep ERROR /var/log/syslog \
+  | curl --upload-file - https://your-instance.example.com/errors.log
 ```
 
-### Downloading with curl
+---
+
+## Archives and backups
+
+### Encrypt and ship a MySQL dump
+
 ```bash
-$ curl https://transfer.sh/1lDau/test.txt -o test.txt
+mysqldump --all-databases \
+  | gzip \
+  | gpg -ac -o- \
+  | curl -X PUT --upload-file - https://your-instance.example.com/dump.sql.gz.gpg
 ```
 
-### Downloading with wget
+### Tar a directory and upload in one shot
+
 ```bash
-$ wget https://transfer.sh/1lDau/test.txt
+tar -czf - /var/log/journal \
+  | curl --upload-file - https://your-instance.example.com/journal.tar.gz
 ```
 
-## Archiving and backups
-<a name="archiving-and-backups"/>
+### Multiple files in a single request
 
-### Backup, encrypt and transfer a MySQL dump
 ```bash
-$ mysqldump --all-databases | gzip | gpg -ac -o- | curl -X PUT --upload-file "-" https://transfer.sh/test.txt
+curl -i \
+  -F filedata=@/tmp/hello.txt \
+  -F filedata=@/tmp/hello2.txt \
+  https://your-instance.example.com/
 ```
 
-### Archive and upload directory
+### Bundle multiple uploads as a download archive
+
+The server can stream a `.zip`, `.tar` or `.tar.gz` of any combination of
+existing tokens:
+
 ```bash
-$ tar -czf - /var/log/journal | curl --upload-file - https://transfer.sh/journal.tar.gz
+curl https://your-instance.example.com/(15HKz/hello.txt,7AbcD/notes.md).tar.gz \
+  -o bundle.tar.gz
 ```
 
-### Uploading multiple files at once
+### Mail the resulting URL
+
 ```bash
-$ curl -i -F filedata=@/tmp/hello.txt -F filedata=@/tmp/hello2.txt https://transfer.sh/
+transfer /tmp/report.pdf | mail -s "Today's report" team@example.com
 ```
 
-### Combining downloads as zip or tar.gz archive
+---
+
+## Encryption
+
+### Symmetric encryption with GPG
+
 ```bash
-$ curl https://transfer.sh/(15HKz/hello.txt,15HKz/hello.txt).tar.gz
-$ curl https://transfer.sh/(15HKz/hello.txt,15HKz/hello.txt).zip 
+gpg --armor --symmetric --output - /tmp/hello.txt \
+  | curl --upload-file - https://your-instance.example.com/hello.txt.asc
 ```
 
-### Transfer and send email with link (using an alias)
+Decrypt:
+
 ```bash
-$ transfer /tmp/hello.txt | mail -s "Hello World" user@yourmaildomain.com 
-```
-## Encrypting and decrypting
-<a name="encrypting-and-decrypting"/>
-
-### Encrypting files with password using gpg
-```bash
-$ gpg --armor --symmetric --output - /tmp/hello.txt | curl --upload-file - https://transfer.sh/test.txt
+curl https://your-instance.example.com/<token>/hello.txt.asc \
+  | gpg --decrypt --output /tmp/hello.txt
 ```
 
-### Downloading and decrypting
-```bash
-$ curl https://transfer.sh/1lDau/test.txt | gpg --decrypt --output /tmp/hello.txt
-```
+### Encrypt + cap downloads in one helper
 
-### Import keys from [keybase](https://keybase.io/)
-```bash
-$ keybase track [them] # Encrypt for recipient(s)
-$ cat somebackupfile.tar.gz | keybase encrypt [them] | curl --upload-file '-' https://transfer.sh/test.txt # Decrypt
-$ curl https://transfer.sh/sqUFi/test.md | keybase decrypt
-```
-
-## Scanning for viruses
-<a name="scanning-for-viruses"/>
-
-### Scan for malware or viruses using Clamav
-```bash
-$ wget http://www.eicar.org/download/eicar.com
-$ curl -X PUT --upload-file ./eicar.com https://transfer.sh/eicar.com/scan
-```
-
-### Upload malware to VirusTotal, get a permalink in return
-```bash
-$ curl -X PUT --upload-file nhgbhhj https://transfer.sh/test.txt/virustotal 
-```
-
-### Upload encrypted password protected files
-
-By default files upload for only 1 download, you can specify download limit using -D flag like `transfer-encrypted -D 50 %file/folder%`
-
-#### One line for bashrc
-```bash
-transfer-encrypted() { if [ $# -eq 0 ]; then echo "No arguments specified.\nUsage:\n transfer <file|directory>\n ... | transfer <file_name>" >&2; return 1; fi; while getopts ":D:" opt; do case $opt in D) max_downloads=$OPTARG;; \?) echo "Invalid option: -$OPTARG" >&2;; esac; done; shift "$((OPTIND - 1))"; file="$1"; file_name=$(basename "$file"); if [ ! -e "$file" ]; then echo "$file: No such file or directory" >&2; return 1; fi; if [ -d "$file" ]; then file_name="$file_name.zip"; (cd "$file" && zip -r -q - .) | openssl aes-256-cbc -pbkdf2 -e > "tmp-$file_name" && cat "tmp-$file_name" | curl -H "Max-Downloads: $max_downloads" -w '\n' --upload-file "tmp-$file_name" "https://transfer.sh/$file_name" | tee /dev/null; rm "tmp-$file_name"; else cat "$file" | openssl aes-256-cbc -pbkdf2 -e > "tmp-$file" && cat "tmp-$file" | curl -H "Max-Downloads: $max_downloads" -w '\n' --upload-file - "https://transfer.sh/$file_name" | tee /dev/null; rm "tmp-$file"; fi; }
-```
-#### Human readable code 
 ```bash
 transfer-encrypted() {
     if [ $# -eq 0 ]; then
-        echo "No arguments specified.\nUsage:\n transfer <file|directory>\n ... | transfer <file_name>" >&2
+        echo "Usage: transfer-encrypted [-D max-downloads] <file>"
         return 1
     fi
 
+    local max_downloads=1
     while getopts ":D:" opt; do
         case $opt in
-            D)
-                max_downloads=$OPTARG
-                ;;
-            \?)
-                echo "Invalid option: -$OPTARG" >&2
-                ;;
+            D) max_downloads=$OPTARG ;;
+            \?) echo "Invalid option: -$OPTARG" >&2 ;;
         esac
     done
-
     shift "$((OPTIND - 1))"
-    file="$1"
-    file_name=$(basename "$file")
 
-    if [ ! -e "$file" ]; then
-        echo "$file: No such file or directory" >&2
+    local file="$1"
+    local file_name
+    file_name="$(basename "$file")"
+
+    if [ ! -f "$file" ]; then
+        echo "$file: not a regular file" >&2
         return 1
     fi
 
-    if [ -d "$file" ]; then
-        file_name="$file_name.zip"
-        (cd "$file" && zip -r -q - .) | openssl aes-256-cbc -pbkdf2 -e > "tmp-$file_name" && cat "tmp-$file_name" | curl -H "Max-Downloads: $max_downloads" -w '\n' --upload-file "tmp-$file_name" "https://transfer.sh/$file_name" | tee /dev/null
-        rm "tmp-$file_name"
-    else
-        cat "$file" | openssl aes-256-cbc -pbkdf2 -e > "tmp-$file" && cat "tmp-$file" | curl -H "Max-Downloads: $max_downloads" -w '\n' --upload-file - "https://transfer.sh/$file_name" | tee /dev/null
-        rm "tmp-$file"
-    fi
+    openssl aes-256-cbc -pbkdf2 -e -in "$file" \
+      | curl -H "Max-Downloads: $max_downloads" \
+             --upload-file - \
+             "https://your-instance.example.com/$file_name"
+    echo
 }
 ```
-#### Decrypt using
+
+Decrypt the result:
+
 ```bash
-curl -s https://transfer.sh/some/file | openssl aes-256-cbc -pbkdf2 -d > output_filename
+curl -s https://your-instance.example.com/<token>/<file> \
+  | openssl aes-256-cbc -pbkdf2 -d > <file>
 ```
 
-## Uploading and copy download command
+### Keybase
 
-Download commands can be automatically copied to the clipboard after files are uploaded using transfer.sh.
-
-It was designed for Linux or macOS.
-
-### 1. Install xclip or xsel for Linux, macOS skips this step
-
-- install xclip see https://command-not-found.com/xclip
-
-- install xsel  see https://command-not-found.com/xsel
-
-Install later, add pbcopy and pbpaste to .bashrc or .zshrc or its equivalent.
-
-- If use xclip, paste the following lines:
-
-```sh
-alias pbcopy='xclip -selection clipboard'
-alias pbpaste='xclip -selection clipboard -o'
-```
-
-- If use xsel, paste the following lines:
-
-```sh
-alias pbcopy='xsel --clipboard --input'
-alias pbpaste='xsel --clipboard --output'
-```
-
-### 2. Add Uploading and copy download command shell function
-
-1. Open .bashrc or .zshrc  or its equivalent.
-
-2. Add the following shell script:
-
-   ```sh
-   transfer() {
-     curl --progress-bar --upload-file "$1" https://transfer.sh/$(basename "$1") | pbcopy;
-     echo "1) Download link:"
-     echo "$(pbpaste)"
-   
-     echo "\n2) Linux or macOS download command:"
-     linux_macos_download_command="wget $(pbpaste)"
-     echo $linux_macos_download_command
-   
-     echo "\n3) Windows download command:"
-     windows_download_command="Invoke-WebRequest -Uri "$(pbpaste)" -OutFile $(basename $1)"
-     echo $windows_download_command
-   
-     case $2 in
-       l|m)  echo $linux_macos_download_command | pbcopy
-       ;;
-       w)  echo $windows_download_command | pbcopy
-       ;;
-     esac
-   }
-   ```
-
-
-### 3. Test
-
-The transfer command has two parameters:
-
-1. The first parameter is the path to upload the file.
-
-2. The second parameter indicates which system's download command is copied. optional:
-
-   - This parameter is empty to copy the download link.
-
-   - `l` or `m` copy the Linux or macOS command that downloaded the file.
-
-   -  `w` copy the Windows command that downloaded the file.
-
-For example, The command to download the file on Windows will be copied:
-
-```sh
-$ transfer ~/temp/a.log w
-######################################################################## 100.0%
-1) Download link:
-https://transfer.sh/y0qr2c/a.log
-
-2) Linux or macOS download command:
-wget https://transfer.sh/y0qr2c/a.log
-
-3) Windows download command:
-Invoke-WebRequest -Uri https://transfer.sh/y0qr2c/a.log -OutFile a.log
-```
-## Uploading and displaying URL and deletion token
 ```bash
-# tempfile
-URLFILE=$HOME/temp/transfersh.url
-# insert number of downloads and days saved
-if [ -f $1 ]; then
-read -p "Allowed number of downloads: " num_down
-read -p "Number of days on server: " num_save
-# transfer
-curl -sD - -H "Max-Downloads: $num_down" -H "Max-Days: $num_save"--progress-bar --upload-file $1 https://transfer.sh/$(basename $1) | grep -i -E 'transfer\.sh|x-url-delete' &> $URLFILE
-# display URL and deletion token
-if [ -f $URLFILE ]; then
-URL=$(tail -n1 $URLFILE)
-TOKEN=$(grep delete $URLFILE | awk -F "/" '{print $NF}')
-echo "*********************************"
-echo "Data is saved in $URLFILE"
-echo "**********************************"
-echo "URL is: $URL"
-echo "Deletion Token is: $TOKEN"
-echo "**********************************"
-else
-echo "NO URL-File found !!"
-fi
-else
-echo "!!!!!!"
-echo "\"$1\" not found !!"
-echo "!!!!!!"
-fi
+cat backup.tar.gz \
+  | keybase encrypt alice bob \
+  | curl --upload-file - https://your-instance.example.com/backup.tar.gz.kb
+
+curl https://your-instance.example.com/<token>/backup.tar.gz.kb | keybase decrypt
+```
+
+---
+
+## Virus scanning
+
+The instance exposes a synchronous scan endpoint that returns the ClamAV
+status without persisting anything. Useful as a one-shot check.
+
+```bash
+# EICAR test file - safe, but recognised by every AV
+wget https://secure.eicar.org/eicar.com.txt
+curl -X PUT --upload-file ./eicar.com.txt \
+  https://your-instance.example.com/eicar.com.txt/scan
+```
+
+When the regular upload path is configured with `--perform-clamav-prescan`,
+infected files are rejected with HTTP 412 (`Precondition Failed`) and the
+upload never lands on disk.
+
+---
+
+## Capturing the URL and delete token
+
+Every upload returns the download URL in the response body and the deletion
+URL in the `X-Url-Delete` response header. A small wrapper that captures both:
+
+```bash
+upload() {
+    local file="$1"
+    local headers
+    headers="$(mktemp)"
+
+    local url
+    url="$(curl --silent --progress-bar \
+                --dump-header "$headers" \
+                --upload-file "$file" \
+                "https://your-instance.example.com/$(basename "$file")")"
+
+    local delete_url
+    delete_url="$(awk 'tolower($1)=="x-url-delete:" {print $2}' "$headers" | tr -d '\r')"
+    rm -f "$headers"
+
+    cat <<INFO
+Download:  $url
+Delete:    $delete_url
+INFO
+}
+```
+
+Usage:
+
+```bash
+$ upload ~/Documents/report.pdf
+Download:  https://your-instance.example.com/abc12345/report.pdf
+Delete:    https://your-instance.example.com/abc12345/report.pdf/XYZdeleteToken
 ```
