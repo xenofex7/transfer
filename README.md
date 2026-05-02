@@ -259,7 +259,7 @@ All flags can be set via CLI args or the matching environment variable.
 
 ## Development
 
-Requires Go 1.23+.
+Requires Go 1.25+.
 
 ```bash
 git clone git@github.com:xenofex7/transfer.sh.git

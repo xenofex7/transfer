@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go_version: ['1.23', '1.24']
+        go_version: ['1.25']
     steps:
       - uses: actions/checkout@v6
 
@@ -39,7 +39,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.24'
+          go-version: '1.25'
           check-latest: true
           cache: true
 
