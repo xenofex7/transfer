@@ -270,6 +270,7 @@ type Server struct {
 	emailContact string
 
 	uploadWebhookURL string
+	webhookToken     string
 
 	deletions *deletionLog
 
@@ -289,11 +290,19 @@ func UseDeletionLog(path string) OptionFn {
 	}
 }
 
-// UploadWebhookURL configures a URL that receives a JSON POST whenever a
-// file is successfully uploaded. Empty disables the webhook.
+// UploadWebhookURL configures a URL that receives JSON POSTs for upload,
+// download and delete events. Empty disables the webhook.
 func UploadWebhookURL(s string) OptionFn {
 	return func(srvr *Server) {
 		srvr.uploadWebhookURL = s
+	}
+}
+
+// WebhookToken sets a bearer token sent as Authorization on every webhook
+// POST. Empty disables the header.
+func WebhookToken(s string) OptionFn {
+	return func(srvr *Server) {
+		srvr.webhookToken = s
 	}
 }
 

@@ -1004,8 +1004,8 @@ func (s *Server) deleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, _, _ := r.BasicAuth()
 	if s.deletions != nil {
-		user, _, _ := r.BasicAuth()
 		if err := s.deletions.Append(DeletionRecord{
 			Token:     token,
 			Filename:  filename,
@@ -1016,6 +1016,12 @@ func (s *Server) deleteHandler(w http.ResponseWriter, r *http.Request) {
 			s.logger.Printf("deletion log: %v", err)
 		}
 	}
+	s.fireDeleteWebhook(uploadEvent{
+		Filename:  filename,
+		Size:      preSize,
+		Downloads: preDownloads,
+		User:      user,
+	})
 }
 
 func (s *Server) zipHandler(w http.ResponseWriter, r *http.Request) {
@@ -1336,6 +1342,16 @@ func (s *Server) getHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error occurred copying to output stream", http.StatusInternalServerError)
 		return
 	}
+
+	relativeURL, _ := url.Parse(path.Join(s.proxyPath, token, filename))
+	resolved := resolveURL(r, relativeURL, s.proxyPort)
+	s.fireDownloadWebhook(uploadEvent{
+		Filename:    filename,
+		ContentType: metadata.ContentType,
+		Size:        int64(contentLength),
+		URL:         resolved,
+		Downloads:   metadata.Downloads,
+	})
 }
 
 func commonHeader(w http.ResponseWriter, filename string) {

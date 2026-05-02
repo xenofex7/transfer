@@ -169,9 +169,15 @@ var globalFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:    "upload-webhook-url",
-		Usage:   "URL that receives a JSON POST after a successful upload",
+		Usage:   "URL that receives a JSON POST for upload, download and delete events",
 		Value:   "",
 		EnvVars: []string{"UPLOAD_WEBHOOK_URL"},
+	},
+	&cli.StringFlag{
+		Name:    "webhook-token",
+		Usage:   "optional bearer token sent as Authorization header on every webhook POST",
+		Value:   "",
+		EnvVars: []string{"WEBHOOK_TOKEN"},
 	},
 }
 
@@ -269,6 +275,9 @@ func New() *Cmd {
 
 		if v := c.String("upload-webhook-url"); v != "" {
 			options = append(options, server.UploadWebhookURL(v))
+		}
+		if v := c.String("webhook-token"); v != "" {
+			options = append(options, server.WebhookToken(v))
 		}
 
 		purgeDays := c.Int("purge-days")

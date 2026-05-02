@@ -41,6 +41,7 @@ services:
       PROXY_PORT: "${PROXY_PORT:-}"
       EMAIL_CONTACT: "${EMAIL_CONTACT:-}"
       UPLOAD_WEBHOOK_URL: "${UPLOAD_WEBHOOK_URL:-}"
+      WEBHOOK_TOKEN: "${WEBHOOK_TOKEN:-}"
     volumes:
       - transfersh-data:/data
       - type: bind
