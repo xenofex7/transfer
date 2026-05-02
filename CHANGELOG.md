@@ -7,6 +7,23 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-05-02
+
+### Added
+- Admin dashboard at `/admin/files` with manual delete button and persisted deletion log
+- Per-upload `Max-Days` and `Max-Downloads` inputs on the homepage
+- Webhook events for downloads and deletions, authenticated with a bearer token
+- Track `LastDownloadedAt` and always count downloads, even for one-shot links
+
+### Changed
+- Bump Go toolchain to 1.25 across Dockerfile and CI
+
+### Removed
+- Redundant admin footer, since the hostname is already shown in the header
+
+### Fixed
+- Incorrect `SA4000` staticcheck flag in the ratelimit isolation test
+
 ## [1.0.4] - 2026-05-02
 
 ### Added
