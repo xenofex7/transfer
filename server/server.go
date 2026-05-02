@@ -271,8 +271,22 @@ type Server struct {
 
 	uploadWebhookURL string
 
+	deletions *deletionLog
+
 	CorsDomains    string
 	ListenerString string
+}
+
+// UseDeletionLog wires a basedir-scoped append-only deletions log. Pass an
+// empty string to disable.
+func UseDeletionLog(path string) OptionFn {
+	return func(srvr *Server) {
+		if path == "" {
+			srvr.deletions = nil
+			return
+		}
+		srvr.deletions = newDeletionLog(path)
+	}
 }
 
 // UploadWebhookURL configures a URL that receives a JSON POST whenever a

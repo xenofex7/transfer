@@ -70,8 +70,8 @@
         {{range .Recent}}
         <li>
           <span class="deletion-name">{{.Filename}}</span>
-          <span class="muted">in {{.Token}}</span>
-          <span class="muted">{{.DeletedAt}}</span>
+          <span class="muted">{{.SizeHuman}}</span>
+          <span class="muted">{{.DeletedAgo}}</span>
           {{if .User}}<span class="muted">by {{.User}}</span>{{end}}
           <span class="muted">({{.Downloads}} downloads)</span>
         </li>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/dutchcoders/transfer.sh/server"
@@ -319,6 +320,7 @@ func New() *Cmd {
 			return err
 		}
 		options = append(options, server.UseStorage(store))
+		options = append(options, server.UseDeletionLog(filepath.Join(basedir, ".deletions.jsonl")))
 
 		srvr, err := server.New(
 			options...,

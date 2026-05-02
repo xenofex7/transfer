@@ -979,6 +979,21 @@ func (s *Server) deleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Snapshot metadata + size before the file is gone so we can record the
+	// deletion in the audit log.
+	var (
+		preDownloads int
+		preSize      int64
+	)
+	if rc, _, err := s.storage.Get(r.Context(), token, fmt.Sprintf("%s.metadata", filename), nil); err == nil {
+		var meta metadata
+		if err := json.NewDecoder(rc).Decode(&meta); err == nil {
+			preDownloads = meta.Downloads
+			preSize = meta.ContentLength
+		}
+		_ = rc.Close()
+	}
+
 	err := s.storage.Delete(r.Context(), token, filename)
 	if s.storage.IsNotExist(err) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -987,6 +1002,19 @@ func (s *Server) deleteHandler(w http.ResponseWriter, r *http.Request) {
 		s.logger.Printf("%s", err.Error())
 		http.Error(w, "Could not delete file.", http.StatusInternalServerError)
 		return
+	}
+
+	if s.deletions != nil {
+		user, _, _ := r.BasicAuth()
+		if err := s.deletions.Append(DeletionRecord{
+			Token:     token,
+			Filename:  filename,
+			Size:      preSize,
+			Downloads: preDownloads,
+			User:      user,
+		}); err != nil {
+			s.logger.Printf("deletion log: %v", err)
+		}
 	}
 }
 

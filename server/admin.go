@@ -45,12 +45,15 @@ type adminFilesData struct {
 	Recent   []adminDeletion
 }
 
-// adminDeletion is a single past deletion (filled in Phase C). Empty in Phase A.
+// adminDeletion is a single past deletion rendered in the dashboard.
 type adminDeletion struct {
 	Filename  string
 	Token     string
 	DeletedAt time.Time
+	DeletedAgo string
 	Downloads int
+	Size      int64
+	SizeHuman string
 	User      string
 }
 
@@ -181,8 +184,34 @@ func expiresLabel(m metadata) string {
 	return strconv.Itoa(days) + " days"
 }
 
-// recentDeletions is wired in Phase C. Returns nil here so the template stays
-// simple.
+// recentDeletions returns up to 50 of the most recent deletions, newest
+// first. Silently returns nil if no log is configured or reading fails.
 func (s *Server) recentDeletions() []adminDeletion {
-	return nil
+	if s.deletions == nil {
+		return nil
+	}
+	records, err := s.deletions.Recent(50)
+	if err != nil {
+		if s.logger != nil {
+			s.logger.Printf("admin: deletions.Recent: %v", err)
+		}
+		return nil
+	}
+	if len(records) == 0 {
+		return nil
+	}
+	out := make([]adminDeletion, 0, len(records))
+	for _, r := range records {
+		out = append(out, adminDeletion{
+			Filename:   r.Filename,
+			Token:      r.Token,
+			DeletedAt:  r.DeletedAt,
+			DeletedAgo: lastDownloadLabel(r.DeletedAt),
+			Downloads:  r.Downloads,
+			Size:       r.Size,
+			SizeHuman:  formatSize(r.Size),
+			User:       r.User,
+		})
+	}
+	return out
 }
