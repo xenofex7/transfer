@@ -41,8 +41,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/VojtechVitek/ratelimit"
-	"github.com/VojtechVitek/ratelimit/memory"
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/tg123/go-htpasswd"
@@ -413,13 +411,13 @@ func (s *Server) Run() {
 		return
 	}).Methods("GET")
 
-	getHandlerFn := s.getHandler
+	var getHandlerFn http.Handler = http.HandlerFunc(s.getHandler)
 	if s.rateLimitRequests > 0 {
-		getHandlerFn = ratelimit.Request(ratelimit.IP).Rate(s.rateLimitRequests, 60*time.Second).LimitBy(memory.New())(http.HandlerFunc(getHandlerFn)).ServeHTTP
+		getHandlerFn = newIPLimiter(s.rateLimitRequests).Wrap(getHandlerFn)
 	}
 
-	r.HandleFunc("/{token}/{filename}", getHandlerFn).Methods("GET")
-	r.HandleFunc("/{action:(?:download|get|inline)}/{token}/{filename}", getHandlerFn).Methods("GET")
+	r.Handle("/{token}/{filename}", getHandlerFn).Methods("GET")
+	r.Handle("/{action:(?:download|get|inline)}/{token}/{filename}", getHandlerFn).Methods("GET")
 
 	r.HandleFunc("/{filename}/scan", s.scanHandler).Methods("PUT")
 	r.HandleFunc("/put/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")

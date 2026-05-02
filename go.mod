@@ -1,11 +1,10 @@
 module github.com/dutchcoders/transfer.sh
 
-go 1.23.0
+go 1.25.0
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8
 	github.com/ProtonMail/gopenpgp/v2 v2.5.2
-	github.com/VojtechVitek/ratelimit v0.0.0-20160722140851-dc172bc0f6d2
 	github.com/dutchcoders/go-clamd v0.0.0-20170520113014-b970184f4d9e
 	github.com/fatih/color v1.14.1
 	github.com/gorilla/handlers v1.5.1
@@ -17,6 +16,7 @@ require (
 	github.com/urfave/cli/v2 v2.25.3
 	golang.org/x/net v0.38.0
 	golang.org/x/text v0.23.0
+	golang.org/x/time v0.15.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 )
 
