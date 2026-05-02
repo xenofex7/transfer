@@ -9,6 +9,8 @@
   var uploadList = document.getElementById('uploads');
   var defaultPrompt = dropzone && dropzone.querySelector('.dropzone-default');
   var activePrompt = dropzone && dropzone.querySelector('.dropzone-active');
+  var optMaxDays = document.getElementById('opt-max-days');
+  var optMaxDownloads = document.getElementById('opt-max-downloads');
 
   if (!dropzone || !fileinput) return;
 
@@ -84,6 +86,15 @@
     var xhr = new XMLHttpRequest();
     xhr.open('PUT', '/' + encodeURIComponent(file.name));
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+    var maxDays = optMaxDays && parseInt(optMaxDays.value, 10);
+    if (maxDays && maxDays > 0) {
+      xhr.setRequestHeader('Max-Days', String(maxDays));
+    }
+    var maxDownloads = optMaxDownloads && parseInt(optMaxDownloads.value, 10);
+    if (maxDownloads && maxDownloads > 0) {
+      xhr.setRequestHeader('Max-Downloads', String(maxDownloads));
+    }
 
     xhr.upload.addEventListener('progress', function (e) {
       if (!e.lengthComputable) return;

@@ -39,6 +39,26 @@ $ transfer hello.txt
       <ul class="uploads" id="uploads" hidden></ul>
     </section>
 
+    <section class="card upload-options">
+      <p class="upload-options-title">Per-upload options (optional)</p>
+      <div class="upload-options-grid">
+        <label class="upload-option">
+          <span class="upload-option-label">Auto-delete after</span>
+          <span class="upload-option-input">
+            <input id="opt-max-days" type="number" min="1" step="1" placeholder="365" autocomplete="off">
+            <span class="upload-option-suffix">days</span>
+          </span>
+        </label>
+        <label class="upload-option">
+          <span class="upload-option-label">Max downloads</span>
+          <span class="upload-option-input">
+            <input id="opt-max-downloads" type="number" min="1" step="1" placeholder="unlimited" autocomplete="off">
+          </span>
+        </label>
+      </div>
+      <p class="upload-options-hint">Leave blank to use the server defaults.</p>
+    </section>
+
     <section class="meta">
       <div class="meta-row"><span class="meta-label">Max upload size</span><span class="meta-value">{{if .MaxUploadSize}}{{.MaxUploadSize}}{{else}}unlimited{{end}}</span></div>
       <div class="meta-row"><span class="meta-label">Files retained for</span><span class="meta-value">{{if .PurgeTime}}{{.PurgeTime}}{{else}}as long as you like{{end}}</span></div>
