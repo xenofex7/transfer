@@ -4,12 +4,34 @@ Tracking & Planung dieses Forks. Ziel: schlanke, selbst-gehostete
 transfer.sh-Variante mit lokalem Storage, ClamAV-Virenscan, htpasswd-Auth und
 Reverse-Proxy davor.
 
+Status: **v1.1.0 in Production**. Phasen 1–4 und 6 sind durch. Übrig
+bleibt eine kurze Liste von Optionals und laufender Wartung.
+
 Legende: `[x]` erledigt · `[ ]` offen · `[~]` in Arbeit
 
 ---
 
-## Phase 1 — Cleanup (abgeschlossen)
+## Backlog (offen)
 
+### Optionale Features
+- [ ] Storage-Quota pro User (htpasswd-User aus Auth-Header)
+- [ ] E-Mail-Benachrichtigung bei Download (optional pro Upload)
+
+### Production-Härtung
+- [ ] HTTPS-Cert mit SSL Labs gegentesten (nice-to-have)
+- [ ] Monitoring (Container-Health, Disk-Usage, ClamAV-Updates)
+- [ ] Log-Rotation
+
+### Maintenance
+- [ ] Dependabot für Go-Module aktivieren
+- [ ] Upstream-Updates beobachten und cherry-picken (laufend)
+- [ ] Go-Version regelmäßig hochziehen (laufend)
+
+---
+
+## Erledigt
+
+### Phase 1 — Cleanup
 - [x] Cloud-Storage-Backends entfernt (S3, GDrive, Storj)
 - [x] VirusTotal-Integration entfernt
 - [x] Eingebauter TLS-Stack + Let's Encrypt entfernt (Reverse-Proxy terminiert TLS)
@@ -18,149 +40,57 @@ Legende: `[x]` erledigt · `[ ]` offen · `[~]` in Arbeit
 - [x] Vagrantfile, Bower-Config, manifest.json entfernt
 - [x] cmd.go auf local-only mit sinnvollen Defaults reduziert
 - [x] `go mod tidy` — diverse Transitive-Deps weg
-- [x] Build, `go vet`, Tests, Smoke-Test (Upload/Download/Delete/TTL) grün
-- [x] In logische Commits aufgeteilt
 
----
+### Phase 2 — Deployment-Setup
+- [x] Dockerfile: Multi-Stage, Alpine-Final, Non-Root, OCI-Labels, HEALTHCHECK
+- [x] PUID/PGID-Logik vereinfacht, alte Args entrümpelt
+- [x] Image-Tag-Strategie (semver, `:latest`, `:edge`, `:sha-<short>`)
+- [x] `docker-compose.yml` mit `transfersh` + `clamav`-Sidecar, Healthcheck, `.env.example`
+- [x] htpasswd-Auth (Datei, Volume-Mount, ENV verdrahtet)
+- [x] Reverse-Proxy mit HTTPS-Termination, `client_max_body_size`,
+      `proxy_request_buffering off`, Forwarded-Header
+- [x] Limits gesetzt: `--max-upload-size`, `--rate-limit`, `--purge-days`,
+      `--random-token-length`
+- [x] GitHub Actions: GHCR-Build (semver/edge/sha), Multi-Arch (amd64+arm64)
+- [x] Docker-Hub-Workflow + Binary-Release-Workflow abgelöst
+- [x] `test.yml` modernisiert (Race-Tests, Cache, aktuelle Action-Versionen)
+- [x] Erste Tags durchlaufen (v1.0.0 → v1.1.0)
 
-## Phase 2 — Deployment-Setup
+### Phase 3 — README & Dokumentation
+- [x] README auf tatsächliches Feature-Set gekürzt
+- [x] Fork-Notice + "What's different from upstream"-Tabelle
+- [x] Konfigurations-Tabelle thematisch gruppiert, Build-/GHCR-/Lizenz-Badges
+- [x] `examples.md` getrimmt (VirusTotal raus, Hostnames generisch)
+- [x] `SECURITY.md`, `llms.txt`, Table of Contents
 
-Ziel: Stack ist mit `docker compose up -d` reproduzierbar deploybar. Auth,
-Storage-Volume, ClamAV-Sidecar laufen sauber zusammen.
+### Phase 4 — Frontend
+- [x] Upstream-Web-Frontend komplett ersetzt durch eigenen vanilla Rebuild
+      (embedded, kein Submodul, kein bindata mehr)
+- [x] Eigenes Logo, Favicon, Farbschema, Title/Meta/OG
+- [x] Preview-Seiten neu gebaut (Audio/Video/Image/Markdown/Sandbox)
+- [x] Cache-Busting via Content-Hash auf CSS/JS
+- [x] Accessibility: focus-visible, reduced motion
+- [x] Security-Header + noindex-Meta
 
-### 2.1 Dockerfile prüfen & anpassen
-- [x] Alte Dockerfile-Annahmen mit dem neuen Code abgleichen (PUID/PGID-Logik
-      vereinfachen, alte Args entrümpeln)
-- [x] Multi-Stage-Build, Alpine-Final, Non-Root-User, OCI-Labels, HEALTHCHECK
-- [x] Image-Tag-Strategie festlegen (semver, `:latest`, `:edge`, `:sha-<short>`)
-- [ ] Image-Größe nach erstem Build verifizieren
+### Phase 5 — Optionale Features
+- [x] Mini-Dashboard `/admin/files` (htpasswd-protected): Filter, Copy-URL,
+      manueller Delete mit Confirm
+- [x] `LastDownloadedAt` getrackt, Download-Counter auch für unlimited Files
+- [x] Append-only `.deletions.jsonl` Log, letzte 50 Löschungen im Dashboard
+- [x] Per-Upload `Max-Days` / `Max-Downloads` Header (UI-Inputs auf Homepage)
+- [x] Webhook bei Upload/Download/Delete (`UPLOAD_WEBHOOK_URL`,
+      optional Bearer-Token via `WEBHOOK_TOKEN`)
 
-### 2.2 docker-compose.yml schreiben
-- [x] Service `transfersh` mit Volume für `basedir`
-- [x] Service `clamav` als Sidecar, transfersh redet via `--clamav-host` mit ihm
-- [x] Restart-Policy, Healthcheck (`/health.html`), Resource-Limits
-- [x] `.env.example` mit allen sinnvollen ENV-Vars
-- [ ] Auf Zielserver deployen und Smoke-Test fahren
+### Phase 6 — Production-Go-Live
+- [x] Deploy auf Zielserver, DNS, HTTPS-Cert (Let's Encrypt via Reverse-Proxy)
+- [x] End-to-End-Test (Upload + Download, ClamAV-Prescan grün)
+- [x] Backup-Strategie (Host-Volume durch Hyper-Backup abgedeckt;
+      ClamAV-Signatures via freshclam beim Container-Start)
 
-### 2.3 Auth einrichten
-- [ ] `htpasswd`-Datei mit den Team-Usern erzeugen
-- [ ] Volume-Mount für die Datei in den Container
-- [ ] `--http-auth-htpasswd` als ENV verdrahten
-- [ ] Optional: `--http-auth-ip-whitelist` für vertrauenswürdige Netze
-
-### 2.4 Reverse-Proxy
-- [ ] HTTPS-Termination am Reverse-Proxy
-- [ ] Proxy-Pass auf transfersh-Container
-- [ ] `client_max_body_size` passend zur `--max-upload-size` setzen
-- [ ] `proxy_request_buffering off` für Streaming-Uploads
-- [ ] Proxy-Header: `X-Forwarded-Host`, `X-Forwarded-Proto`
-
-### 2.5 Sinnvolle Limits setzen
-- [ ] `--max-upload-size` festlegen
-- [ ] `--rate-limit` (Requests pro Minute)
-- [ ] Default `--purge-days` (aktuell 360) bestätigen oder anpassen
-- [ ] `--random-token-length` ggf. erhöhen
-
-### 2.6 Container-Builds in CI
-- [x] GitHub Actions Workflow für GHCR-Build (semver-Tags, edge, sha)
-- [x] Multi-Arch (amd64 + arm64)
-- [x] Bestehenden Docker-Hub-Workflow ablösen
-- [x] Binary-Release-Workflow entfernen (wir liefern nur Container)
-- [x] test.yml modernisiert (aktuelle Action-Versionen, race-Tests, Cache)
-- [ ] Erstes Tag (`v0.1.0`) setzen, Workflow real durchlaufen lassen
-
----
-
-## Phase 3 — README & Dokumentation
-
-- [x] README auf das tatsächliche Feature-Set gekürzt (633 → 313 Zeilen)
-- [x] Disclaimer aus Upstream entfernt
-- [x] Beispiel-curl-Befehle behalten, andere Abschnitte gestrichen
-- [x] Setup-Anleitung für den schlanken Stack ergänzt
-- [x] Fork-Notice + "What's different from upstream"-Tabelle ergänzt
-- [x] Konfigurations-Tabelle nach Themen gruppiert
-- [x] Build-Status, GHCR und Lizenz-Badges
-- [x] examples.md getrimmt: VirusTotal raus, Hostnames generisch, 345 -> 190 Zeilen
-
----
-
-## Phase 4 — Frontend-Branding
-
-Web-Assets sind als Go-bindata embedded aus dem Submodul
-`dutchcoders/transfer.sh-web`. Branding heißt: eigenen Web-Fork pflegen oder
-Patches/Overrides legen.
-
-- [ ] Entscheiden: eigener Web-Fork oder Override via `--web-path`?
-- [ ] Logo + Favicon ersetzen
-- [ ] Farbschema anpassen
-- [ ] Title-Tag, Meta-Beschreibung, OG-Tags
-- [ ] Preview-Seite leicht entrümpeln (Upstream-Branding entfernen oder
-      Footer-Zeile umschreiben)
-- [ ] QR-Code-Logo auswechseln (falls eingebrannt)
-
----
-
-## Phase 5 — Optionale Features
-
-### 5.1 Mini-Dashboard für File-Übersicht (v1.1)
-Endpoint `/admin/files`, hinter htpasswd, listet alles im `basedir`.
-
-- [x] Phase A: File-Listing mit Filename, Size, Content-Type, Upload-Datum,
-      Downloads, Remaining, Expiry, Open- und Copy-Buttons (Download-URL +
-      Delete-URL)
-- [x] Phase B: `LastDownloadedAt` mitgetrackt, Download-Counter wird jetzt
-      auch für unlimited-Files inkrementiert
-- [x] Phase C: Append-only `.deletions.jsonl` Log; Dashboard zeigt die
-      letzten 50 Löschungen mit Filename, Size, "ago"-Label, User,
-      Download-Count vor Löschung
-- [x] Live-Filter (JS, kein Backend-Roundtrip) und Copy-to-Clipboard fürs URL
-- [x] Manueller Delete-Button im Admin-UI (mit Confirm, Row-Fadeout)
-
-### 5.2 Erweiterte Auto-Cleanup-Regeln
-- [x] Per-Datei TTL und Max-Downloads über das Upload-UI setzbar
-      (Drag-Drop schreibt `Max-Days` / `Max-Downloads` Header)
-- [ ] Storage-Quota pro User (htpasswd-User aus Auth-Header)
-
-### 5.3 Notifications
-- [x] Webhook bei neuem Upload (POST JSON, async, opt-in via `UPLOAD_WEBHOOK_URL`)
-- [x] Webhook bei Download / Delete (gleicher Endpoint, Event-Type im Body)
-- [x] Optional Auth-Header (Bearer-Token) via `WEBHOOK_TOKEN`
-- [ ] E-Mail-Benachrichtigung bei Download (optional pro Upload)
-
----
-
-## Phase 6 — Production-Go-Live
-
-- [x] Deploy auf Zielserver
-- [x] DNS-Record auf Zielserver
-- [x] HTTPS-Cert ausgestellt (Let's Encrypt via Reverse-Proxy)
-- [x] End-to-End-Test (curl Upload + Download, ClamAV-Prescan grün)
-- [x] Backup-Strategie für `basedir` (deckt der bestehende Hyper-Backup-Job
-      des Host-Volumes ab; ClamAV-Signatures werden bei Container-Start
-      neu via freshclam geladen, kein Backup nötig)
-- [ ] HTTPS-Cert mit SSL Labs gegentesten (nice-to-have)
-- [ ] Monitoring (Container-Health, Disk-Usage, ClamAV-Updates)
-- [ ] Log-Rotation
-
----
-
-## Phase 7 — Maintenance / Backlog
-
-- [ ] Upstream-Updates beobachten und cherry-picken
-- [ ] Go-Version regelmäßig hochziehen
-- [ ] Dependabot für Go-Module aktivieren
-- [ ] CI-Workflow im Fork: build + test + golangci-lint
-- [ ] golangci-lint Config (`.golangci.yml`) prüfen, ggf. strenger setzen
-- [ ] Audit der `extras/` (clamd, transfersh) — wird das gebraucht?
-
----
-
-## Offene Entscheidungen / Diskussion
-
-- **Branding-Strategie:** Eigener Web-Fork (mehr Pflegeaufwand, sauberer) oder
-  `--web-path`-Override (schneller, aber Patches synchron halten)?
-- **Mini-Dashboard:** Ja/Nein? Falls ja: read-only Listing oder mit Delete-Funktion?
-- **Public oder nur LAN?** Aktuell geplant: public mit Auth. Falls Abuse-Risiko
-  steigt, wäre IP-Whitelist eine Option.
-- **Backups:** Wegwerf-Transfer-Charakter, aber Bind-Mount liegt im
-  Host-Backup-Pfad → semi-persistent als Nebenprodukt erledigt.
+### Phase 7 — Maintenance (laufend abgearbeitet)
+- [x] CI: build + test + golangci-lint + govulncheck
+- [x] `.golangci.yml` konfiguriert
+- [x] `extras/` (clamd, transfersh) entfernt — nicht gebraucht
+- [x] Eigener Token-Bucket-IP-Limiter (Drittabhängigkeit raus)
+- [x] CVE-Bumps: cloudflare/circl, golang.org/x/net
+- [x] Go-Toolchain auf 1.25 angehoben (Dockerfile + CI)
