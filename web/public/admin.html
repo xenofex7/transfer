@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin &middot; {{.Hostname}}</title>
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+</head>
+<body>
+  <main class="page page-wide">
+    <header class="admin-head">
+      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="/images/logo.png" alt=""></a>
+      <h1 class="admin-title">Files on {{.Hostname}}</h1>
+      <p class="admin-meta"><span class="admin-count">{{.Total}}</span> file{{if ne .Total 1}}s{{end}} stored</p>
+    </header>
+
+    <section class="card admin-toolbar">
+      <input id="filter" class="filter-input" type="search" placeholder="Filter by name or token..." autocomplete="off" aria-label="Filter files">
+    </section>
+
+    {{if .Rows}}
+    <section class="card admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Filename</th>
+            <th>Size</th>
+            <th>Type</th>
+            <th>Uploaded</th>
+            <th>Downloads</th>
+            <th>Expires</th>
+            <th>Links</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          {{range .Rows}}
+          <tr class="row{{if .Expired}} row-expired{{end}}" data-search="{{.Filename}} {{.Token}}">
+            <td class="cell-name" title="{{.Filename}}">{{.Filename}}</td>
+            <td class="cell-num">{{.SizeHuman}}</td>
+            <td class="cell-type">{{.ContentType}}</td>
+            <td class="cell-time" title="{{.UploadedAt}}">{{.UploadedHuman}}</td>
+            <td class="cell-num">{{.Downloads}}{{if ne .MaxDownloads -1}} <span class="muted">({{.Remaining}})</span>{{end}}</td>
+            <td class="cell-time">{{.ExpiresHuman}}</td>
+            <td class="cell-links">
+              <a class="link" href="{{.URL}}" target="_blank" rel="noopener">open</a>
+              <span class="dot">&middot;</span>
+              <button class="link copy-btn" type="button" data-copy="{{.URL}}">copy</button>
+              <span class="dot">&middot;</span>
+              <button class="link copy-btn danger" type="button" data-copy="{{.DeleteURL}}" title="Copy delete URL">copy delete</button>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </section>
+    {{else}}
+    <section class="card admin-empty">
+      <p>No files yet. Drop one on the home page.</p>
+    </section>
+    {{end}}
+
+    {{if .Recent}}
+    <section class="card admin-deletions">
+      <h2>Recently deleted</h2>
+      <ul class="deletion-list">
+        {{range .Recent}}
+        <li>
+          <span class="deletion-name">{{.Filename}}</span>
+          <span class="muted">in {{.Token}}</span>
+          <span class="muted">{{.DeletedAt}}</span>
+          {{if .User}}<span class="muted">by {{.User}}</span>{{end}}
+          <span class="muted">({{.Downloads}} downloads)</span>
+        </li>
+        {{end}}
+      </ul>
+    </section>
+    {{end}}
+
+    <footer class="footer">
+      <a href="/">{{.Hostname}}</a>
+    </footer>
+  </main>
+
+  <script src="{{asset "/scripts/admin.js"}}" defer></script>
+</body>
+</html>

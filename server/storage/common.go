@@ -88,6 +88,18 @@ func ParseRange(rng string) *Range {
 	return &Range{Start: start, Limit: finish - start + 1}
 }
 
+// ListEntry describes a single stored file as returned by List. Storage
+// backends should fill the structural fields; metadata interpretation is
+// the caller's responsibility (the metadata blob is the raw JSON written
+// by transfer.sh during upload).
+type ListEntry struct {
+	Token      string
+	Filename   string
+	Size       int64
+	UploadedAt time.Time
+	Metadata   []byte // raw JSON; empty if no .metadata file exists
+}
+
 // Storage is the interface for storage operation
 type Storage interface {
 	// Get retrieves a file from storage
@@ -102,6 +114,9 @@ type Storage interface {
 	IsNotExist(err error) bool
 	// Purge cleans up the storage
 	Purge(ctx context.Context, days time.Duration) error
+	// List returns every persisted file pair (filename + .metadata) in storage.
+	// Returned entries are ordered by upload time, newest first.
+	List(ctx context.Context) ([]ListEntry, error)
 	// Whether storage supports Get with Range header
 	IsRangeSupported() bool
 	// Type returns the storage type

@@ -307,6 +307,40 @@ func init() {
 	theRand = rand.New(rand.NewSource(int64(binary.LittleEndian.Uint64(seedBytes[:]))))
 }
 
+var loadEmbeddedTemplatesOnce sync.Once
+
+// loadEmbeddedTemplates walks the bundled web/public filesystem once and
+// parses every *.html and *.txt file into the package-level template trees.
+// html/template trees mutate during the first execution (escaping is
+// applied once), so re-parsing later would corrupt the parsed state.
+func loadEmbeddedTemplates(logger *log.Logger) {
+	loadEmbeddedTemplatesOnce.Do(func() {
+		err := iofs.WalkDir(web.FS, ".", func(p string, d iofs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return err
+			}
+			body, readErr := iofs.ReadFile(web.FS, p)
+			if readErr != nil {
+				return readErr
+			}
+			if strings.HasSuffix(p, ".html") {
+				if _, e := htmlTemplates.New(p).Parse(string(body)); e != nil && logger != nil {
+					logger.Println("Unable to parse html template", e)
+				}
+			}
+			if strings.HasSuffix(p, ".txt") {
+				if _, e := textTemplates.New(p).Parse(string(body)); e != nil && logger != nil {
+					logger.Println("Unable to parse text template", e)
+				}
+			}
+			return nil
+		})
+		if err != nil && logger != nil {
+			logger.Printf("Unable to walk embedded web assets: %s", err)
+		}
+	})
+}
+
 // Run starts Server
 func (s *Server) Run() {
 	listening := false
@@ -324,35 +358,7 @@ func (s *Server) Run() {
 		textTemplates, _ = textTemplates.ParseGlob(filepath.Join(s.webPath, "*.txt"))
 	} else {
 		fileSys = http.FS(web.FS)
-
-		err := iofs.WalkDir(web.FS, ".", func(path string, d iofs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.IsDir() {
-				return nil
-			}
-
-			bytes, err := iofs.ReadFile(web.FS, path)
-			if err != nil {
-				return err
-			}
-
-			if strings.HasSuffix(path, ".html") {
-				if _, e := htmlTemplates.New(path).Parse(string(bytes)); e != nil {
-					s.logger.Println("Unable to parse html template", e)
-				}
-			}
-			if strings.HasSuffix(path, ".txt") {
-				if _, e := textTemplates.New(path).Parse(string(bytes)); e != nil {
-					s.logger.Println("Unable to parse text template", e)
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			s.logger.Panicf("Unable to walk embedded web assets: %s", err)
-		}
+		loadEmbeddedTemplates(s.logger)
 	}
 
 	staticHandler := http.FileServer(fileSys)
@@ -382,6 +388,7 @@ func (s *Server) Run() {
 	r.HandleFunc("/{filename:(?:favicon\\.ico|robots\\.txt|health\\.html)}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
 
 	r.HandleFunc("/health.html", healthHandler).Methods("GET")
+	r.Handle("/admin/files", s.basicAuthHandler(http.HandlerFunc(s.adminFilesHandler))).Methods("GET")
 	r.HandleFunc("/", s.viewHandler).Methods("GET")
 
 	r.HandleFunc("/({files:.*}).zip", s.zipHandler).Methods("GET")

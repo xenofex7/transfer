@@ -82,6 +82,56 @@ func TestLocalStorageType(t *testing.T) {
 	}
 }
 
+func TestLocalStorageListFindsBothFiles(t *testing.T) {
+	s := newTestStorage(t)
+	ctx := context.Background()
+
+	if err := s.Put(ctx, "tokenA", "alpha.txt", strings.NewReader("aaa"), "text/plain", 3); err != nil {
+		t.Fatalf("Put alpha: %v", err)
+	}
+	if err := s.Put(ctx, "tokenA", "alpha.txt.metadata", strings.NewReader(`{"ContentType":"text/plain","Downloads":3}`), "text/json", 0); err != nil {
+		t.Fatalf("Put alpha metadata: %v", err)
+	}
+	if err := s.Put(ctx, "tokenB", "beta.bin", strings.NewReader("bb"), "application/octet-stream", 2); err != nil {
+		t.Fatalf("Put beta: %v", err)
+	}
+
+	entries, err := s.List(ctx)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if got := len(entries); got != 2 {
+		t.Fatalf("entry count: got %d, want 2", got)
+	}
+
+	byToken := map[string]ListEntry{}
+	for _, e := range entries {
+		byToken[e.Token] = e
+	}
+	if _, ok := byToken["tokenA"]; !ok {
+		t.Fatal("missing tokenA in List output")
+	}
+	if string(byToken["tokenA"].Metadata) == "" {
+		t.Error("tokenA metadata blob is empty; expected raw JSON")
+	}
+	if string(byToken["tokenB"].Metadata) != "" {
+		t.Errorf("tokenB had no metadata file but List returned %q", byToken["tokenB"].Metadata)
+	}
+}
+
+func TestLocalStorageListMissingDirReturnsEmpty(t *testing.T) {
+	logger := log.New(io.Discard, "", 0)
+	s, _ := NewLocalStorage(t.TempDir()+"/does-not-exist", logger)
+
+	entries, err := s.List(context.Background())
+	if err != nil {
+		t.Fatalf("List on missing basedir: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected zero entries, got %d", len(entries))
+	}
+}
+
 // Ensure t.TempDir cleanup works as expected.
 func TestLocalStorageBasedirIsolated(t *testing.T) {
 	a := newTestStorage(t)

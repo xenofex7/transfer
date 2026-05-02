@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -136,3 +138,62 @@ func (s *LocalStorage) Put(_ context.Context, token string, filename string, rea
 }
 
 func (s *LocalStorage) IsRangeSupported() bool { return true }
+
+// List walks basedir and returns one entry per uploaded file (skipping the
+// adjacent .metadata files). The metadata blob is included verbatim; caller
+// decodes it into whatever shape it needs.
+func (s *LocalStorage) List(_ context.Context) ([]ListEntry, error) {
+	entries := make([]ListEntry, 0, 64)
+
+	tokenDirs, err := os.ReadDir(s.basedir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return entries, nil
+		}
+		return nil, err
+	}
+
+	for _, d := range tokenDirs {
+		if !d.IsDir() {
+			continue
+		}
+		token := d.Name()
+		tokenPath := filepath.Join(s.basedir, token)
+
+		files, ferr := os.ReadDir(tokenPath)
+		if ferr != nil {
+			s.logger.Printf("list: skipping %s: %v", tokenPath, ferr)
+			continue
+		}
+
+		for _, f := range files {
+			name := f.Name()
+			if f.IsDir() || strings.HasSuffix(name, ".metadata") {
+				continue
+			}
+			info, infoErr := f.Info()
+			if infoErr != nil {
+				continue
+			}
+
+			// Best-effort metadata read; missing metadata is fine.
+			var meta []byte
+			if b, mErr := os.ReadFile(filepath.Join(tokenPath, name+".metadata")); mErr == nil {
+				meta = b
+			}
+
+			entries = append(entries, ListEntry{
+				Token:      token,
+				Filename:   name,
+				Size:       info.Size(),
+				UploadedAt: info.ModTime(),
+				Metadata:   meta,
+			})
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].UploadedAt.After(entries[j].UploadedAt)
+	})
+	return entries, nil
+}
