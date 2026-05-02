@@ -41,7 +41,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/PuerkitoBio/ghost/handlers"
 	"github.com/VojtechVitek/ratelimit"
 	"github.com/VojtechVitek/ratelimit/memory"
 	gorillaHandlers "github.com/gorilla/handlers"
@@ -272,8 +271,18 @@ type Server struct {
 	proxyPort    string
 	emailContact string
 
+	uploadWebhookURL string
+
 	CorsDomains    string
 	ListenerString string
+}
+
+// UploadWebhookURL configures a URL that receives a JSON POST whenever a
+// file is successfully uploaded. Empty disables the webhook.
+func UploadWebhookURL(s string) OptionFn {
+	return func(srvr *Server) {
+		srvr.uploadWebhookURL = s
+	}
 }
 
 // New is the factory fot Server
@@ -447,16 +456,14 @@ func (s *Server) Run() {
 	}
 
 	h := securityHeaders(
-		handlers.PanicHandler(
+		panicRecover(s.logger,
 			ipFilterHandler(
-				handlers.LogHandler(
+				accessLog(s.logger,
 					LoveHandler(
 						s.RedirectHandler(cors(r))),
-					handlers.NewLogOptions(s.logger.Printf, "_default_"),
 				),
 				s.ipFilterOptions,
 			),
-			nil,
 		),
 	)
 

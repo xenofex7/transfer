@@ -166,6 +166,12 @@ var globalFlags = []cli.Flag{
 		Value:   10,
 		EnvVars: []string{"RANDOM_TOKEN_LENGTH"},
 	},
+	&cli.StringFlag{
+		Name:    "upload-webhook-url",
+		Usage:   "URL that receives a JSON POST after a successful upload",
+		Value:   "",
+		EnvVars: []string{"UPLOAD_WEBHOOK_URL"},
+	},
 }
 
 // Cmd wraps cli.app
@@ -259,6 +265,10 @@ func New() *Cmd {
 
 		v := c.Int("random-token-length")
 		options = append(options, server.RandomTokenLength(v))
+
+		if v := c.String("upload-webhook-url"); v != "" {
+			options = append(options, server.UploadWebhookURL(v))
+		}
 
 		purgeDays := c.Int("purge-days")
 		purgeInterval := c.Int("purge-interval")

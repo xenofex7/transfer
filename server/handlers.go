@@ -59,8 +59,6 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/dutchcoders/transfer.sh/server/storage"
 	"github.com/tg123/go-htpasswd"
-	"github.com/tomasen/realip"
-
 	"github.com/dutchcoders/transfer.sh/web"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
@@ -546,8 +544,19 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) {
 			filename = url.PathEscape(filename)
 			relativeURL, _ := url.Parse(path.Join(s.proxyPath, token, filename))
 			deleteURL, _ := url.Parse(path.Join(s.proxyPath, token, filename, metadata.DeletionToken))
-			w.Header().Add("X-Url-Delete", resolveURL(r, deleteURL, s.proxyPort))
-			responseBody += fmt.Sprintln(getURL(r, s.proxyPort).ResolveReference(relativeURL).String())
+			resolvedURL := resolveURL(r, relativeURL, s.proxyPort)
+			resolvedDelete := resolveURL(r, deleteURL, s.proxyPort)
+			w.Header().Add("X-Url-Delete", resolvedDelete)
+			responseBody += fmt.Sprintln(resolvedURL)
+			user, _, _ := r.BasicAuth()
+			s.fireUploadWebhook(uploadEvent{
+				Filename:    filename,
+				ContentType: contentType,
+				Size:        contentLength,
+				URL:         resolvedURL,
+				DeleteURL:   resolvedDelete,
+				User:        user,
+			})
 		}
 	}
 	_, err := w.Write([]byte(responseBody))
@@ -736,9 +745,22 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 	relativeURL, _ := url.Parse(path.Join(s.proxyPath, token, filename))
 	deleteURL, _ := url.Parse(path.Join(s.proxyPath, token, filename, metadata.DeletionToken))
 
-	w.Header().Set("X-Url-Delete", resolveURL(r, deleteURL, s.proxyPort))
+	resolvedURL := resolveURL(r, relativeURL, s.proxyPort)
+	resolvedDelete := resolveURL(r, deleteURL, s.proxyPort)
 
-	_, _ = w.Write([]byte(resolveURL(r, relativeURL, s.proxyPort)))
+	w.Header().Set("X-Url-Delete", resolvedDelete)
+
+	_, _ = w.Write([]byte(resolvedURL))
+
+	user, _, _ := r.BasicAuth()
+	s.fireUploadWebhook(uploadEvent{
+		Filename:    filename,
+		ContentType: contentType,
+		Size:        contentLength,
+		URL:         resolvedURL,
+		DeleteURL:   resolvedDelete,
+		User:        user,
+	})
 }
 
 func resolveURL(r *http.Request, u *url.URL, proxyPort string) string {
@@ -1356,7 +1378,7 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 
 		var authorized bool
 		if s.authIPFilter != nil {
-			remoteIP := realip.FromRequest(r)
+			remoteIP := realIPFromRequest(r)
 			authorized = s.authIPFilter.Allowed(remoteIP)
 		}
 

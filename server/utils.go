@@ -34,7 +34,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/gddo/httputil/header"
 )
 
 func formatNumber(format string, s uint64) string {
@@ -199,15 +198,21 @@ func ipAddrFromRemoteAddr(s string) string {
 	return s[:idx]
 }
 
+// acceptsHTML reports whether the request's Accept header lists "text/html"
+// as one of its acceptable media types. Quality parameters and other
+// suffixes (e.g. ";q=0.9") are ignored - this matches what the previous
+// gddo-based implementation did for our use.
 func acceptsHTML(hdr http.Header) bool {
-	actual := header.ParseAccept(hdr, "Accept")
-
-	for _, s := range actual {
-		if s.Value == "text/html" {
-			return true
+	for _, raw := range hdr.Values("Accept") {
+		for _, item := range strings.Split(raw, ",") {
+			if idx := strings.Index(item, ";"); idx >= 0 {
+				item = item[:idx]
+			}
+			if strings.TrimSpace(item) == "text/html" {
+				return true
+			}
 		}
 	}
-
 	return false
 }
 

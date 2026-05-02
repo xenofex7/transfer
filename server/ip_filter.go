@@ -17,8 +17,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-
-	"github.com/tomasen/realip"
 )
 
 // IPFilterOptions for ipFilter. Allowed takes precedence over Blocked.
@@ -197,7 +195,7 @@ type ipFilterMiddleware struct {
 }
 
 func (m *ipFilterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	remoteIP := realip.FromRequest(r)
+	remoteIP := realIPFromRequest(r)
 
 	if !m.Allowed(remoteIP) {
 		//show simple forbidden text
