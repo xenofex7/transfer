@@ -123,6 +123,26 @@ func TestRemainingDownloadsLabel(t *testing.T) {
 	}
 }
 
+func TestLastDownloadLabel(t *testing.T) {
+	now := time.Now()
+	cases := []struct {
+		name string
+		t    time.Time
+		want string
+	}{
+		{"never", time.Time{}, "never"},
+		{"just now", now.Add(-30 * time.Second), "just now"},
+		{"5 min ago", now.Add(-5 * time.Minute), "5 min ago"},
+		{"3h ago", now.Add(-3 * time.Hour), "3h ago"},
+		{"2 days ago", now.Add(-48 * time.Hour), "2 days ago"},
+	}
+	for _, c := range cases {
+		if got := lastDownloadLabel(c.t); got != c.want {
+			t.Errorf("%s: got %q, want %q", c.name, got, c.want)
+		}
+	}
+}
+
 func TestExpiresLabel(t *testing.T) {
 	cases := []struct {
 		name string

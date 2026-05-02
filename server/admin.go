@@ -18,21 +18,23 @@ import (
 
 // adminFileRow is the per-file row rendered in the admin file list.
 type adminFileRow struct {
-	Token         string
-	Filename      string
-	ContentType   string
-	Size          int64
-	SizeHuman     string
-	UploadedAt    time.Time
-	UploadedHuman string
-	Downloads     int
-	MaxDownloads  int
-	Remaining     string
-	ExpiresAt     time.Time
-	ExpiresHuman  string
-	URL           string
-	DeleteURL     string
-	Expired       bool
+	Token              string
+	Filename           string
+	ContentType        string
+	Size               int64
+	SizeHuman          string
+	UploadedAt         time.Time
+	UploadedHuman      string
+	Downloads          int
+	MaxDownloads       int
+	Remaining          string
+	LastDownloadedAt   time.Time
+	LastDownloadHuman  string
+	ExpiresAt          time.Time
+	ExpiresHuman       string
+	URL                string
+	DeleteURL          string
+	Expired            bool
 }
 
 // adminFilesData is the template context for admin.html.
@@ -81,6 +83,8 @@ func (s *Server) adminFilesHandler(w http.ResponseWriter, r *http.Request) {
 				row.ExpiresAt = meta.MaxDate
 				row.ExpiresHuman = expiresLabel(meta)
 				row.Expired = !meta.MaxDate.IsZero() && time.Now().After(meta.MaxDate)
+				row.LastDownloadedAt = meta.LastDownloadedAt
+				row.LastDownloadHuman = lastDownloadLabel(meta.LastDownloadedAt)
 
 				escFilename := url.PathEscape(e.Filename)
 				rel, _ := url.Parse(path.Join(s.proxyPath, e.Token, escFilename))
@@ -119,6 +123,39 @@ func remainingDownloadsLabel(m metadata) string {
 		left = 0
 	}
 	return strconv.Itoa(left) + " / " + strconv.Itoa(m.MaxDownloads)
+}
+
+// lastDownloadLabel renders a relative-time string for the most recent
+// download, or a placeholder for files that have never been downloaded.
+func lastDownloadLabel(t time.Time) string {
+	if t.IsZero() {
+		return "never"
+	}
+	since := time.Since(t)
+	switch {
+	case since < time.Minute:
+		return "just now"
+	case since < time.Hour:
+		mins := int(since.Minutes())
+		if mins == 1 {
+			return "1 min ago"
+		}
+		return strconv.Itoa(mins) + " min ago"
+	case since < 24*time.Hour:
+		hours := int(since.Hours())
+		if hours == 1 {
+			return "1h ago"
+		}
+		return strconv.Itoa(hours) + "h ago"
+	case since < 7*24*time.Hour:
+		days := int(since.Hours() / 24)
+		if days == 1 {
+			return "1 day ago"
+		}
+		return strconv.Itoa(days) + " days ago"
+	default:
+		return t.Format("2006-01-02")
+	}
 }
 
 // expiresLabel formats the auto-purge date for the dashboard.

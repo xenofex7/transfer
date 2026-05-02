@@ -597,6 +597,9 @@ type metadata struct {
 	Encrypted bool
 	// DecryptedContentType is the original uploading content type
 	DecryptedContentType string
+	// LastDownloadedAt is the timestamp of the most recent successful
+	// download. Zero value means the file has never been downloaded.
+	LastDownloadedAt time.Time
 }
 
 func metadataForRequest(contentType string, contentLength int64, randomTokenLength int, r *http.Request) metadata {
@@ -903,15 +906,17 @@ func (s *Server) checkMetadata(ctx context.Context, token, filename string, incr
 
 	if err := json.NewDecoder(r).Decode(&metadata); err != nil {
 		return metadata, err
-	} else if metadata.MaxDownloads != -1 && metadata.Downloads >= metadata.MaxDownloads {
+	}
+	if metadata.MaxDownloads != -1 && metadata.Downloads >= metadata.MaxDownloads {
 		return metadata, errors.New("maxDownloads expired")
-	} else if !metadata.MaxDate.IsZero() && time.Now().After(metadata.MaxDate) {
+	}
+	if !metadata.MaxDate.IsZero() && time.Now().After(metadata.MaxDate) {
 		return metadata, errors.New("maxDate expired")
-	} else if metadata.MaxDownloads != -1 && increaseDownload {
-		// todo(nl5887): mutex?
+	}
 
-		// update number of downloads
+	if increaseDownload {
 		metadata.Downloads++
+		metadata.LastDownloadedAt = time.Now()
 
 		buffer := &bytes.Buffer{}
 		if err := json.NewEncoder(buffer).Encode(metadata); err != nil {

@@ -30,6 +30,7 @@
             <th>Type</th>
             <th>Uploaded</th>
             <th>Downloads</th>
+            <th>Last download</th>
             <th>Expires</th>
             <th>Links</th>
           </tr>
@@ -42,6 +43,7 @@
             <td class="cell-type">{{.ContentType}}</td>
             <td class="cell-time" title="{{.UploadedAt}}">{{.UploadedHuman}}</td>
             <td class="cell-num">{{.Downloads}}{{if ne .MaxDownloads -1}} <span class="muted">({{.Remaining}})</span>{{end}}</td>
+            <td class="cell-time" title="{{.LastDownloadedAt}}">{{.LastDownloadHuman}}</td>
             <td class="cell-time">{{.ExpiresHuman}}</td>
             <td class="cell-links">
               <a class="link" href="{{.URL}}" target="_blank" rel="noopener">open</a>
