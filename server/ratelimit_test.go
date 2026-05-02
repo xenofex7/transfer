@@ -27,8 +27,11 @@ func TestIPLimiterIsolatesIPs(t *testing.T) {
 	l := newIPLimiter(2)
 	defer l.Stop()
 
-	if !l.Allow("198.51.100.1") || !l.Allow("198.51.100.1") {
-		t.Fatal("first IP exhausted before reaching its burst")
+	// Two Allow() calls in a row, side-effecting; consume the full burst of 2.
+	for i := 0; i < 2; i++ {
+		if !l.Allow("198.51.100.1") {
+			t.Fatalf("first IP exhausted at call %d before reaching its burst", i+1)
+		}
 	}
 	if l.Allow("198.51.100.1") {
 		t.Fatal("first IP not throttled past its burst")
