@@ -7,6 +7,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-05-02
+
+### Added
+- Upload webhook to notify external services on new uploads
+- Token-bucket `ipLimiter` replacing the third-party `VojtechVitek/ratelimit` middleware
+
+### Changed
+- Replaced third-party middleware dependencies with in-tree implementations
+- Bumped `cloudflare/circl` and `golang.org/x/net` to patch govulncheck CVEs
+- Bumped govulncheck CI job to Go 1.25
+
+### Removed
+- `flake.nix` and `flake.lock` Nix flake files
+
 ## [1.0.3] - 2026-05-01
 
 ### Added
