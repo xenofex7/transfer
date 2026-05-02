@@ -33,7 +33,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 )
 
 func formatNumber(format string, s uint64) string {
