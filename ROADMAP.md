@@ -102,22 +102,28 @@ Patches/Overrides legen.
 
 ## Phase 5 — Optionale Features
 
-### 5.1 Mini-Dashboard für File-Übersicht
-Aktuell weiß man nach einem Upload nur die URL — wenn man die verliert, ist die
-Datei "weg" (kein Listing). Für ein kleines Team ggf. unpraktisch.
+### 5.1 Mini-Dashboard für File-Übersicht (v1.1)
+Endpoint `/admin/files`, hinter htpasswd, listet alles im `basedir`.
 
-- [ ] Endpoint `/admin/files` (hinter htpasswd) der `basedir` listet
-- [ ] Anzeige: Upload-Datum, Größe, verbleibende TTL, Download-URL,
-      Delete-URL (aus Metadata-Datei lesen)
-- [ ] Such-/Filterfunktion
-- [ ] Manueller Delete-Button
+- [x] Phase A: File-Listing mit Filename, Size, Content-Type, Upload-Datum,
+      Downloads, Remaining, Expiry, Open- und Copy-Buttons (Download-URL +
+      Delete-URL)
+- [x] Phase B: `LastDownloadedAt` mitgetrackt, Download-Counter wird jetzt
+      auch für unlimited-Files inkrementiert
+- [x] Phase C: Append-only `.deletions.jsonl` Log; Dashboard zeigt die
+      letzten 50 Löschungen mit Filename, Size, "ago"-Label, User,
+      Download-Count vor Löschung
+- [x] Live-Filter (JS, kein Backend-Roundtrip) und Copy-to-Clipboard fürs URL
+- [ ] Manueller Delete-Button im Admin-UI (aktuell nur via Delete-URL-Copy)
 
 ### 5.2 Erweiterte Auto-Cleanup-Regeln
 - [ ] Per-Datei TTL über UI setzbar (statt nur per `Max-Days` Header)
 - [ ] Storage-Quota pro User (htpasswd-User aus Auth-Header)
 
 ### 5.3 Notifications
-- [ ] Webhook bei neuem Upload (z. B. Chat-Integration)
+- [x] Webhook bei neuem Upload (POST JSON, async, opt-in via `UPLOAD_WEBHOOK_URL`)
+- [ ] Webhook bei Download / Delete (Event-Typ-Erweiterung)
+- [ ] Optional Auth-Header (Bearer-Token) für den Webhook-Empfänger
 - [ ] E-Mail-Benachrichtigung bei Download (optional pro Upload)
 
 ---
