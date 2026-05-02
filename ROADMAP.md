@@ -114,16 +114,17 @@ Endpoint `/admin/files`, hinter htpasswd, listet alles im `basedir`.
       letzten 50 Löschungen mit Filename, Size, "ago"-Label, User,
       Download-Count vor Löschung
 - [x] Live-Filter (JS, kein Backend-Roundtrip) und Copy-to-Clipboard fürs URL
-- [ ] Manueller Delete-Button im Admin-UI (aktuell nur via Delete-URL-Copy)
+- [x] Manueller Delete-Button im Admin-UI (mit Confirm, Row-Fadeout)
 
 ### 5.2 Erweiterte Auto-Cleanup-Regeln
-- [ ] Per-Datei TTL über UI setzbar (statt nur per `Max-Days` Header)
+- [x] Per-Datei TTL und Max-Downloads über das Upload-UI setzbar
+      (Drag-Drop schreibt `Max-Days` / `Max-Downloads` Header)
 - [ ] Storage-Quota pro User (htpasswd-User aus Auth-Header)
 
 ### 5.3 Notifications
 - [x] Webhook bei neuem Upload (POST JSON, async, opt-in via `UPLOAD_WEBHOOK_URL`)
-- [ ] Webhook bei Download / Delete (Event-Typ-Erweiterung)
-- [ ] Optional Auth-Header (Bearer-Token) für den Webhook-Empfänger
+- [x] Webhook bei Download / Delete (gleicher Endpoint, Event-Type im Body)
+- [x] Optional Auth-Header (Bearer-Token) via `WEBHOOK_TOKEN`
 - [ ] E-Mail-Benachrichtigung bei Download (optional pro Upload)
 
 ---
