@@ -55,4 +55,49 @@
     document.body.removeChild(ta);
     cb();
   }
+
+  // ---- delete buttons ----
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.delete-btn');
+    if (!btn) return;
+    var url = btn.getAttribute('data-delete') || '';
+    var name = btn.getAttribute('data-name') || 'this file';
+    if (!url) return;
+
+    if (!window.confirm('Delete "' + name + '"? This cannot be undone.')) return;
+
+    var row = btn.closest('tr');
+    btn.disabled = true;
+    btn.textContent = 'deleting...';
+
+    fetch(url, { method: 'DELETE', credentials: 'include' })
+      .then(function (resp) {
+        if (resp.ok) {
+          if (row) {
+            row.style.transition = 'opacity 200ms, transform 200ms';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(8px)';
+            setTimeout(function () { row && row.parentNode && row.parentNode.removeChild(row); }, 220);
+          }
+          updateCount(-1);
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'failed (' + resp.status + ')';
+          setTimeout(function () { btn.textContent = 'delete'; }, 2000);
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.textContent = 'network error';
+        setTimeout(function () { btn.textContent = 'delete'; }, 2000);
+      });
+  });
+
+  function updateCount(delta) {
+    var counter = document.querySelector('.admin-count');
+    if (!counter) return;
+    var n = parseInt(counter.textContent, 10);
+    if (isNaN(n)) return;
+    counter.textContent = String(Math.max(0, n + delta));
+  }
 })();
