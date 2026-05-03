@@ -9,6 +9,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [1.1.1] - 2026-05-03
 
+### Changed
+- Rewrite ROADMAP to reflect v1.1.0 production state
+
+### Fixed
+- Ship a default clamd.conf to prevent prescan 500 errors on uploads larger than 25 MB
+
+## [1.1.1] - 2026-05-03
+
 ### Fixed
 - Large uploads (>25 MB) failing with HTTP 500 because clamd's default
   `StreamMaxLength` aborted the prescan stream. Ship a bundled `clamd.conf`
