@@ -127,15 +127,15 @@
         copy.className = 'upload-copy';
         copy.title = 'Copy link';
         copy.setAttribute('aria-label', 'Copy link');
-        copy.innerHTML = copyIconSvg();
+        copy.innerHTML = '<i data-lucide="copy"></i>';
         copy.addEventListener('click', function (e) {
           e.preventDefault();
           e.stopPropagation();
           copyToClipboard(url, copy);
         });
         result.appendChild(copy);
-
         item.appendChild(result);
+        renderIcons(copy);
       } else if (xhr.status === 401) {
         item.classList.add('is-error');
         status.textContent = 'auth required';
@@ -197,10 +197,21 @@
     document.body.removeChild(ta);
   }
 
-  function copyIconSvg() {
-    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-      '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
-      '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
-      '</svg>';
+  // renderIcons converts every <i data-lucide="..."> in the given container
+  // into an inline SVG. Safe to call before lucide finishes loading - it's
+  // a no-op until window.lucide exists, and the script ordering in <head>
+  // guarantees lucide.min.js loads before main.js fires DOM events.
+  function renderIcons(container) {
+    if (!(window.lucide && typeof window.lucide.createIcons === 'function')) {
+      // Lucide hasn't loaded yet (defer race) - retry once after it does.
+      window.addEventListener('load', function once() {
+        window.removeEventListener('load', once);
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons({ nameAttr: 'data-lucide', root: container || document });
+        }
+      });
+      return;
+    }
+    window.lucide.createIcons({ nameAttr: 'data-lucide', root: container || document });
   }
 })();
