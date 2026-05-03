@@ -378,6 +378,7 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		purgeTime = formatDurationDays(s.purgeDays)
 	}
 
+	cfg := s.settings.Get()
 	data := struct {
 		Hostname      string
 		WebAddress    string
@@ -392,8 +393,8 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		hostname,
 		webAddress,
-		s.emailContact,
-		s.tagline,
+		cfg.EmailContact,
+		cfg.Tagline,
 		"",
 		"",
 		purgeTime,

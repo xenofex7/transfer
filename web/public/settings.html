@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings &middot; {{.Hostname}}</title>
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+</head>
+<body>
+  <main class="page">
+    <header class="admin-head">
+      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="/images/logo.png" alt=""></a>
+      <h1 class="admin-title">Branding settings</h1>
+      <nav class="admin-nav">
+        <a href="/admin/files">Files</a>
+        <span class="admin-nav-current">Settings</span>
+      </nav>
+    </header>
+
+    {{if .Saved}}<p class="settings-flash settings-flash-ok">Saved.</p>{{end}}
+    {{if .Error}}<p class="settings-flash settings-flash-err">{{.Error}}</p>{{end}}
+
+    <section class="card">
+      <form method="POST" action="/admin/settings" class="settings-form" novalidate>
+        <div class="settings-field">
+          <label for="tagline" class="settings-label">Tagline</label>
+          <input id="tagline" name="tagline" type="text" maxlength="200" value="{{.Tagline}}" autocomplete="off">
+          <p class="settings-hint">Shown beneath the hostname on the homepage. Leave empty to hide.</p>
+        </div>
+
+        <div class="settings-field">
+          <label for="email_contact" class="settings-label">Contact email</label>
+          <input id="email_contact" name="email_contact" type="email" maxlength="200" value="{{.EmailContact}}" autocomplete="off">
+          <p class="settings-hint">Adds a "contact" link in the footer. Leave empty to hide.</p>
+        </div>
+
+        <div class="settings-actions">
+          <button type="submit" class="btn-primary">Save</button>
+          <button type="submit" name="reset" value="1" class="btn-secondary">Reset to defaults</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

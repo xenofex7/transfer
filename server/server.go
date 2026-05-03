@@ -105,10 +105,20 @@ func EmailContact(emailContact string) OptionFn {
 	}
 }
 
-// Tagline sets the homepage tagline shown beneath the hostname.
+// Tagline sets the bootstrap homepage tagline. The actual tagline served at
+// runtime can be overridden via the admin settings panel and persisted to
+// the settings file in basedir.
 func Tagline(s string) OptionFn {
 	return func(srvr *Server) {
 		srvr.tagline = s
+	}
+}
+
+// SettingsPath wires the runtime-mutable settings store. Pass an empty path
+// to keep the store in memory only (admin edits won't survive a restart).
+func SettingsPath(path string) OptionFn {
+	return func(srvr *Server) {
+		srvr.settingsPath = path
 	}
 }
 
@@ -287,6 +297,8 @@ type Server struct {
 	proxyPort    string
 	emailContact string
 	tagline      string
+	settings     *settingsStore
+	settingsPath string
 
 	uploadWebhookURL string
 	webhookToken     string
@@ -330,12 +342,21 @@ func New(options ...OptionFn) (*Server, error) {
 	s := &Server{
 		locks:             sync.Map{},
 		clamavScanTimeout: 60 * time.Second,
-		tagline:           "Easy and fast file sharing from the command line.",
+		tagline:           DefaultTagline,
 	}
 
 	for _, optionFn := range options {
 		optionFn(s)
 	}
+
+	store, err := newSettingsStore(s.settingsPath, Settings{
+		Tagline:      s.tagline,
+		EmailContact: s.emailContact,
+	})
+	if err != nil {
+		return nil, err
+	}
+	s.settings = store
 
 	return s, nil
 }
@@ -433,6 +454,8 @@ func (s *Server) Run() {
 
 	r.HandleFunc("/health.html", healthHandler).Methods("GET")
 	r.Handle("/admin/files", s.basicAuthHandler(http.HandlerFunc(s.adminFilesHandler))).Methods("GET")
+	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsGetHandler))).Methods("GET")
+	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsPostHandler))).Methods("POST")
 	r.HandleFunc("/", s.viewHandler).Methods("GET")
 
 	r.HandleFunc("/({files:.*}).zip", s.zipHandler).Methods("GET")
