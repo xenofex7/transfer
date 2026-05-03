@@ -26,11 +26,11 @@
     if (!value) return;
 
     var done = function () {
-      var prev = btn.textContent;
-      btn.textContent = 'copied';
+      var prevTitle = btn.title;
+      btn.title = 'Copied';
       btn.classList.add('copied');
       setTimeout(function () {
-        btn.textContent = prev;
+        btn.title = prevTitle;
         btn.classList.remove('copied');
       }, 1200);
     };
@@ -67,8 +67,9 @@
     if (!window.confirm('Delete "' + name + '"? This cannot be undone.')) return;
 
     var row = btn.closest('tr');
+    var prevTitle = btn.title;
     btn.disabled = true;
-    btn.textContent = 'deleting...';
+    btn.title = 'Deleting...';
 
     fetch(url, { method: 'DELETE', credentials: 'include' })
       .then(function (resp) {
@@ -82,14 +83,14 @@
           updateCount(-1);
         } else {
           btn.disabled = false;
-          btn.textContent = 'failed (' + resp.status + ')';
-          setTimeout(function () { btn.textContent = 'delete'; }, 2000);
+          btn.title = 'Failed (' + resp.status + ') - click to retry';
+          setTimeout(function () { btn.title = prevTitle; }, 2000);
         }
       })
       .catch(function () {
         btn.disabled = false;
-        btn.textContent = 'network error';
-        setTimeout(function () { btn.textContent = 'delete'; }, 2000);
+        btn.title = 'Network error - click to retry';
+        setTimeout(function () { btn.title = prevTitle; }, 2000);
       });
   });
 

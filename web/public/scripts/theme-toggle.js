@@ -44,6 +44,14 @@
     return 'monitor';
   }
 
+  // Render every static <i data-lucide="..."> the server emitted (admin
+  // table actions, footer github icon, etc). theme-toggle.js loads after
+  // lucide and after the page-specific scripts, so this is the natural
+  // place to do a one-shot global pass.
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons({ nameAttr: 'data-lucide' });
+  }
+
   var btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'theme-toggle';

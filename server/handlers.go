@@ -77,6 +77,11 @@ var (
 	textTemplates = initTextTemplates()
 )
 
+// BuildVersion is set by cmd at startup from the same ldflags-injected
+// constant that powers the CLI's --version. Templates surface it via the
+// build_version helper so the footer can show "v1.1.1" or similar.
+var BuildVersion = "dev"
+
 func initTextTemplates() *textTemplate.Template {
 	templateMap := textTemplate.FuncMap{"format": formatNumber}
 
@@ -87,12 +92,14 @@ func initTextTemplates() *textTemplate.Template {
 
 func initHTMLTemplates() *htmlTemplate.Template {
 	templateMap := htmlTemplate.FuncMap{
-		"format":           formatNumber,
-		"asset":            func(path string) string { return path + "?v=" + web.Version },
-		"logo_url":         brandingLogoURL,
-		"favicon_url":      brandingFaviconURL,
-		"theme_default":    themeDefault,
-		"theme_bootstrap":  themeBootstrap,
+		"format":          formatNumber,
+		"asset":           func(path string) string { return path + "?v=" + web.Version },
+		"logo_url":        brandingLogoURL,
+		"favicon_url":     brandingFaviconURL,
+		"theme_default":   themeDefault,
+		"theme_bootstrap": themeBootstrap,
+		"build_version":   func() string { return BuildVersion },
+		"contact_email":   contactEmail,
 	}
 
 	// Templates with functions available to them
@@ -129,6 +136,16 @@ func themeDefault() string {
 		}
 	}
 	return DefaultTheme
+}
+
+// contactEmail surfaces the operator-configured contact address from the
+// settings store so any page can render a "contact" link in its footer
+// without having to thread the value through its data context.
+func contactEmail() string {
+	if s := activeSettings.Load(); s != nil {
+		return s.Get().EmailContact
+	}
+	return ""
 }
 
 // themeBootstrap returns the inline <script> tag rendered into every

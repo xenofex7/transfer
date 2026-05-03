@@ -15,7 +15,7 @@ import (
 )
 
 // Version is inject at build time
-var Version = "0.0.0"
+var Version = "dev"
 var helpTemplate = `NAME:
 {{.Name}} - {{.Usage}}
 
@@ -206,6 +206,10 @@ func versionCommand(_ *cli.Context) error {
 // New is the factory for transfer.sh
 func New() *Cmd {
 	logger := log.New(os.Stdout, "[transfer.sh]", log.LstdFlags)
+
+	// Surface the ldflags-injected build version to handlers/templates so
+	// the footer can render it.
+	server.BuildVersion = Version
 
 	app := cli.NewApp()
 	app.Name = "transfer.sh"

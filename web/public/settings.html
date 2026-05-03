@@ -83,6 +83,14 @@
       </div>
     </section>
     {{end}}
+
+    <footer class="footer">
+      <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
+      <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>
+      <a class="footer-link" href="https://github.com/xenofex7/transfer.sh" target="_blank" rel="noopener">
+        <i data-lucide="git-branch"></i><span>source on github</span>
+      </a>
+    </footer>
   </main>
   <script>
     document.querySelectorAll('[data-branding-reset]').forEach(function (btn) {
