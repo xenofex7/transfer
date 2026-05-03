@@ -9,25 +9,37 @@ package server
 import (
 	"net/http"
 	"net/mail"
+	"path/filepath"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 // adminSettingsData is the template context for settings.html.
 type adminSettingsData struct {
-	Hostname     string
-	Tagline      string
-	EmailContact string
-	Saved        bool
-	Error        string
+	Hostname        string
+	Tagline         string
+	EmailContact    string
+	HasLogo         bool
+	HasFavicon      bool
+	BrandingEnabled bool
+	Saved           bool
+	Error           string
 }
 
 func (s *Server) adminSettingsGetHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := s.settings.Get()
-	s.renderSettings(w, r, adminSettingsData{
-		Hostname:     getURL(r, s.proxyPort).Host,
-		Tagline:      cfg.Tagline,
-		EmailContact: cfg.EmailContact,
-	})
+	data := s.settingsData(r, cfg.Tagline, cfg.EmailContact)
+	if c, err := r.Cookie("settings_flash_ok"); err == nil && c.Value != "" {
+		data.Saved = true
+		// best-effort cookie clear
+		http.SetCookie(w, &http.Cookie{Name: "settings_flash_ok", Value: "", Path: "/admin/settings", MaxAge: -1})
+	}
+	if c, err := r.Cookie("settings_flash_err"); err == nil && c.Value != "" {
+		data.Error = c.Value
+		http.SetCookie(w, &http.Cookie{Name: "settings_flash_err", Value: "", Path: "/admin/settings", MaxAge: -1})
+	}
+	s.renderSettings(w, r, data)
 }
 
 func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,43 +57,31 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if len(next.Tagline) > 200 || len(next.EmailContact) > 200 {
-		s.renderSettings(w, r, adminSettingsData{
-			Hostname:     getURL(r, s.proxyPort).Host,
-			Tagline:      next.Tagline,
-			EmailContact: next.EmailContact,
-			Error:        "Values must be 200 characters or fewer.",
-		})
+		data := s.settingsData(r, next.Tagline, next.EmailContact)
+		data.Error = "Values must be 200 characters or fewer."
+		s.renderSettings(w, r, data)
 		return
 	}
 	if next.EmailContact != "" {
 		if _, err := mail.ParseAddress(next.EmailContact); err != nil {
-			s.renderSettings(w, r, adminSettingsData{
-				Hostname:     getURL(r, s.proxyPort).Host,
-				Tagline:      next.Tagline,
-				EmailContact: next.EmailContact,
-				Error:        "Contact email is not a valid address.",
-			})
+			data := s.settingsData(r, next.Tagline, next.EmailContact)
+			data.Error = "Contact email is not a valid address."
+			s.renderSettings(w, r, data)
 			return
 		}
 	}
 
 	if err := s.settings.Set(next); err != nil {
 		s.logger.Printf("admin: settings.Set: %v", err)
-		s.renderSettings(w, r, adminSettingsData{
-			Hostname:     getURL(r, s.proxyPort).Host,
-			Tagline:      next.Tagline,
-			EmailContact: next.EmailContact,
-			Error:        "Could not persist settings: " + err.Error(),
-		})
+		data := s.settingsData(r, next.Tagline, next.EmailContact)
+		data.Error = "Could not persist settings: " + err.Error()
+		s.renderSettings(w, r, data)
 		return
 	}
 
-	s.renderSettings(w, r, adminSettingsData{
-		Hostname:     getURL(r, s.proxyPort).Host,
-		Tagline:      next.Tagline,
-		EmailContact: next.EmailContact,
-		Saved:        true,
-	})
+	data := s.settingsData(r, next.Tagline, next.EmailContact)
+	data.Saved = true
+	s.renderSettings(w, r, data)
 }
 
 func (s *Server) renderSettings(w http.ResponseWriter, _ *http.Request, data adminSettingsData) {
@@ -90,3 +90,82 @@ func (s *Server) renderSettings(w http.ResponseWriter, _ *http.Request, data adm
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
+
+// settingsData centralises the template-context construction so every code
+// path renders the same hostname / branding-state info.
+func (s *Server) settingsData(r *http.Request, tagline, email string) adminSettingsData {
+	d := adminSettingsData{
+		Hostname:        getURL(r, s.proxyPort).Host,
+		Tagline:         tagline,
+		EmailContact:    email,
+		BrandingEnabled: s.branding != nil && s.brandingDir != "",
+	}
+	if s.branding != nil {
+		d.HasLogo = s.branding.Get(BrandingLogo).exists
+		d.HasFavicon = s.branding.Get(BrandingFavicon).exists
+	}
+	return d
+}
+
+// adminBrandingUploadHandler accepts a multipart upload of a single image
+// for the given slot, validates extension and size via brandingStore.Save,
+// then redirects back to the settings page with a flash result.
+func (s *Server) adminBrandingUploadHandler(w http.ResponseWriter, r *http.Request) {
+	slot := BrandingSlot(mux.Vars(r)["slot"])
+	if s.branding == nil || s.brandingDir == "" {
+		s.brandingFlashAndRedirect(w, r, "Branding storage not configured.", true)
+		return
+	}
+
+	if err := r.ParseMultipartForm(MaxBrandingBytes + 1<<10); err != nil {
+		s.brandingFlashAndRedirect(w, r, "Could not parse upload: "+err.Error(), true)
+		return
+	}
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		s.brandingFlashAndRedirect(w, r, "No file in upload.", true)
+		return
+	}
+	defer func() { _ = file.Close() }()
+
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	if err := s.branding.Save(slot, ext, file); err != nil {
+		s.brandingFlashAndRedirect(w, r, err.Error(), true)
+		return
+	}
+	s.brandingFlashAndRedirect(w, r, string(slot)+" updated", false)
+}
+
+// adminBrandingDeleteHandler removes the custom file for slot, restoring
+// the embedded fallback.
+func (s *Server) adminBrandingDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	slot := BrandingSlot(mux.Vars(r)["slot"])
+	if s.branding == nil {
+		http.Error(w, "branding store not configured", http.StatusServiceUnavailable)
+		return
+	}
+	if err := s.branding.Delete(slot); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// brandingFlashAndRedirect sets a one-shot cookie the GET handler reads to
+// surface success/error messages, then redirects back to /admin/settings.
+func (s *Server) brandingFlashAndRedirect(w http.ResponseWriter, r *http.Request, msg string, isError bool) {
+	name := "settings_flash_ok"
+	if isError {
+		name = "settings_flash_err"
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     name,
+		Value:    msg,
+		Path:     "/admin/settings",
+		MaxAge:   30,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+	http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)
+}
+

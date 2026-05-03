@@ -87,14 +87,32 @@ func initTextTemplates() *textTemplate.Template {
 
 func initHTMLTemplates() *htmlTemplate.Template {
 	templateMap := htmlTemplate.FuncMap{
-		"format": formatNumber,
-		"asset":  func(path string) string { return path + "?v=" + web.Version },
+		"format":      formatNumber,
+		"asset":       func(path string) string { return path + "?v=" + web.Version },
+		"logo_url":    brandingLogoURL,
+		"favicon_url": brandingFaviconURL,
 	}
 
 	// Templates with functions available to them
 	var templates = htmlTemplate.New("").Funcs(templateMap)
 
 	return templates
+}
+
+// brandingLogoURL is what the templates call. It reads the active branding
+// store at request time so a fresh upload is reflected without a restart.
+func brandingLogoURL() string {
+	if b := activeBranding.Load(); b != nil {
+		return b.LogoURL()
+	}
+	return "/images/logo.png?v=" + web.Version
+}
+
+func brandingFaviconURL() string {
+	if b := activeBranding.Load(); b != nil {
+		return b.FaviconURL()
+	}
+	return "/favicon.ico?v=" + web.Version
 }
 
 func attachEncryptionReader(reader io.ReadCloser, password string) (io.ReadCloser, error) {

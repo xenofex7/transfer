@@ -5,13 +5,13 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Settings &middot; {{.Hostname}}</title>
-  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link rel="icon" href="{{favicon_url}}">
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
 </head>
 <body>
   <main class="page">
     <header class="admin-head">
-      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="/images/logo.png" alt=""></a>
+      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
       <h1 class="admin-title">Branding settings</h1>
       <nav class="admin-nav">
         <a href="/admin/files">Files</a>
@@ -42,6 +42,50 @@
         </div>
       </form>
     </section>
+
+    {{if .BrandingEnabled}}
+    <section class="card">
+      <h2 class="settings-section-title">Branding assets</h2>
+
+      <div class="branding-grid">
+        <div class="branding-slot">
+          <p class="settings-label">Logo</p>
+          <img class="branding-preview" src="{{logo_url}}" alt="Current logo preview">
+          <p class="settings-hint">PNG / JPG / SVG / WebP / GIF, max 1 MiB. Replaces the embedded logo across the whole site.</p>
+          <form method="POST" action="/admin/branding/logo" enctype="multipart/form-data" class="branding-form">
+            <input type="file" name="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" required>
+            <button type="submit" class="btn-primary">Upload</button>
+            {{if .HasLogo}}<button type="button" class="btn-secondary" data-branding-reset="logo">Reset</button>{{end}}
+          </form>
+        </div>
+
+        <div class="branding-slot">
+          <p class="settings-label">Favicon</p>
+          <img class="branding-preview branding-preview-small" src="{{favicon_url}}" alt="Current favicon preview">
+          <p class="settings-hint">ICO / PNG / SVG, max 1 MiB. Browsers may cache aggressively.</p>
+          <form method="POST" action="/admin/branding/favicon" enctype="multipart/form-data" class="branding-form">
+            <input type="file" name="file" accept="image/x-icon,image/png,image/svg+xml,.ico" required>
+            <button type="submit" class="btn-primary">Upload</button>
+            {{if .HasFavicon}}<button type="button" class="btn-secondary" data-branding-reset="favicon">Reset</button>{{end}}
+          </form>
+        </div>
+      </div>
+    </section>
+    {{end}}
   </main>
+  <script>
+    document.querySelectorAll('[data-branding-reset]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var slot = btn.getAttribute('data-branding-reset');
+        if (!confirm('Remove the custom ' + slot + ' and revert to the embedded default?')) return;
+        fetch('/admin/branding/' + slot, { method: 'DELETE', credentials: 'same-origin' })
+          .then(function (r) {
+            if (r.ok) { window.location.reload(); return; }
+            r.text().then(function (t) { alert('Reset failed: ' + t); });
+          })
+          .catch(function (e) { alert('Reset failed: ' + e); });
+      });
+    });
+  </script>
 </body>
 </html>

@@ -122,6 +122,15 @@ func SettingsPath(path string) OptionFn {
 	}
 }
 
+// BrandingDir is the directory that holds operator-uploaded branding assets
+// (logo, favicon). Empty disables custom branding (admin upload UI shows
+// nothing to do).
+func BrandingDir(dir string) OptionFn {
+	return func(srvr *Server) {
+		srvr.brandingDir = dir
+	}
+}
+
 // WebPath sets web path
 func WebPath(s string) OptionFn {
 	return func(srvr *Server) {
@@ -299,6 +308,8 @@ type Server struct {
 	tagline      string
 	settings     *settingsStore
 	settingsPath string
+	branding     *brandingStore
+	brandingDir  string
 
 	uploadWebhookURL string
 	webhookToken     string
@@ -357,6 +368,13 @@ func New(options ...OptionFn) (*Server, error) {
 		return nil, err
 	}
 	s.settings = store
+
+	branding, err := newBrandingStore(s.brandingDir)
+	if err != nil {
+		return nil, err
+	}
+	s.branding = branding
+	activeBranding.Store(branding)
 
 	return s, nil
 }
@@ -456,6 +474,10 @@ func (s *Server) Run() {
 	r.Handle("/admin/files", s.basicAuthHandler(http.HandlerFunc(s.adminFilesHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsGetHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsPostHandler))).Methods("POST")
+	r.Handle("/admin/branding/{slot:logo|favicon}", s.basicAuthHandler(http.HandlerFunc(s.adminBrandingUploadHandler))).Methods("POST")
+	r.Handle("/admin/branding/{slot:logo|favicon}", s.basicAuthHandler(http.HandlerFunc(s.adminBrandingDeleteHandler))).Methods("DELETE")
+	r.Handle("/branding/logo", s.brandingHandler(BrandingLogo)).Methods("GET")
+	r.Handle("/branding/favicon", s.brandingHandler(BrandingFavicon)).Methods("GET")
 	r.HandleFunc("/", s.viewHandler).Methods("GET")
 
 	r.HandleFunc("/({files:.*}).zip", s.zipHandler).Methods("GET")
