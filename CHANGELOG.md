@@ -7,6 +7,26 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-05-03
+
+### Added
+- Admin settings page at `/admin/settings` for runtime tagline and contact email
+- Custom logo and favicon upload via admin settings
+- Light/dark/system theme switch with persistent admin default
+- Toast notifier and clickable changelog modal in the footer
+
+### Changed
+- Settings save and branding upload now use POST/Redirect/GET with toast feedback
+- Adopted Lucide as the project-wide icon set
+- Replaced terminal mono look with the system sans stack
+- Design pass unifying 6px corners, fixed footer, dropzone, and icons
+
+### Removed
+- Client-side PGP encryption, along with the related tagline
+
+### Fixed
+- Deduplicated the 1.1.1 changelog block from the auto-generated entry
+
 ## [1.1.1] - 2026-05-03
 
 ### Fixed
