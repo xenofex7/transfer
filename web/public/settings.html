@@ -99,14 +99,26 @@
         if (!confirm('Remove the custom ' + slot + ' and revert to the embedded default?')) return;
         fetch('/admin/branding/' + slot, { method: 'DELETE', credentials: 'same-origin' })
           .then(function (r) {
-            if (r.ok) { window.location.reload(); return; }
-            r.text().then(function (t) { alert('Reset failed: ' + t); });
+            if (r.ok) {
+              if (window.toast) window.toast.success(slot.charAt(0).toUpperCase() + slot.slice(1) + ' reset to default');
+              setTimeout(function () { window.location.reload(); }, 600);
+              return;
+            }
+            r.text().then(function (t) {
+              if (window.toast) window.toast.error('Reset failed: ' + t);
+              else alert('Reset failed: ' + t);
+            });
           })
-          .catch(function (e) { alert('Reset failed: ' + e); });
+          .catch(function (e) {
+            if (window.toast) window.toast.error('Reset failed: ' + e);
+            else alert('Reset failed: ' + e);
+          });
       });
     });
   </script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
+  <script src="{{asset "/scripts/toast.js"}}" defer></script>
+  <script src="{{asset "/scripts/changelog-modal.js"}}" defer></script>
   <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>

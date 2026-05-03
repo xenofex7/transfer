@@ -33,6 +33,7 @@
         btn.title = prevTitle;
         btn.classList.remove('copied');
       }, 1200);
+      if (window.toast) window.toast.success('Link copied to clipboard');
     };
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -81,16 +82,19 @@
             setTimeout(function () { row && row.parentNode && row.parentNode.removeChild(row); }, 220);
           }
           updateCount(-1);
+          if (window.toast) window.toast.success('Deleted ' + name);
         } else {
           btn.disabled = false;
           btn.title = 'Failed (' + resp.status + ') - click to retry';
           setTimeout(function () { btn.title = prevTitle; }, 2000);
+          if (window.toast) window.toast.error('Delete failed (' + resp.status + ')');
         }
       })
       .catch(function () {
         btn.disabled = false;
         btn.title = 'Network error - click to retry';
         setTimeout(function () { btn.title = prevTitle; }, 2000);
+        if (window.toast) window.toast.error('Delete failed: network error');
       });
   });
 

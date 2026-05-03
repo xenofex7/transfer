@@ -139,15 +139,18 @@
       } else if (xhr.status === 401) {
         item.classList.add('is-error');
         status.textContent = 'auth required';
+        if (window.toast) window.toast.error('Auth required to upload ' + file.name);
       } else {
         item.classList.add('is-error');
         status.textContent = 'failed (' + xhr.status + ')';
+        if (window.toast) window.toast.error('Upload failed (' + xhr.status + '): ' + file.name);
       }
     });
 
     xhr.addEventListener('error', function () {
       item.classList.add('is-error');
       status.textContent = 'network error';
+      if (window.toast) window.toast.error('Network error uploading ' + file.name);
     });
 
     xhr.send(file);
@@ -173,6 +176,7 @@
         btn.classList.remove('is-copied');
         btn.title = 'Copy link';
       }, 1500);
+      if (window.toast) window.toast.success('Link copied to clipboard');
     };
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(done, function () {

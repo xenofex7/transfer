@@ -804,3 +804,146 @@ button { font: inherit; }
 .theme-toggle:hover { color: var(--text); border-color: var(--accent); }
 .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-toggle svg { width: 18px; height: 18px; }
+
+/* ----- toast notifier ----- */
+.toast-container {
+  position: fixed;
+  top: 4rem;          /* leave room for the theme-toggle at top-right */
+  right: 1rem;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: calc(100vw - 2rem);
+  pointer-events: none;
+}
+.toast {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 240px;
+  max-width: 360px;
+  padding: 0.625rem 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-dim);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  font-size: 0.8125rem;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.toast.is-in { opacity: 1; transform: translateX(0); }
+.toast.is-out { opacity: 0; transform: translateX(8px); }
+.toast-icon { display: inline-flex; align-items: center; justify-content: center; }
+.toast-icon svg { width: 16px; height: 16px; }
+.toast-msg { line-height: 1.35; word-break: break-word; }
+.toast-close {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.toast-close:hover { color: var(--text); background: var(--surface-2); }
+.toast-close svg { width: 14px; height: 14px; }
+.toast-success { border-left-color: var(--accent); }
+.toast-success .toast-icon { color: var(--accent); }
+.toast-error   { border-left-color: var(--danger); }
+.toast-error   .toast-icon { color: var(--danger); }
+.toast-info    .toast-icon { color: var(--text-dim); }
+
+/* ----- modal (used for the changelog viewer) ----- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.modal-backdrop.is-in { opacity: 1; }
+.modal {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: min(680px, 100%);
+  max-height: min(80vh, 800px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  transform: translateY(8px);
+  transition: transform 160ms ease;
+}
+.modal-backdrop.is-in .modal { transform: translateY(0); }
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.125rem;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title { margin: 0; font-size: 0.95rem; font-weight: 600; }
+.modal-close {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.modal-close:hover { color: var(--text); background: var(--surface-2); }
+.modal-close svg { width: 16px; height: 16px; }
+.modal-body {
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+/* loose markdown styling for changelog content */
+.modal-body h1, .modal-body h2, .modal-body h3 {
+  margin: 1.25rem 0 0.5rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+.modal-body h1 { font-size: 1.1rem; }
+.modal-body h2 { font-size: 1rem; color: var(--text); }
+.modal-body h3 { font-size: 0.9rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+.modal-body h2:first-child, .modal-body h1:first-child { margin-top: 0; }
+.modal-body ul { margin: 0.25rem 0 0.75rem; padding-left: 1.25rem; }
+.modal-body li { margin: 0.15rem 0; }
+.modal-body a { color: var(--accent); }
+.modal-body code { background: var(--surface-2); padding: 0.05rem 0.3rem; border-radius: var(--radius-sm); font-family: var(--mono); font-size: 0.85em; }
+
+/* footer-version becomes an inline button when interactive */
+.footer-version-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.footer-version-link:hover { color: var(--text); }
