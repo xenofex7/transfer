@@ -42,6 +42,7 @@ services:
       EMAIL_CONTACT: "${EMAIL_CONTACT:-}"
       UPLOAD_WEBHOOK_URL: "${UPLOAD_WEBHOOK_URL:-}"
       WEBHOOK_TOKEN: "${WEBHOOK_TOKEN:-}"
+      CLAMAV_SCAN_TIMEOUT: "${CLAMAV_SCAN_TIMEOUT:-600}"
     volumes:
       - transfersh-data:/data
       - type: bind
@@ -70,6 +71,12 @@ services:
       - internal
     volumes:
       - clamav-db:/var/lib/clamav
+      - type: bind
+        source: ./clamd.conf
+        target: /etc/clamav/clamd.conf
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
       test: ["CMD", "clamdcheck.sh"]
       interval: 30s

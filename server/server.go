@@ -72,6 +72,16 @@ func PerformClamavPrescan(b bool) OptionFn {
 	}
 }
 
+// ClamavScanTimeout sets the per-stream scan timeout in seconds.
+// Values <= 0 are ignored and the built-in default is kept.
+func ClamavScanTimeout(seconds int) OptionFn {
+	return func(srvr *Server) {
+		if seconds > 0 {
+			srvr.clamavScanTimeout = time.Duration(seconds) * time.Second
+		}
+	}
+}
+
 // Listener set listener
 func Listener(s string) OptionFn {
 	return func(srvr *Server) {
@@ -261,6 +271,7 @@ type Server struct {
 
 	ClamAVDaemonHost     string
 	performClamavPrescan bool
+	clamavScanTimeout    time.Duration
 
 	tempPath string
 
@@ -309,7 +320,8 @@ func WebhookToken(s string) OptionFn {
 // New is the factory fot Server
 func New(options ...OptionFn) (*Server, error) {
 	s := &Server{
-		locks: sync.Map{},
+		locks:             sync.Map{},
+		clamavScanTimeout: 60 * time.Second,
 	}
 
 	for _, optionFn := range options {

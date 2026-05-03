@@ -116,7 +116,7 @@ func (s *Server) performScan(path string) (string, error) {
 	case response := <-responseCh:
 		st := <-response
 		return st.Status, nil
-	case <-time.After(time.Second * 60):
+	case <-time.After(s.clamavScanTimeout):
 		return "", errors.New("clamav scan timeout")
 	}
 }

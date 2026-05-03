@@ -119,6 +119,12 @@ var globalFlags = []cli.Flag{
 		Usage:   "perform-clamav-prescan",
 		EnvVars: []string{"PERFORM_CLAMAV_PRESCAN"},
 	},
+	&cli.IntFlag{
+		Name:    "clamav-scan-timeout",
+		Usage:   "clamav scan timeout in seconds",
+		Value:   60,
+		EnvVars: []string{"CLAMAV_SCAN_TIMEOUT"},
+	},
 	&cli.StringFlag{
 		Name:    "http-auth-user",
 		Usage:   "user for http basic auth",
@@ -260,6 +266,10 @@ func New() *Cmd {
 			}
 
 			options = append(options, server.PerformClamavPrescan(v))
+		}
+
+		if v := c.Int("clamav-scan-timeout"); v > 0 {
+			options = append(options, server.ClamavScanTimeout(v))
 		}
 
 		if v := c.Int64("max-upload-size"); v > 0 {

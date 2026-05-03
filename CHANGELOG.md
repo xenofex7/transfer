@@ -7,6 +7,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-05-03
+
+### Fixed
+- Large uploads (>25 MB) failing with HTTP 500 because clamd's default
+  `StreamMaxLength` aborted the prescan stream. Ship a bundled `clamd.conf`
+  that raises the stream / file / scan limits to 6 GiB.
+
+### Added
+- `CLAMAV_SCAN_TIMEOUT` env / `--clamav-scan-timeout` flag to lift the
+  hard-coded 60 s scan timeout. Defaults to 60 s in code, 600 s in the
+  shipped compose stack.
+
 ## [1.1.0] - 2026-05-02
 
 ### Added
