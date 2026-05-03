@@ -105,6 +105,13 @@ func EmailContact(emailContact string) OptionFn {
 	}
 }
 
+// Tagline sets the homepage tagline shown beneath the hostname.
+func Tagline(s string) OptionFn {
+	return func(srvr *Server) {
+		srvr.tagline = s
+	}
+}
+
 // WebPath sets web path
 func WebPath(s string) OptionFn {
 	return func(srvr *Server) {
@@ -279,6 +286,7 @@ type Server struct {
 	proxyPath    string
 	proxyPort    string
 	emailContact string
+	tagline      string
 
 	uploadWebhookURL string
 	webhookToken     string
@@ -322,6 +330,7 @@ func New(options ...OptionFn) (*Server, error) {
 	s := &Server{
 		locks:             sync.Map{},
 		clamavScanTimeout: 60 * time.Second,
+		tagline:           "Easy and fast file sharing from the command line.",
 	}
 
 	for _, optionFn := range options {

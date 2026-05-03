@@ -76,6 +76,7 @@
     var name = document.createElement('span');
     name.className = 'upload-name';
     name.textContent = file.name;
+    name.title = file.name;
     var status = document.createElement('span');
     status.className = 'upload-status';
     status.textContent = '0%';
@@ -89,6 +90,7 @@
 
     var maxDays = optMaxDays && parseInt(optMaxDays.value, 10);
     if (maxDays && maxDays > 0) {
+      if (maxDays > 365) maxDays = 365;
       xhr.setRequestHeader('Max-Days', String(maxDays));
     }
     var maxDownloads = optMaxDownloads && parseInt(optMaxDownloads.value, 10);
@@ -107,12 +109,33 @@
         var url = (xhr.responseText || '').trim();
         item.classList.add('is-done');
         item.removeChild(status);
+
+        var result = document.createElement('div');
+        result.className = 'upload-result';
+
         var link = document.createElement('a');
         link.href = url;
-        link.textContent = url;
+        link.className = 'upload-link';
+        link.textContent = shortenUrl(url);
+        link.title = url;
         link.target = '_blank';
         link.rel = 'noopener';
-        item.appendChild(link);
+        result.appendChild(link);
+
+        var copy = document.createElement('button');
+        copy.type = 'button';
+        copy.className = 'upload-copy';
+        copy.title = 'Copy link';
+        copy.setAttribute('aria-label', 'Copy link');
+        copy.innerHTML = copyIconSvg();
+        copy.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          copyToClipboard(url, copy);
+        });
+        result.appendChild(copy);
+
+        item.appendChild(result);
       } else if (xhr.status === 401) {
         item.classList.add('is-error');
         status.textContent = 'auth required';
@@ -128,5 +151,56 @@
     });
 
     xhr.send(file);
+  }
+
+  // ----- helpers -----
+  function shortenUrl(url) {
+    try {
+      var u = new URL(url);
+      var parts = u.pathname.split('/').filter(Boolean);
+      var token = parts[0] || '';
+      return u.host + '/' + token;
+    } catch (_) {
+      return url;
+    }
+  }
+
+  function copyToClipboard(text, btn) {
+    var done = function () {
+      btn.classList.add('is-copied');
+      btn.title = 'Copied';
+      setTimeout(function () {
+        btn.classList.remove('is-copied');
+        btn.title = 'Copy link';
+      }, 1500);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, function () {
+        legacyCopy(text);
+        done();
+      });
+    } else {
+      legacyCopy(text);
+      done();
+    }
+  }
+
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (_) { /* ignore */ }
+    document.body.removeChild(ta);
+  }
+
+  function copyIconSvg() {
+    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
+      '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
+      '</svg>';
   }
 })();

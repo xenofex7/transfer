@@ -14,21 +14,8 @@
     <header class="hero">
       <img class="logo" src="/images/logo.png" alt="">
       <h1 class="hostname">{{.Hostname}}</h1>
-      <p class="tagline">Easy and fast file sharing from the command line.</p>
+      {{if .Tagline}}<p class="tagline">{{.Tagline}}</p>{{end}}
     </header>
-
-    <section class="card snippet">
-      <pre><code><span class="comment"># Upload with curl</span>
-$ curl --upload-file ./hello.txt {{.WebAddress}}hello.txt
-{{.WebAddress}}{{.SampleToken}}/hello.txt
-
-<span class="comment"># Upload from the shell helper (see README)</span>
-$ transfer hello.txt
-{{.WebAddress}}{{.SampleToken2}}/hello.txt
-
-<span class="comment"># Drag a file into the box below</span>
-</code></pre>
-    </section>
 
     <section class="card dropzone" id="dropzone" tabindex="0" aria-label="Drop files to upload">
       <input type="file" id="fileinput" multiple hidden>
@@ -45,7 +32,7 @@ $ transfer hello.txt
         <label class="upload-option">
           <span class="upload-option-label">Auto-delete after</span>
           <span class="upload-option-input">
-            <input id="opt-max-days" type="number" min="1" step="1" placeholder="365" autocomplete="off">
+            <input id="opt-max-days" type="number" min="1" max="365" step="1" value="30" placeholder="30" autocomplete="off">
             <span class="upload-option-suffix">days</span>
           </span>
         </label>

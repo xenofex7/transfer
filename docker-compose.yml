@@ -40,6 +40,7 @@ services:
       PROXY_PATH: "${PROXY_PATH:-}"
       PROXY_PORT: "${PROXY_PORT:-}"
       EMAIL_CONTACT: "${EMAIL_CONTACT:-}"
+      TAGLINE: "${TAGLINE:-Easy and fast file sharing from the command line.}"
       UPLOAD_WEBHOOK_URL: "${UPLOAD_WEBHOOK_URL:-}"
       WEBHOOK_TOKEN: "${WEBHOOK_TOKEN:-}"
       CLAMAV_SCAN_TIMEOUT: "${CLAMAV_SCAN_TIMEOUT:-600}"

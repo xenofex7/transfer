@@ -72,6 +72,12 @@ var globalFlags = []cli.Flag{
 		Value:   "",
 		EnvVars: []string{"EMAIL_CONTACT"},
 	},
+	&cli.StringFlag{
+		Name:    "tagline",
+		Usage:   "tagline shown beneath the hostname on the homepage; empty hides it",
+		Value:   "Easy and fast file sharing from the command line.",
+		EnvVars: []string{"TAGLINE"},
+	},
 	&cli.IntFlag{
 		Name:    "rate-limit",
 		Usage:   "requests per minute",
@@ -245,6 +251,8 @@ func New() *Cmd {
 		if v := c.String("email-contact"); v != "" {
 			options = append(options, server.EmailContact(v))
 		}
+
+		options = append(options, server.Tagline(c.String("tagline")))
 
 		if v := c.String("temp-path"); v != "" {
 			options = append(options, server.TempPath(v))

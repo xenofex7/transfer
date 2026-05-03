@@ -382,6 +382,7 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		Hostname      string
 		WebAddress    string
 		EmailContact  string
+		Tagline       string
 		GAKey         string
 		UserVoiceKey  string
 		PurgeTime     string
@@ -392,6 +393,7 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		hostname,
 		webAddress,
 		s.emailContact,
+		s.tagline,
 		"",
 		"",
 		purgeTime,
