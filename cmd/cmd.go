@@ -75,7 +75,7 @@ var globalFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:    "tagline",
 		Usage:   "tagline shown beneath the hostname on the homepage; empty hides it",
-		Value:   "Easy and fast file sharing from the command line.",
+		Value:   "WeTransfer - aber lokal!",
 		EnvVars: []string{"TAGLINE"},
 	},
 	&cli.IntFlag{

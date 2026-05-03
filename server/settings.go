@@ -20,7 +20,7 @@ import (
 var activeSettings atomic.Pointer[settingsStore]
 
 // DefaultTagline is the homepage tagline used when nothing else is set.
-const DefaultTagline = "Easy and fast file sharing from the command line."
+const DefaultTagline = "WeTransfer - aber lokal!"
 
 // DefaultTheme is the initial theme served to first-time visitors before
 // they pick one for themselves via the toggle.

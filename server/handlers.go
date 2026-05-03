@@ -53,10 +53,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/ProtonMail/go-crypto/openpgp/armor"
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/dutchcoders/transfer.sh/server/storage"
 	"github.com/dutchcoders/transfer.sh/web"
 	"github.com/gorilla/mux"
@@ -155,128 +151,6 @@ func themeBootstrap() htmlTemplate.HTML {
 	return htmlTemplate.HTML(`<script>(function(){try{var k='transfersh_theme',v=localStorage.getItem(k);if(v!=='light'&&v!=='dark'&&v!=='system')v=document.documentElement.getAttribute('data-theme-default')||'system';if(v==='light'||v==='dark')document.documentElement.setAttribute('data-theme',v);}catch(e){}})();</script>`)
 }
 
-func attachEncryptionReader(reader io.ReadCloser, password string) (io.ReadCloser, error) {
-	if len(password) == 0 {
-		return reader, nil
-	}
-
-	return encrypt(reader, []byte(password))
-}
-
-func attachDecryptionReader(reader io.ReadCloser, password string) (io.ReadCloser, error) {
-	if len(password) == 0 {
-		return reader, nil
-	}
-
-	return decrypt(reader, []byte(password))
-}
-
-func decrypt(ciphertext io.ReadCloser, password []byte) (plaintext io.ReadCloser, err error) {
-	unarmored, err := armor.Decode(ciphertext)
-	if err != nil {
-		return
-	}
-
-	firstTimeCalled := true
-	var prompt = func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
-		if firstTimeCalled {
-			firstTimeCalled = false
-			return password, nil
-		}
-		// Re-prompt still occurs if SKESK pasrsing fails (i.e. when decrypted cipher algo is invalid).
-		// For most (but not all) cases, inputting a wrong passwords is expected to trigger this error.
-		return nil, errors.New("gopenpgp: wrong password in symmetric decryption")
-	}
-
-	config := &packet.Config{
-		DefaultCipher: packet.CipherAES256,
-	}
-
-	var emptyKeyRing openpgp.EntityList
-	md, err := openpgp.ReadMessage(unarmored.Body, emptyKeyRing, prompt, config)
-	if err != nil {
-		// Parsing errors when reading the message are most likely caused by incorrect password, but we cannot know for sure
-		return
-	}
-
-	plaintext = io.NopCloser(md.UnverifiedBody)
-
-	return
-}
-
-type encryptWrapperReader struct {
-	plaintext         io.Reader
-	encrypt           io.WriteCloser
-	armored           io.WriteCloser
-	buffer            io.ReadWriter
-	plaintextReadZero bool
-}
-
-func (e *encryptWrapperReader) Read(p []byte) (n int, err error) {
-	p2 := make([]byte, len(p))
-
-	n, _ = e.plaintext.Read(p2)
-	if n == 0 {
-		if !e.plaintextReadZero {
-			err = e.encrypt.Close()
-			if err != nil {
-				return
-			}
-
-			err = e.armored.Close()
-			if err != nil {
-				return
-			}
-
-			e.plaintextReadZero = true
-		}
-
-		return e.buffer.Read(p)
-	}
-
-	return e.buffer.Read(p)
-}
-
-func (e *encryptWrapperReader) Close() error {
-	return nil
-}
-
-func NewEncryptWrapperReader(plaintext io.Reader, armored, encrypt io.WriteCloser, buffer io.ReadWriter) io.ReadCloser {
-	return &encryptWrapperReader{
-		plaintext: io.TeeReader(plaintext, encrypt),
-		encrypt:   encrypt,
-		armored:   armored,
-		buffer:    buffer,
-	}
-}
-
-func encrypt(plaintext io.ReadCloser, password []byte) (ciphertext io.ReadCloser, err error) {
-	bufferReadWriter := new(bytes.Buffer)
-	armored, err := armor.Encode(bufferReadWriter, constants.PGPMessageHeader, nil)
-	if err != nil {
-		return
-	}
-	config := &packet.Config{
-		DefaultCipher: packet.CipherAES256,
-		Time:          time.Now,
-	}
-
-	hints := &openpgp.FileHints{
-		IsBinary: true,
-		FileName: "",
-		ModTime:  time.Unix(time.Now().Unix(), 0),
-	}
-
-	encryptWriter, err := openpgp.SymmetricallyEncrypt(armored, password, hints, config)
-	if err != nil {
-		return
-	}
-
-	ciphertext = NewEncryptWrapperReader(plaintext, armored, encryptWriter, bufferReadWriter)
-
-	return
-}
-
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write([]byte("Approaching Neutral Zone, all systems normal and functioning."))
 }
@@ -304,7 +178,7 @@ func canContainsXSS(contentType string) bool {
 
 /* The preview handler will show a preview of the content for browsers (accept type text/html), and referer is not transfer.sh */
 func (s *Server) previewHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Vary", "Range, Referer, X-Decrypt-Password")
+	w.Header().Set("Vary", "Range, Referer")
 
 	vars := mux.Vars(r)
 
@@ -591,13 +465,7 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) {
 
 			s.logger.Printf("Uploading %s %s %d %s", token, filename, contentLength, contentType)
 
-			reader, err := attachEncryptionReader(file, r.Header.Get("X-Encrypt-Password"))
-			if err != nil {
-				http.Error(w, "Could not crypt file", http.StatusInternalServerError)
-				return
-			}
-
-			if err = s.storage.Put(r.Context(), token, filename, reader, contentType, uint64(contentLength)); err != nil {
+			if err = s.storage.Put(r.Context(), token, filename, file, contentType, uint64(contentLength)); err != nil {
 				s.logger.Printf("Backend storage error: %s", err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -656,10 +524,6 @@ type metadata struct {
 	MaxDate time.Time
 	// DeletionToken contains the token to match against for deletion
 	DeletionToken string
-	// Encrypted contains if the file was encrypted
-	Encrypted bool
-	// DecryptedContentType is the original uploading content type
-	DecryptedContentType string
 	// LastDownloadedAt is the timestamp of the most recent successful
 	// download. Zero value means the file has never been downloaded.
 	LastDownloadedAt time.Time
@@ -685,14 +549,6 @@ func metadataForRequest(contentType string, contentLength int64, randomTokenLeng
 	} else if v, err := strconv.Atoi(v); err != nil {
 	} else {
 		metadata.MaxDate = time.Now().Add(time.Hour * 24 * time.Duration(v))
-	}
-
-	if password := r.Header.Get("X-Encrypt-Password"); password != "" {
-		metadata.Encrypted = true
-		metadata.ContentType = "text/plain; charset=utf-8"
-		metadata.DecryptedContentType = contentType
-	} else {
-		metadata.Encrypted = false
 	}
 
 	return metadata
@@ -791,13 +647,7 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 
 	s.logger.Printf("Uploading %s %s %d %s", token, filename, contentLength, contentType)
 
-	reader, err := attachEncryptionReader(reader, r.Header.Get("X-Encrypt-Password"))
-	if err != nil {
-		http.Error(w, "Could not crypt file", http.StatusInternalServerError)
-		return
-	}
-
-	if err = s.storage.Put(r.Context(), token, filename, reader, contentType, uint64(contentLength)); err != nil {
+	if err := s.storage.Put(r.Context(), token, filename, reader, contentType, uint64(contentLength)); err != nil {
 		s.logger.Printf("Error putting new file: %s", err.Error())
 		http.Error(w, "Could not save file", http.StatusInternalServerError)
 		return
@@ -1304,7 +1154,7 @@ func (s *Server) headHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "close")
 	w.Header().Set("X-Remaining-Downloads", remainingDownloads)
 	w.Header().Set("X-Remaining-Days", remainingDays)
-	w.Header().Set("Vary", "Range, Referer, X-Decrypt-Password")
+	w.Header().Set("Vary", "Range, Referer")
 
 	if s.storage.IsRangeSupported() {
 		w.Header().Set("Accept-Ranges", "bytes")
@@ -1376,21 +1226,9 @@ func (s *Server) getHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Remaining-Downloads", remainingDownloads)
 	w.Header().Set("X-Remaining-Days", remainingDays)
 
-	password := r.Header.Get("X-Decrypt-Password")
-	reader, err = attachDecryptionReader(reader, password)
-	if err != nil {
-		http.Error(w, "Could not decrypt file", http.StatusInternalServerError)
-		return
-	}
-
-	if metadata.Encrypted && len(password) > 0 {
-		contentType = metadata.DecryptedContentType
-		contentLength = uint64(metadata.ContentLength)
-	}
-
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", strconv.FormatUint(contentLength, 10))
-	w.Header().Set("Vary", "Range, Referer, X-Decrypt-Password")
+	w.Header().Set("Vary", "Range, Referer")
 
 	if rng != nil && rng.ContentRange() != "" {
 		w.WriteHeader(http.StatusPartialContent)

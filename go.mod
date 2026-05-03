@@ -3,8 +3,6 @@ module github.com/dutchcoders/transfer.sh
 go 1.25.0
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8
-	github.com/ProtonMail/gopenpgp/v2 v2.5.2
 	github.com/dutchcoders/go-clamd v0.0.0-20170520113014-b970184f4d9e
 	github.com/fatih/color v1.14.1
 	github.com/gorilla/handlers v1.5.1
@@ -23,7 +21,6 @@ require (
 require (
 	github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
