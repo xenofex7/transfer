@@ -363,11 +363,13 @@ func New(options ...OptionFn) (*Server, error) {
 	store, err := newSettingsStore(s.settingsPath, Settings{
 		Tagline:      s.tagline,
 		EmailContact: s.emailContact,
+		Theme:        DefaultTheme,
 	})
 	if err != nil {
 		return nil, err
 	}
 	s.settings = store
+	activeSettings.Store(store)
 
 	branding, err := newBrandingStore(s.brandingDir)
 	if err != nil {

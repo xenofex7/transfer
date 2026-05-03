@@ -1,5 +1,17 @@
 /* ----- design tokens ----- */
 :root {
+  --radius:    14px;
+  --radius-sm: 8px;
+  --gap:       1rem;
+  --gap-lg:    2rem;
+  --mono:      ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans:      system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* dark theme - applied by default and when [data-theme="dark"] is set
+   explicitly. */
+:root,
+:root[data-theme="dark"] {
   --bg:        #0F1318;
   --surface:   #1A2027;
   --surface-2: #232C36;
@@ -9,12 +21,35 @@
   --accent:    #3FE8B0;
   --accent-2:  #2BC79A;
   --danger:    #FF6B6B;
-  --radius:    14px;
-  --radius-sm: 8px;
-  --gap:       1rem;
-  --gap-lg:    2rem;
-  --mono:      ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  --sans:      system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* light theme - explicit override. */
+:root[data-theme="light"] {
+  --bg:        #F4F6F9;
+  --surface:   #FFFFFF;
+  --surface-2: #ECEFF3;
+  --border:    #D6DBE2;
+  --text:      #15191F;
+  --text-dim:  #5A6371;
+  --accent:    #0F9D6E;
+  --accent-2:  #0B8259;
+  --danger:    #C0392B;
+}
+
+/* system preference: when no data-theme attr is set and the OS asks for
+   light, mirror the light tokens above. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg:        #F4F6F9;
+    --surface:   #FFFFFF;
+    --surface-2: #ECEFF3;
+    --border:    #D6DBE2;
+    --text:      #15191F;
+    --text-dim:  #5A6371;
+    --accent:    #0F9D6E;
+    --accent-2:  #0B8259;
+    --danger:    #C0392B;
+  }
 }
 
 /* ----- reset ----- */
@@ -489,7 +524,9 @@ button { font: inherit; }
   font-size: 0.8125rem;
   color: var(--text-dim);
 }
-.settings-form input[type=text], .settings-form input[type=email] {
+.settings-form input[type=text],
+.settings-form input[type=email],
+.settings-form select {
   width: 100%;
   background: var(--surface-2);
   color: var(--text);
@@ -497,8 +534,10 @@ button { font: inherit; }
   border-radius: var(--radius-sm);
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
+  font: inherit;
 }
-.settings-form input:focus-visible {
+.settings-form input:focus-visible,
+.settings-form select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -685,3 +724,26 @@ button { font: inherit; }
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ----- theme toggle ----- */
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  background: var(--surface);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color .12s ease, border-color .12s ease, background .12s ease;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-toggle svg { width: 18px; height: 18px; }

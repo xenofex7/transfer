@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme-default="{{theme_default}}">
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
@@ -7,6 +7,7 @@
   <title>Settings &middot; {{.Hostname}}</title>
   <link rel="icon" href="{{favicon_url}}">
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
 </head>
 <body>
   <main class="page">
@@ -34,6 +35,16 @@
           <label for="email_contact" class="settings-label">Contact email</label>
           <input id="email_contact" name="email_contact" type="email" maxlength="200" value="{{.EmailContact}}" autocomplete="off">
           <p class="settings-hint">Adds a "contact" link in the footer. Leave empty to hide.</p>
+        </div>
+
+        <div class="settings-field">
+          <label for="theme" class="settings-label">Default theme</label>
+          <select id="theme" name="theme" class="settings-select">
+            <option value="system" {{if eq .Theme "system"}}selected{{end}}>Follow OS preference</option>
+            <option value="dark" {{if eq .Theme "dark"}}selected{{end}}>Dark</option>
+            <option value="light" {{if eq .Theme "light"}}selected{{end}}>Light</option>
+          </select>
+          <p class="settings-hint">First-visit fallback. Visitors can override per-browser via the toggle in the top-right.</p>
         </div>
 
         <div class="settings-actions">
@@ -87,5 +98,6 @@
       });
     });
   </script>
+  <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>

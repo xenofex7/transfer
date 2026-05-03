@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme-default="{{theme_default}}">
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
@@ -7,6 +7,7 @@
   <title>{{.Filename}} &middot; {{.Hostname}}</title>
   <link rel="icon" href="{{favicon_url}}">
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
 </head>
 <body>
   <main class="page">
@@ -35,5 +36,6 @@
       <a href="/">{{.Hostname}}</a>
     </footer>
   </main>
+  <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>

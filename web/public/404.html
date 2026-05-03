@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme-default="{{theme_default}}">
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
@@ -7,6 +7,7 @@
   <title>404 &middot; not found</title>
   <link rel="icon" href="{{favicon_url}}">
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
 </head>
 <body>
   <main class="page">
@@ -17,5 +18,6 @@
       <p><a class="button" href="/">Back to home</a></p>
     </section>
   </main>
+  <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>

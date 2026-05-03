@@ -20,6 +20,7 @@ type adminSettingsData struct {
 	Hostname        string
 	Tagline         string
 	EmailContact    string
+	Theme           string
 	HasLogo         bool
 	HasFavicon      bool
 	BrandingEnabled bool
@@ -29,7 +30,7 @@ type adminSettingsData struct {
 
 func (s *Server) adminSettingsGetHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := s.settings.Get()
-	data := s.settingsData(r, cfg.Tagline, cfg.EmailContact)
+	data := s.settingsData(r, cfg.Tagline, cfg.EmailContact, cfg.Theme)
 	if c, err := r.Cookie("settings_flash_ok"); err == nil && c.Value != "" {
 		data.Saved = true
 		// best-effort cookie clear
@@ -50,21 +51,25 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 
 	var next Settings
 	if r.PostForm.Get("reset") != "" {
-		next = Settings{Tagline: DefaultTagline, EmailContact: ""}
+		next = Settings{Tagline: DefaultTagline, EmailContact: "", Theme: DefaultTheme}
 	} else {
 		next.Tagline = strings.TrimSpace(r.PostForm.Get("tagline"))
 		next.EmailContact = strings.TrimSpace(r.PostForm.Get("email_contact"))
+		next.Theme = strings.TrimSpace(r.PostForm.Get("theme"))
+		if !ValidThemes[next.Theme] {
+			next.Theme = DefaultTheme
+		}
 	}
 
 	if len(next.Tagline) > 200 || len(next.EmailContact) > 200 {
-		data := s.settingsData(r, next.Tagline, next.EmailContact)
+		data := s.settingsData(r, next.Tagline, next.EmailContact, next.Theme)
 		data.Error = "Values must be 200 characters or fewer."
 		s.renderSettings(w, r, data)
 		return
 	}
 	if next.EmailContact != "" {
 		if _, err := mail.ParseAddress(next.EmailContact); err != nil {
-			data := s.settingsData(r, next.Tagline, next.EmailContact)
+			data := s.settingsData(r, next.Tagline, next.EmailContact, next.Theme)
 			data.Error = "Contact email is not a valid address."
 			s.renderSettings(w, r, data)
 			return
@@ -73,13 +78,13 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 
 	if err := s.settings.Set(next); err != nil {
 		s.logger.Printf("admin: settings.Set: %v", err)
-		data := s.settingsData(r, next.Tagline, next.EmailContact)
+		data := s.settingsData(r, next.Tagline, next.EmailContact, next.Theme)
 		data.Error = "Could not persist settings: " + err.Error()
 		s.renderSettings(w, r, data)
 		return
 	}
 
-	data := s.settingsData(r, next.Tagline, next.EmailContact)
+	data := s.settingsData(r, next.Tagline, next.EmailContact, next.Theme)
 	data.Saved = true
 	s.renderSettings(w, r, data)
 }
@@ -93,11 +98,12 @@ func (s *Server) renderSettings(w http.ResponseWriter, _ *http.Request, data adm
 
 // settingsData centralises the template-context construction so every code
 // path renders the same hostname / branding-state info.
-func (s *Server) settingsData(r *http.Request, tagline, email string) adminSettingsData {
+func (s *Server) settingsData(r *http.Request, tagline, email, theme string) adminSettingsData {
 	d := adminSettingsData{
 		Hostname:        getURL(r, s.proxyPort).Host,
 		Tagline:         tagline,
 		EmailContact:    email,
+		Theme:           theme,
 		BrandingEnabled: s.branding != nil && s.brandingDir != "",
 	}
 	if s.branding != nil {

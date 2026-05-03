@@ -87,10 +87,12 @@ func initTextTemplates() *textTemplate.Template {
 
 func initHTMLTemplates() *htmlTemplate.Template {
 	templateMap := htmlTemplate.FuncMap{
-		"format":      formatNumber,
-		"asset":       func(path string) string { return path + "?v=" + web.Version },
-		"logo_url":    brandingLogoURL,
-		"favicon_url": brandingFaviconURL,
+		"format":           formatNumber,
+		"asset":            func(path string) string { return path + "?v=" + web.Version },
+		"logo_url":         brandingLogoURL,
+		"favicon_url":      brandingFaviconURL,
+		"theme_default":    themeDefault,
+		"theme_bootstrap":  themeBootstrap,
 	}
 
 	// Templates with functions available to them
@@ -113,6 +115,27 @@ func brandingFaviconURL() string {
 		return b.FaviconURL()
 	}
 	return "/favicon.ico?v=" + web.Version
+}
+
+// themeDefault returns the operator-chosen initial theme used as a
+// data-theme-default attr on <html>. The user's localStorage choice (set
+// via the toggle) always wins client-side; this is only the first-visit
+// fallback. Returns "system" when no settings store is wired.
+func themeDefault() string {
+	if s := activeSettings.Load(); s != nil {
+		t := s.Get().Theme
+		if t == "light" || t == "dark" || t == "system" {
+			return t
+		}
+	}
+	return DefaultTheme
+}
+
+// themeBootstrap returns the inline <script> tag rendered into every
+// page's <head>. It runs synchronously before paint so the right theme
+// is already applied on the first frame (no flash of wrong theme).
+func themeBootstrap() htmlTemplate.HTML {
+	return htmlTemplate.HTML(`<script>(function(){try{var k='transfersh_theme',v=localStorage.getItem(k);if(v!=='light'&&v!=='dark'&&v!=='system')v=document.documentElement.getAttribute('data-theme-default')||'system';if(v==='light'||v==='dark')document.documentElement.setAttribute('data-theme',v);}catch(e){}})();</script>`)
 }
 
 func attachEncryptionReader(reader io.ReadCloser, password string) (io.ReadCloser, error) {
@@ -402,6 +425,7 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		WebAddress    string
 		EmailContact  string
 		Tagline       string
+		Theme         string
 		GAKey         string
 		UserVoiceKey  string
 		PurgeTime     string
@@ -413,6 +437,7 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		webAddress,
 		cfg.EmailContact,
 		cfg.Tagline,
+		cfg.Theme,
 		"",
 		"",
 		purgeTime,

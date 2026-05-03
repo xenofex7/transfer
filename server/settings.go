@@ -11,10 +11,23 @@ import (
 	"errors"
 	"os"
 	"sync"
+	"sync/atomic"
 )
+
+// activeSettings is the package-level handle the template functions read so
+// every page can render the operator-configured theme default without each
+// handler having to thread it through its data struct.
+var activeSettings atomic.Pointer[settingsStore]
 
 // DefaultTagline is the homepage tagline used when nothing else is set.
 const DefaultTagline = "Easy and fast file sharing from the command line."
+
+// DefaultTheme is the initial theme served to first-time visitors before
+// they pick one for themselves via the toggle.
+const DefaultTheme = "system"
+
+// ValidThemes lists the values Settings.Theme accepts.
+var ValidThemes = map[string]bool{"system": true, "light": true, "dark": true}
 
 // Settings holds the runtime-mutable configuration that an operator can edit
 // from the admin UI. Every field here is persisted to disk so it survives
@@ -22,6 +35,7 @@ const DefaultTagline = "Easy and fast file sharing from the command line."
 type Settings struct {
 	Tagline      string `json:"tagline"`
 	EmailContact string `json:"email_contact"`
+	Theme        string `json:"theme"`
 }
 
 // settingsStore loads, returns and persists Settings. All access goes through
@@ -55,8 +69,14 @@ func newSettingsStore(path string, bootstrap Settings) (*settingsStore, error) {
 	if err := json.Unmarshal(data, &loaded); err != nil {
 		return nil, err
 	}
-	// Persisted file wins outright. Empty values are honored - admin may
-	// have intentionally cleared the tagline or contact link.
+	// Persisted file wins outright for free-form text fields. Empty values
+	// are honored - admin may have intentionally cleared the tagline or
+	// contact link.
+	// Theme is a closed enum; an unset / unknown value (e.g. settings.json
+	// from before the field existed) falls back to the bootstrap default.
+	if !ValidThemes[loaded.Theme] {
+		loaded.Theme = bootstrap.Theme
+	}
 	s.current = loaded
 	return s, nil
 }

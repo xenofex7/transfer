@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme-default="{{theme_default}}">
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
@@ -8,6 +8,7 @@
   <meta name="description" content="Easy and fast file sharing from the command line.">
   <link rel="icon" href="{{favicon_url}}">
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
 </head>
 <body>
   <main class="page">
@@ -58,5 +59,6 @@
   </main>
 
   <script src="{{asset "/scripts/main.js"}}" defer></script>
+  <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>
