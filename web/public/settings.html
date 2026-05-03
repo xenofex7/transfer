@@ -20,9 +20,6 @@
       </nav>
     </header>
 
-    {{if .Saved}}<p class="settings-flash settings-flash-ok">Saved.</p>{{end}}
-    {{if .Error}}<p class="settings-flash settings-flash-err">{{.Error}}</p>{{end}}
-
     <section class="card">
       <form method="POST" action="/admin/settings" class="settings-form" novalidate>
         <div class="settings-field">
@@ -92,6 +89,15 @@
       </a>
     </footer>
   </main>
+  {{if or .Flash .FlashError}}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!window.toast) return;
+      {{with .Flash}}window.toast.success({{.}});{{end}}
+      {{with .FlashError}}window.toast.error({{.}});{{end}}
+    });
+  </script>
+  {{end}}
   <script>
     document.querySelectorAll('[data-branding-reset]').forEach(function (btn) {
       btn.addEventListener('click', function () {

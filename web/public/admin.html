@@ -14,11 +14,11 @@
     <header class="admin-head">
       <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
       <h1 class="admin-title">Files on {{.Hostname}}</h1>
-      <p class="admin-meta"><span class="admin-count">{{.Total}}</span> file{{if ne .Total 1}}s{{end}} stored</p>
       <nav class="admin-nav">
         <span class="admin-nav-current">Files</span>
         <a href="/admin/settings">Settings</a>
       </nav>
+      <p class="admin-meta"><span class="admin-count">{{.Total}}</span> file{{if ne .Total 1}}s{{end}} stored</p>
     </header>
 
     <section class="card admin-toolbar">

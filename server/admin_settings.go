@@ -24,20 +24,22 @@ type adminSettingsData struct {
 	HasLogo         bool
 	HasFavicon      bool
 	BrandingEnabled bool
-	Saved           bool
-	Error           string
+	// Flash + FlashError are one-shot messages surfaced via toast on the
+	// next GET render. They come from the settings_flash_* cookies that
+	// flashAndRedirect sets after a successful POST or upload.
+	Flash      string
+	FlashError string
 }
 
 func (s *Server) adminSettingsGetHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := s.settings.Get()
 	data := s.settingsData(r, cfg.Tagline, cfg.EmailContact, cfg.Theme)
 	if c, err := r.Cookie("settings_flash_ok"); err == nil && c.Value != "" {
-		data.Saved = true
-		// best-effort cookie clear
+		data.Flash = c.Value
 		http.SetCookie(w, &http.Cookie{Name: "settings_flash_ok", Value: "", Path: "/admin/settings", MaxAge: -1})
 	}
 	if c, err := r.Cookie("settings_flash_err"); err == nil && c.Value != "" {
-		data.Error = c.Value
+		data.FlashError = c.Value
 		http.SetCookie(w, &http.Cookie{Name: "settings_flash_err", Value: "", Path: "/admin/settings", MaxAge: -1})
 	}
 	s.renderSettings(w, r, data)
@@ -45,7 +47,7 @@ func (s *Server) adminSettingsGetHandler(w http.ResponseWriter, r *http.Request)
 
 func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form", http.StatusBadRequest)
+		s.flashAndRedirect(w, r, "Invalid form submission", true)
 		return
 	}
 
@@ -62,31 +64,27 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if len(next.Tagline) > 200 || len(next.EmailContact) > 200 {
-		data := s.settingsData(r, next.Tagline, next.EmailContact, next.Theme)
-		data.Error = "Values must be 200 characters or fewer."
-		s.renderSettings(w, r, data)
+		s.flashAndRedirect(w, r, "Values must be 200 characters or fewer.", true)
 		return
 	}
 	if next.EmailContact != "" {
 		if _, err := mail.ParseAddress(next.EmailContact); err != nil {
-			data := s.settingsData(r, next.Tagline, next.EmailContact, next.Theme)
-			data.Error = "Contact email is not a valid address."
-			s.renderSettings(w, r, data)
+			s.flashAndRedirect(w, r, "Contact email is not a valid address.", true)
 			return
 		}
 	}
 
 	if err := s.settings.Set(next); err != nil {
 		s.logger.Printf("admin: settings.Set: %v", err)
-		data := s.settingsData(r, next.Tagline, next.EmailContact, next.Theme)
-		data.Error = "Could not persist settings: " + err.Error()
-		s.renderSettings(w, r, data)
+		s.flashAndRedirect(w, r, "Could not persist settings: "+err.Error(), true)
 		return
 	}
 
-	data := s.settingsData(r, next.Tagline, next.EmailContact, next.Theme)
-	data.Saved = true
-	s.renderSettings(w, r, data)
+	if r.PostForm.Get("reset") != "" {
+		s.flashAndRedirect(w, r, "Settings reset to defaults", false)
+	} else {
+		s.flashAndRedirect(w, r, "Settings saved", false)
+	}
 }
 
 func (s *Server) renderSettings(w http.ResponseWriter, _ *http.Request, data adminSettingsData) {
@@ -119,27 +117,27 @@ func (s *Server) settingsData(r *http.Request, tagline, email, theme string) adm
 func (s *Server) adminBrandingUploadHandler(w http.ResponseWriter, r *http.Request) {
 	slot := BrandingSlot(mux.Vars(r)["slot"])
 	if s.branding == nil || s.brandingDir == "" {
-		s.brandingFlashAndRedirect(w, r, "Branding storage not configured.", true)
+		s.flashAndRedirect(w, r, "Branding storage not configured.", true)
 		return
 	}
 
 	if err := r.ParseMultipartForm(MaxBrandingBytes + 1<<10); err != nil {
-		s.brandingFlashAndRedirect(w, r, "Could not parse upload: "+err.Error(), true)
+		s.flashAndRedirect(w, r, "Could not parse upload: "+err.Error(), true)
 		return
 	}
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		s.brandingFlashAndRedirect(w, r, "No file in upload.", true)
+		s.flashAndRedirect(w, r, "No file in upload.", true)
 		return
 	}
 	defer func() { _ = file.Close() }()
 
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	if err := s.branding.Save(slot, ext, file); err != nil {
-		s.brandingFlashAndRedirect(w, r, err.Error(), true)
+		s.flashAndRedirect(w, r, err.Error(), true)
 		return
 	}
-	s.brandingFlashAndRedirect(w, r, string(slot)+" updated", false)
+	s.flashAndRedirect(w, r, strings.Title(string(slot))+" updated", false) //nolint:staticcheck // strings.Title is fine for ASCII slot names
 }
 
 // adminBrandingDeleteHandler removes the custom file for slot, restoring
@@ -157,9 +155,9 @@ func (s *Server) adminBrandingDeleteHandler(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// brandingFlashAndRedirect sets a one-shot cookie the GET handler reads to
-// surface success/error messages, then redirects back to /admin/settings.
-func (s *Server) brandingFlashAndRedirect(w http.ResponseWriter, r *http.Request, msg string, isError bool) {
+// flashAndRedirect sets a one-shot cookie the GET handler reads to surface
+// success/error messages as toasts, then redirects back to /admin/settings.
+func (s *Server) flashAndRedirect(w http.ResponseWriter, r *http.Request, msg string, isError bool) {
 	name := "settings_flash_ok"
 	if isError {
 		name = "settings_flash_err"
@@ -174,4 +172,3 @@ func (s *Server) brandingFlashAndRedirect(w http.ResponseWriter, r *http.Request
 	})
 	http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)
 }
-

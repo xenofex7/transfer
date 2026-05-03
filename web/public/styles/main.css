@@ -540,15 +540,6 @@ button { font: inherit; }
 .admin-nav-current { background: var(--surface-1); color: var(--text); }
 
 /* ----- admin: settings form ----- */
-.settings-flash {
-  margin: 0 0 1rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.8125rem;
-}
-.settings-flash-ok { background: rgba(110, 231, 183, 0.12); color: var(--accent); }
-.settings-flash-err { background: rgba(248, 113, 113, 0.12); color: var(--danger); }
-
 .settings-form { padding: 0.5rem 0.25rem; }
 .settings-field { margin-bottom: 1.25rem; }
 .settings-label {
