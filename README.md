@@ -5,7 +5,7 @@
 <h1 align="center">transfer</h1>
 
 <p align="center">
-  Easy and fast file sharing from the command line.
+  A small, self-hosted file-drop service. Easy and fast file sharing from the command line.
 </p>
 
 <p align="center">
@@ -32,8 +32,6 @@
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Development](#development)
-- [Shell helper](#shell-helper)
-- [Roadmap](#roadmap)
 - [Credits](#credits)
 
 ---
@@ -56,18 +54,11 @@ curl --upload-file ./hello.txt http://127.0.0.1:8080/hello.txt
 ```
 
 The response body is the download URL. The `X-Url-Delete` response header
-contains the deletion URL — keep both.
+contains the deletion URL - keep both.
 
-### Image tags
-
-| Tag | What you get |
-|---|---|
-| `latest` | latest commit on `main` |
-| `edge` | same as `latest`, alternative name |
-| `1.0.0`, `1.0`, `1` | released versions (semver) |
-| `sha-<short>` | exact commit |
-
-Multi-arch images are built for **`linux/amd64`** and **`linux/arm64`**.
+Multi-arch images (`linux/amd64`, `linux/arm64`) are published on GHCR with
+`latest`, semver (`X.Y.Z`, `X.Y`, `X`) and per-commit (`sha-<short>`) tags.
+Pin to a specific version in production.
 
 ---
 
@@ -88,7 +79,7 @@ htpasswd -B    htpasswd bob
 docker compose up -d
 ```
 
-The transfer container exposes port 8080 only inside the compose network —
+The transfer container exposes port 8080 only inside the compose network.
 TLS and the public hostname are expected to be handled by your reverse proxy
 of choice (nginx, Caddy, Traefik). Pass standard proxy headers
 (`X-Forwarded-Host`, `X-Forwarded-Proto`) and set `client_max_body_size` to at
@@ -119,19 +110,6 @@ curl -X DELETE https://your-instance.example.com/<token>/hello.txt/<delete-token
 The `<delete-token>` is returned in the `X-Url-Delete` response header on
 upload.
 
-### Encrypt + upload (client-side)
-
-```bash
-gpg --armor --symmetric --output - ./hello.txt \
-  | curl --upload-file - https://your-instance.example.com/hello.txt
-```
-
-### Download + decrypt
-
-```bash
-curl https://your-instance.example.com/<token>/hello.txt | gpg --decrypt --output ./hello.txt
-```
-
 ### Per-upload limits
 
 ```bash
@@ -149,26 +127,16 @@ curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt \
 Direct download (skip the preview page):
 
 ```
-https://your-instance.example.com/<token>/hello.txt
-→ https://your-instance.example.com/get/<token>/hello.txt
+https://your-instance.example.com/get/<token>/hello.txt
 ```
 
 Inline (open in browser instead of download):
 
 ```
-https://your-instance.example.com/<token>/hello.txt
-→ https://your-instance.example.com/inline/<token>/hello.txt
+https://your-instance.example.com/inline/<token>/hello.txt
 ```
 
-### Bulk archive download
-
-```bash
-curl https://your-instance.example.com/(<token1>/file1,<token2>/file2).zip -o files.zip
-curl https://your-instance.example.com/(<token1>/file1,<token2>/file2).tar
-curl https://your-instance.example.com/(<token1>/file1,<token2>/file2).tar.gz
-```
-
-More examples in [`examples.md`](examples.md).
+For shell helpers, encryption, bulk archives and more, see [`examples.md`](examples.md).
 
 ---
 
@@ -181,9 +149,9 @@ All flags can be set via CLI args or the matching environment variable.
 | Flag | Env | Default | Description |
 |---|---|---|---|
 | `--listener` | `LISTENER` | `127.0.0.1:8080` | Address the HTTP server binds to |
-| `--proxy-path` | `PROXY_PATH` | — | Path prefix when behind a reverse proxy |
-| `--proxy-port` | `PROXY_PORT` | — | External port of the reverse proxy |
-| `--cors-domains` | `CORS_DOMAINS` | — | Comma-separated list of CORS origins |
+| `--proxy-path` | `PROXY_PATH` | - | Path prefix when behind a reverse proxy |
+| `--proxy-port` | `PROXY_PORT` | - | External port of the reverse proxy |
+| `--cors-domains` | `CORS_DOMAINS` | - | Comma-separated list of CORS origins |
 
 ### Storage
 
@@ -239,12 +207,13 @@ cd transfer
 go run . --listener 127.0.0.1:8080 --basedir ./tmp/storage --temp-path ./tmp
 ```
 
-Or, for a production-style binary:
+Or, for a production-style binary (the Go module path is kept on
+`dutchcoders/transfer.sh` for compatibility):
 
 ```bash
 go build -tags netgo \
   -ldflags "-X github.com/dutchcoders/transfer.sh/cmd.Version=dev -s -w" \
-  -o transfersh ./
+  -o transfer ./
 ```
 
 Run the tests and the linter:
@@ -255,36 +224,7 @@ golangci-lint run --config .golangci.yml
 ```
 
 CI runs both on every push (see `.github/workflows/test.yml`).
-
----
-
-## Shell helper
-
-A minimal `transfer` function for `~/.bashrc` or `~/.zshrc`:
-
-```bash
-transfer() {
-  if [ $# -eq 0 ]; then
-    echo "Usage: transfer <file>"
-    return 1
-  fi
-  curl --progress-bar --upload-file "$1" \
-    "https://your-instance.example.com/$(basename "$1")"
-}
-```
-
-Then:
-
-```bash
-transfer hello.txt
-```
-
----
-
-## Roadmap
-
-The current state and the planned work are tracked in [ROADMAP.md](ROADMAP.md).
-Feedback and PRs are welcome.
+The roadmap and planned work live in [`ROADMAP.md`](ROADMAP.md).
 
 ---
 
@@ -292,8 +232,8 @@ Feedback and PRs are welcome.
 
 Built on top of the original work by:
 
-- **Remco Verhoef** & **Uvis Grinfelds** — original creators of `transfer.sh`
-- **Andrea Spacca** & **Stefan Benten** — long-time upstream maintainers
+- **Remco Verhoef** & **Uvis Grinfelds** - original creators of `transfer.sh`
+- **Andrea Spacca** & **Stefan Benten** - long-time upstream maintainers
 
 The upstream copyright notice is kept intact and the project ships under the
 same [MIT license](LICENSE).
