@@ -6,17 +6,17 @@
 #   docker compose up -d
 #
 # Reverse-proxy (TLS termination) is expected to live OUTSIDE this compose file
-# and forward to the `transfersh` service over the shared `proxy` network.
+# and forward to the `transfer` service over the shared `proxy` network.
 #
 # By default the stack joins an EXTERNAL bridge network called `proxy`.
 # Override with the PROXY_NETWORK variable in .env if your reverse-proxy lives
 # on a network with a different name.
 
-name: transfersh
+name: transfer
 
 services:
-  transfersh:
-    image: ${TRANSFERSH_IMAGE:-ghcr.io/xenofex7/transfer:latest}
+  transfer:
+    image: ${TRANSFER_IMAGE:-ghcr.io/xenofex7/transfer:latest}
     restart: unless-stopped
     depends_on:
       clamav:
@@ -24,15 +24,16 @@ services:
     environment:
       LISTENER: ":8080"
       BASEDIR: "/data"
-      TEMP_PATH: "/tmp/transfersh"
+      TEMP_PATH: "/tmp/transfer"
       PURGE_DAYS: "${PURGE_DAYS:-360}"
       PURGE_INTERVAL: "${PURGE_INTERVAL:-24}"
       MAX_UPLOAD_SIZE: "${MAX_UPLOAD_SIZE:-5242880}"   # in KB, default 5 GiB
       RATE_LIMIT: "${RATE_LIMIT:-0}"
       RANDOM_TOKEN_LENGTH: "${RANDOM_TOKEN_LENGTH:-10}"
-      CLAMAV_HOST: "tcp://clamav:3310"
+      CLAMAV_HOST: "clamav:3310"
       PERFORM_CLAMAV_PRESCAN: "${PERFORM_CLAMAV_PRESCAN:-true}"
-      HTTP_AUTH_HTPASSWD: "/etc/transfersh/htpasswd"
+      CLAMAV_SCAN_TIMEOUT: "${CLAMAV_SCAN_TIMEOUT:-600}"
+      HTTP_AUTH_HTPASSWD: "/etc/transfer/htpasswd"
       HTTP_AUTH_IP_WHITELIST: "${HTTP_AUTH_IP_WHITELIST:-}"
       IP_WHITELIST: "${IP_WHITELIST:-}"
       IP_BLACKLIST: "${IP_BLACKLIST:-}"
@@ -43,12 +44,11 @@ services:
       TAGLINE: "${TAGLINE:-Easy and fast file sharing from the command line.}"
       UPLOAD_WEBHOOK_URL: "${UPLOAD_WEBHOOK_URL:-}"
       WEBHOOK_TOKEN: "${WEBHOOK_TOKEN:-}"
-      CLAMAV_SCAN_TIMEOUT: "${CLAMAV_SCAN_TIMEOUT:-600}"
     volumes:
-      - transfersh-data:/data
+      - ${DATA_DIR:-./data}:/data
       - type: bind
         source: ./htpasswd
-        target: /etc/transfersh/htpasswd
+        target: /etc/transfer/htpasswd
         read_only: true
         bind:
           create_host_path: false
@@ -61,7 +61,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    mem_limit: ${TRANSFERSH_MEMORY_LIMIT:-512M}
+    mem_limit: ${TRANSFER_MEMORY_LIMIT:-512M}
     security_opt:
       - no-new-privileges:true
 
@@ -89,7 +89,6 @@ services:
       - no-new-privileges:true
 
 volumes:
-  transfersh-data:
   clamav-db:
 
 networks:
