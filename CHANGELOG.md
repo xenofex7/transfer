@@ -7,6 +7,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-05-04
+
+### Changed
+- Rename project from transfer.sh to transfer, including user-facing branding
+- Rename environment variables from `TRANSFERSH_*` to `TRANSFER_*` and parametrise the data path
+- Default Auto-delete form field to empty so the server-side default is applied
+- Update default tagline to an English WeTransfer comparison
+- Reframe README as a standalone repository and drop fork-related sections
+
 ## [1.2.0] - 2026-05-03
 
 ### Added
