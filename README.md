@@ -20,11 +20,13 @@
   </a>
 </p>
 
+> Originally based on [dutchcoders/transfer.sh](https://github.com/dutchcoders/transfer.sh);
+> this repository is now developed and maintained independently.
+
 ---
 
 ## Contents
 
-- [About this fork](#about-this-fork)
 - [Quick start](#quick-start)
 - [Self-hosting with docker compose](#self-hosting-with-docker-compose)
 - [Usage](#usage)
@@ -33,36 +35,6 @@
 - [Shell helper](#shell-helper)
 - [Roadmap](#roadmap)
 - [Credits](#credits)
-
----
-
-## About this fork
-
-This repository is a **fork of [dutchcoders/transfer.sh](https://github.com/dutchcoders/transfer.sh)**
-that has been deliberately slimmed down for a single, focused use case:
-
-> a small, self-hosted file-drop service that runs as a container behind a
-> reverse proxy, stores files on the local filesystem, scans uploads with
-> ClamAV and lives behind HTTP basic auth.
-
-The fork is **actively maintained** — see [ROADMAP.md](ROADMAP.md) for what's
-on the table and what's coming next. Pull requests, ideas and bug reports are
-welcome.
-
-### What's different from upstream
-
-| Area | Upstream | This fork |
-|---|---|---|
-| Storage backends | local · S3 · Google Drive · Storj | **local only** |
-| TLS termination | built-in (Let's Encrypt + manual certs) | **delegated to a reverse proxy** |
-| Virus scanning | ClamAV + VirusTotal | **ClamAV only** |
-| Profiler / pprof | optional flag | **removed** |
-| Frontend keys | Google Analytics, UserVoice | **removed** |
-| Container registry | Docker Hub | **GHCR** with semver tags |
-| Default purge | off | **360 days** with a 24 h sweep |
-
-The result is a noticeably smaller dependency tree, a faster build and a tiny
-runtime image.
 
 ---
 
@@ -312,7 +284,7 @@ transfer hello.txt
 ## Roadmap
 
 The current state and the planned work are tracked in [ROADMAP.md](ROADMAP.md).
-The repository is a small, opinionated rewrite — feedback and PRs are welcome.
+Feedback and PRs are welcome.
 
 ---
 
@@ -320,8 +292,8 @@ The repository is a small, opinionated rewrite — feedback and PRs are welcome.
 
 Built on top of the original work by:
 
-- **Remco Verhoef** & **Uvis Grinfelds** — original creators of `transfer`
+- **Remco Verhoef** & **Uvis Grinfelds** — original creators of `transfer.sh`
 - **Andrea Spacca** & **Stefan Benten** — long-time upstream maintainers
 
-This fork keeps the upstream copyright notice intact and ships under the same
-[MIT license](LICENSE).
+The upstream copyright notice is kept intact and the project ships under the
+same [MIT license](LICENSE).
