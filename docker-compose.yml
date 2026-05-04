@@ -1,4 +1,4 @@
-# transfer.sh deployment stack
+# transfer deployment stack
 #
 # Usage:
 #   cp .env.example .env             # then edit .env
@@ -16,7 +16,7 @@ name: transfersh
 
 services:
   transfersh:
-    image: ${TRANSFERSH_IMAGE:-ghcr.io/xenofex7/transfer.sh:latest}
+    image: ${TRANSFERSH_IMAGE:-ghcr.io/xenofex7/transfer:latest}
     restart: unless-stopped
     depends_on:
       clamav:

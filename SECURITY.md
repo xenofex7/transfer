@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the latest released container tag (`ghcr.io/xenofex7/transfer.sh:latest`)
+Only the latest released container tag (`ghcr.io/xenofex7/transfer:latest`)
 and the latest semver tag receive security fixes. Older builds are not
 patched.
 
@@ -14,7 +14,7 @@ programme. If you find an issue:
 1. **Do not open a public GitHub issue** for anything that could be
    exploited (auth bypass, RCE, sensitive disclosure, malware
    delivery via uploads, etc.).
-2. Open a [private security advisory](https://github.com/xenofex7/transfer.sh/security/advisories/new)
+2. Open a [private security advisory](https://github.com/xenofex7/transfer/security/advisories/new)
    on this repository, or file a regular issue prefixed with
    `[security]` for low-impact findings (e.g. missing hardening
    header, doc inaccuracies).
@@ -29,7 +29,7 @@ You will get a response within a few days. There is no formal SLA.
 In scope:
 
 - Issues in the Go server code under `cmd/`, `server/`, `web/`
-- The published container image (`ghcr.io/xenofex7/transfer.sh`)
+- The published container image (`ghcr.io/xenofex7/transfer`)
 - The deployment defaults shipped in `docker-compose.yml`
 
 Out of scope:

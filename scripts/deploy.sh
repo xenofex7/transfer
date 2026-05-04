@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ─────────────────────────────────────────────────────────
-# deploy.sh — Tag and release a new version of transfer.sh
+# deploy.sh — Tag and release a new version of transfer
 #
 # Usage:
 #   ./scripts/deploy.sh           # auto-increment patch (v1.0.1 -> v1.0.2)
@@ -118,7 +118,7 @@ TODAY=$(date +%Y-%m-%d)
 CHANGELOG_BODY=""
 if command -v claude &> /dev/null; then
   info "Summarising commits with Claude..."
-  PROMPT="Du schreibst den Changelog für transfer.sh, ein selbst-gehostetes File-Sharing-Tool.
+  PROMPT="Du schreibst den Changelog für transfer, ein selbst-gehostetes File-Sharing-Tool.
 
 Schreibe basierend auf diesen Git-Commits einen kurzen, technisch-faktischen Changelog-Abschnitt auf Englisch.
 

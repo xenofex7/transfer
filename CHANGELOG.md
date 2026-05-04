@@ -115,10 +115,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   dependencies)
 - Compose stack splits into an `internal` network and an external
   `proxy` network so it slots into an existing reverse-proxy stack
-- Default container image is `ghcr.io/xenofex7/transfer.sh:latest`
+- Default container image is `ghcr.io/xenofex7/transfer:latest`
 - ClamAV connection prepends `tcp://` when the host has no scheme,
   and uploads are streamed via `INSTREAM` so clamd does not need
-  filesystem access to the transfer.sh container
+  filesystem access to the transfer container
 - Auto-create the temp folder on startup so any `TEMP_PATH` value
   works without pre-creating directories
 - CI moved to Node.js 24 toolchain (`actions/checkout@v6`,
@@ -163,6 +163,6 @@ Initial release of the slim, self-hosted fork.
 - Vagrantfile, Bower configuration, manifest.json
 - Multi-OS binary release workflow (we ship containers only)
 
-[Unreleased]: https://github.com/xenofex7/transfer.sh/compare/v1.0.1...HEAD
-[1.0.1]: https://github.com/xenofex7/transfer.sh/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/xenofex7/transfer.sh/releases/tag/v1.0.0
+[Unreleased]: https://github.com/xenofex7/transfer/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/xenofex7/transfer/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/xenofex7/transfer/releases/tag/v1.0.0

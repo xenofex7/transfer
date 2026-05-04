@@ -176,7 +176,7 @@ func canContainsXSS(contentType string) bool {
 	return false
 }
 
-/* The preview handler will show a preview of the content for browsers (accept type text/html), and referer is not transfer.sh */
+/* The preview handler will show a preview of the content for browsers (accept type text/html), and referer is not transfer */
 func (s *Server) previewHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Vary", "Range, Referer")
 

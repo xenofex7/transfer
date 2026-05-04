@@ -22,4 +22,4 @@ Delete (token returned in X-Url-Delete response header):
 {{if .MaxUploadSize}}Max upload size: {{.MaxUploadSize}}
 {{end}}{{if .PurgeTime}}Files retained for: {{.PurgeTime}}
 {{end}}
-Source: https://github.com/xenofex7/transfer.sh
+Source: https://github.com/xenofex7/transfer

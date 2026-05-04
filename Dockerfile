@@ -28,7 +28,7 @@ ARG VERSION=dev
 ARG VCS_REF=unknown
 ARG BUILD_DATE
 
-LABEL org.opencontainers.image.title="transfer.sh" \
+LABEL org.opencontainers.image.title="transfer" \
       org.opencontainers.image.description="Easy file sharing from the command line" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${VCS_REF}" \

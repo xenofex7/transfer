@@ -78,7 +78,7 @@ func (s *Server) fireWebhook(ev uploadEvent) {
 			return
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", "transfer.sh-webhook/1")
+		req.Header.Set("User-Agent", "transfer-webhook/1")
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
 		}

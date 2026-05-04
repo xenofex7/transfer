@@ -91,7 +91,7 @@ func ParseRange(rng string) *Range {
 // ListEntry describes a single stored file as returned by List. Storage
 // backends should fill the structural fields; metadata interpretation is
 // the caller's responsibility (the metadata blob is the raw JSON written
-// by transfer.sh during upload).
+// by transfer during upload).
 type ListEntry struct {
 	Token      string
 	Filename   string

@@ -1,18 +1,18 @@
 <p align="center">
-  <img src="assets/logo.png" alt="transfer.sh" width="180">
+  <img src="assets/logo.png" alt="transfer" width="180">
 </p>
 
-<h1 align="center">transfer.sh</h1>
+<h1 align="center">transfer</h1>
 
 <p align="center">
   Easy and fast file sharing from the command line.
 </p>
 
 <p align="center">
-  <a href="https://github.com/xenofex7/transfer.sh/actions/workflows/test.yml">
-    <img src="https://github.com/xenofex7/transfer.sh/actions/workflows/test.yml/badge.svg?branch=main" alt="Build Status">
+  <a href="https://github.com/xenofex7/transfer/actions/workflows/test.yml">
+    <img src="https://github.com/xenofex7/transfer/actions/workflows/test.yml/badge.svg?branch=main" alt="Build Status">
   </a>
-  <a href="https://github.com/xenofex7/transfer.sh/pkgs/container/transfer.sh">
+  <a href="https://github.com/xenofex7/transfer/pkgs/container/transfer">
     <img src="https://img.shields.io/badge/container-ghcr.io-2496ED?logo=docker" alt="Container">
   </a>
   <a href="LICENSE">
@@ -74,7 +74,7 @@ Pull the published container image and run it with a local data directory:
 docker run --rm \
   -p 8080:8080 \
   -v $(pwd)/data:/data \
-  ghcr.io/xenofex7/transfer.sh:latest
+  ghcr.io/xenofex7/transfer:latest
 ```
 
 Then, in another shell:
@@ -116,7 +116,7 @@ htpasswd -B    htpasswd bob
 docker compose up -d
 ```
 
-The transfer.sh container exposes port 8080 only inside the compose network —
+The transfer container exposes port 8080 only inside the compose network —
 TLS and the public hostname are expected to be handled by your reverse proxy
 of choice (nginx, Caddy, Traefik). Pass standard proxy headers
 (`X-Forwarded-Host`, `X-Forwarded-Proto`) and set `client_max_body_size` to at
@@ -262,8 +262,8 @@ All flags can be set via CLI args or the matching environment variable.
 Requires Go 1.25+.
 
 ```bash
-git clone git@github.com:xenofex7/transfer.sh.git
-cd transfer.sh
+git clone git@github.com:xenofex7/transfer.git
+cd transfer
 go run . --listener 127.0.0.1:8080 --basedir ./tmp/storage --temp-path ./tmp
 ```
 
@@ -320,7 +320,7 @@ The repository is a small, opinionated rewrite — feedback and PRs are welcome.
 
 Built on top of the original work by:
 
-- **Remco Verhoef** & **Uvis Grinfelds** — original creators of `transfer.sh`
+- **Remco Verhoef** & **Uvis Grinfelds** — original creators of `transfer`
 - **Andrea Spacca** & **Stefan Benten** — long-time upstream maintainers
 
 This fork keeps the upstream copyright notice intact and ships under the same

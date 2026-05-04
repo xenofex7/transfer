@@ -1,4 +1,4 @@
-// Package web embeds the static front-end assets shipped with transfer.sh.
+// Package web embeds the static front-end assets shipped with transfer.
 //
 // The bundled HTML templates, CSS, JavaScript and images live under public/
 // and are exposed as a single fs.FS rooted at that directory. The Go server

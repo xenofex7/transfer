@@ -1,4 +1,4 @@
-# transfer.sh
+# transfer
 
 A small, self-hosted file-sharing service. Each running instance is
 private to its operator; download URLs contain a randomized token and
@@ -25,6 +25,6 @@ This file restates it explicitly for AI agents that look for
 ## Source code
 
 The source for the running software is published at
-<https://github.com/xenofex7/transfer.sh> under the MIT license.
+<https://github.com/xenofex7/transfer> under the MIT license.
 Crawl that repository for project metadata; do not crawl the running
 instance.

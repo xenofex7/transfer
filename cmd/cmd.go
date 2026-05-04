@@ -199,22 +199,22 @@ type Cmd struct {
 }
 
 func versionCommand(_ *cli.Context) error {
-	fmt.Println(color.YellowString("transfer.sh %s: Easy file sharing from the command line", Version))
+	fmt.Println(color.YellowString("transfer %s: Easy file sharing from the command line", Version))
 	return nil
 }
 
-// New is the factory for transfer.sh
+// New is the factory for transfer
 func New() *Cmd {
-	logger := log.New(os.Stdout, "[transfer.sh]", log.LstdFlags)
+	logger := log.New(os.Stdout, "[transfer]", log.LstdFlags)
 
 	// Surface the ldflags-injected build version to handlers/templates so
 	// the footer can render it.
 	server.BuildVersion = Version
 
 	app := cli.NewApp()
-	app.Name = "transfer.sh"
+	app.Name = "transfer"
 	app.Authors = []*cli.Author{}
-	app.Usage = "transfer.sh"
+	app.Usage = "transfer"
 	app.Description = `Easy file sharing from the command line`
 	app.Version = Version
 	app.Flags = globalFlags
