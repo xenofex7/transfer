@@ -1288,7 +1288,7 @@ func LoveHandler(h http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("x-made-with", "<3 by DutchCoders")
 		w.Header().Set("x-served-by", "Proudly served by DutchCoders")
-		w.Header().Set("server", "Transfer.sh HTTP Server")
+		w.Header().Set("server", "transfer HTTP Server")
 		h.ServeHTTP(w, r)
 	}
 }

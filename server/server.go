@@ -537,7 +537,7 @@ func (s *Server) Run() {
 		}
 	}
 
-	s.logger.Printf("Transfer.sh server started.\nusing temp folder: %s\nusing storage provider: %s", s.tempPath, s.storage.Type())
+	s.logger.Printf("transfer server started.\nusing temp folder: %s\nusing storage provider: %s", s.tempPath, s.storage.Type())
 
 	var cors func(http.Handler) http.Handler
 	if len(s.CorsDomains) > 0 {
