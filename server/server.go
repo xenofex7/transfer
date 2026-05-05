@@ -58,30 +58,6 @@ const _5M = (1 << 20) * 5
 // OptionFn is the option function type
 type OptionFn func(*Server)
 
-// ClamavHost sets clamav host
-func ClamavHost(s string) OptionFn {
-	return func(srvr *Server) {
-		srvr.ClamAVDaemonHost = s
-	}
-}
-
-// PerformClamavPrescan enables clamav prescan on upload
-func PerformClamavPrescan(b bool) OptionFn {
-	return func(srvr *Server) {
-		srvr.performClamavPrescan = b
-	}
-}
-
-// ClamavScanTimeout sets the per-stream scan timeout in seconds.
-// Values <= 0 are ignored and the built-in default is kept.
-func ClamavScanTimeout(seconds int) OptionFn {
-	return func(srvr *Server) {
-		if seconds > 0 {
-			srvr.clamavScanTimeout = time.Duration(seconds) * time.Second
-		}
-	}
-}
-
 // Listener set listener
 func Listener(s string) OptionFn {
 	return func(srvr *Server) {
@@ -295,10 +271,6 @@ type Server struct {
 
 	ipFilterOptions *IPFilterOptions
 
-	ClamAVDaemonHost     string
-	performClamavPrescan bool
-	clamavScanTimeout    time.Duration
-
 	tempPath string
 
 	webPath      string
@@ -351,9 +323,8 @@ func WebhookToken(s string) OptionFn {
 // New is the factory fot Server
 func New(options ...OptionFn) (*Server, error) {
 	s := &Server{
-		locks:             sync.Map{},
-		clamavScanTimeout: 60 * time.Second,
-		tagline:           DefaultTagline,
+		locks:   sync.Map{},
+		tagline: DefaultTagline,
 	}
 
 	for _, optionFn := range options {
@@ -518,7 +489,6 @@ func (s *Server) Run() {
 	r.Handle("/{token}/{filename}", getHandlerFn).Methods("GET")
 	r.Handle("/{action:(?:download|get|inline)}/{token}/{filename}", getHandlerFn).Methods("GET")
 
-	r.HandleFunc("/{filename}/scan", s.scanHandler).Methods("PUT")
 	r.HandleFunc("/put/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
 	r.HandleFunc("/upload/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
 	r.HandleFunc("/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")

@@ -3,7 +3,6 @@ module github.com/dutchcoders/transfer.sh
 go 1.25.0
 
 require (
-	github.com/dutchcoders/go-clamd v0.0.0-20170520113014-b970184f4d9e
 	github.com/fatih/color v1.14.1
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0

@@ -115,23 +115,6 @@ var globalFlags = []cli.Flag{
 		EnvVars: []string{"BASEDIR"},
 	},
 	&cli.StringFlag{
-		Name:    "clamav-host",
-		Usage:   "clamav-host",
-		Value:   "",
-		EnvVars: []string{"CLAMAV_HOST"},
-	},
-	&cli.BoolFlag{
-		Name:    "perform-clamav-prescan",
-		Usage:   "perform-clamav-prescan",
-		EnvVars: []string{"PERFORM_CLAMAV_PRESCAN"},
-	},
-	&cli.IntFlag{
-		Name:    "clamav-scan-timeout",
-		Usage:   "clamav scan timeout in seconds",
-		Value:   60,
-		EnvVars: []string{"CLAMAV_SCAN_TIMEOUT"},
-	},
-	&cli.StringFlag{
 		Name:    "http-auth-user",
 		Usage:   "user for http basic auth",
 		Value:   "",
@@ -266,22 +249,6 @@ func New() *Cmd {
 			options = append(options, server.LogFile(logger, v))
 		} else {
 			options = append(options, server.Logger(logger))
-		}
-
-		if v := c.String("clamav-host"); v != "" {
-			options = append(options, server.ClamavHost(v))
-		}
-
-		if v := c.Bool("perform-clamav-prescan"); v {
-			if c.String("clamav-host") == "" {
-				return errors.New("clamav-host not set")
-			}
-
-			options = append(options, server.PerformClamavPrescan(v))
-		}
-
-		if v := c.Int("clamav-scan-timeout"); v > 0 {
-			options = append(options, server.ClamavScanTimeout(v))
 		}
 
 		if v := c.Int64("max-upload-size"); v > 0 {

@@ -433,21 +433,6 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if s.performClamavPrescan {
-				status, err := s.performScan(file.Name())
-				if err != nil {
-					s.logger.Printf("%s", err.Error())
-					http.Error(w, "Could not perform prescan", http.StatusInternalServerError)
-					return
-				}
-
-				if status != clamavScanStatusOK {
-					s.logger.Printf("prescan positive: %s", status)
-					http.Error(w, "Clamav prescan found a virus", http.StatusPreconditionFailed)
-					return
-				}
-			}
-
 			metadata := metadataForRequest(contentType, contentLength, s.randomTokenLength, r)
 
 			buffer := &bytes.Buffer{}
@@ -565,7 +550,7 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 
 	reader := r.Body
 
-	if contentLength < 1 || s.performClamavPrescan {
+	if contentLength < 1 {
 		file, err := os.CreateTemp(s.tempPath, "transfer-")
 		defer s.cleanTmpFile(file)
 		if err != nil {
@@ -575,7 +560,6 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// queue file to disk, because s3 needs content length
-		// and clamav prescan scans a file
 		n, err := io.Copy(file, r.Body)
 		if err != nil {
 			s.logger.Printf("%s", err.Error())
@@ -593,21 +577,6 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		contentLength = n
-
-		if s.performClamavPrescan {
-			status, err := s.performScan(file.Name())
-			if err != nil {
-				s.logger.Printf("%s", err.Error())
-				http.Error(w, "Could not perform prescan", http.StatusInternalServerError)
-				return
-			}
-
-			if status != clamavScanStatusOK {
-				s.logger.Printf("prescan positive: %s", status)
-				http.Error(w, "Clamav prescan found a virus", http.StatusPreconditionFailed)
-				return
-			}
-		}
 
 		reader = file
 	}
