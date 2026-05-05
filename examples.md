@@ -10,7 +10,6 @@ All snippets assume an instance reachable at `https://your-instance.example.com`
 - [Other upload clients](#other-upload-clients)
 - [Archives and backups](#archives-and-backups)
 - [Encryption](#encryption)
-- [Virus scanning](#virus-scanning)
 - [Capturing the URL and delete token](#capturing-the-url-and-delete-token)
 
 ---
@@ -204,24 +203,6 @@ cat backup.tar.gz \
 
 curl https://your-instance.example.com/<token>/backup.tar.gz.kb | keybase decrypt
 ```
-
----
-
-## Virus scanning
-
-The instance exposes a synchronous scan endpoint that returns the ClamAV
-status without persisting anything. Useful as a one-shot check.
-
-```bash
-# EICAR test file - safe, but recognised by every AV
-wget https://secure.eicar.org/eicar.com.txt
-curl -X PUT --upload-file ./eicar.com.txt \
-  https://your-instance.example.com/eicar.com.txt/scan
-```
-
-When the regular upload path is configured with `--perform-clamav-prescan`,
-infected files are rejected with HTTP 412 (`Precondition Failed`) and the
-upload never lands on disk.
 
 ---
 

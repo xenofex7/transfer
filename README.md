@@ -64,7 +64,7 @@ Pin to a specific version in production.
 
 ## Self-hosting with docker compose
 
-A complete stack with a ClamAV sidecar lives in [`docker-compose.yml`](docker-compose.yml).
+The deployment stack lives in [`docker-compose.yml`](docker-compose.yml).
 
 ```bash
 # 1. Configuration template
@@ -179,13 +179,6 @@ All flags can be set via CLI args or the matching environment variable.
 | `--http-auth-ip-whitelist` | `HTTP_AUTH_IP_WHITELIST` | CIDRs that may upload without auth |
 | `--ip-whitelist` | `IP_WHITELIST` | CIDRs allowed at the connection level |
 | `--ip-blacklist` | `IP_BLACKLIST` | CIDRs denied at the connection level |
-
-### Antivirus
-
-| Flag | Env | Description |
-|---|---|---|
-| `--clamav-host` | `CLAMAV_HOST` | clamd host:port (e.g. `clamav:3310`) |
-| `--perform-clamav-prescan` | `PERFORM_CLAMAV_PRESCAN` | Refuse uploads that fail the prescan |
 
 ### Frontend / misc
 

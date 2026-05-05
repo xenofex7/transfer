@@ -7,6 +7,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Removed
+- ClamAV prescan, scan endpoint, sidecar service and related flags / env vars
+  (`CLAMAV_HOST`, `PERFORM_CLAMAV_PRESCAN`, `CLAMAV_SCAN_TIMEOUT`). The
+  deployment is meant for a small set of authenticated uploaders sharing
+  ordinary files, where a 2 GiB AV sidecar adds little value.
+
 ## [1.2.1] - 2026-05-04
 
 ### Changed

@@ -1,7 +1,7 @@
 # Roadmap
 
 Tracking & Planung dieses Forks. Ziel: schlanke, selbst-gehostete
-transfer-Variante mit lokalem Storage, ClamAV-Virenscan, htpasswd-Auth und
+transfer-Variante mit lokalem Storage, htpasswd-Auth und
 Reverse-Proxy davor.
 
 Status: **v1.1.0 in Production**. Phasen 1–4 und 6 sind durch. Übrig
@@ -19,7 +19,7 @@ Legende: `[x]` erledigt · `[ ]` offen · `[~]` in Arbeit
 
 ### Production-Härtung
 - [ ] HTTPS-Cert mit SSL Labs gegentesten (nice-to-have)
-- [ ] Monitoring (Container-Health, Disk-Usage, ClamAV-Updates)
+- [ ] Monitoring (Container-Health, Disk-Usage)
 - [ ] Log-Rotation
 
 ### Maintenance
