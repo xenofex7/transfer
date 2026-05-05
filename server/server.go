@@ -252,7 +252,9 @@ type Server struct {
 	authHtpasswd        string
 	authIPFilterOptions *IPFilterOptions
 
+	htpasswdMu   sync.RWMutex
 	htpasswdFile *htpasswd.File
+	users        *userStore
 	authIPFilter *ipFilter
 
 	logger *log.Logger
@@ -348,6 +350,8 @@ func New(options ...OptionFn) (*Server, error) {
 	}
 	s.branding = branding
 	activeBranding.Store(branding)
+
+	s.users = newUserStore(s.authHtpasswd, s.reloadHtpasswdFile)
 
 	return s, nil
 }
@@ -448,6 +452,10 @@ func (s *Server) Run() {
 	r.Handle("/admin/files", s.basicAuthHandler(http.HandlerFunc(s.adminFilesHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsGetHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsPostHandler))).Methods("POST")
+	r.Handle("/admin/users", s.basicAuthHandler(http.HandlerFunc(s.adminUsersGetHandler))).Methods("GET")
+	r.Handle("/admin/users", s.basicAuthHandler(http.HandlerFunc(s.adminUsersAddHandler))).Methods("POST")
+	r.Handle("/admin/users/{name}/password", s.basicAuthHandler(http.HandlerFunc(s.adminUsersResetHandler))).Methods("POST")
+	r.Handle("/admin/users/{name}/delete", s.basicAuthHandler(http.HandlerFunc(s.adminUsersDeleteHandler))).Methods("POST")
 	r.Handle("/admin/branding/{slot:logo|favicon}", s.basicAuthHandler(http.HandlerFunc(s.adminBrandingUploadHandler))).Methods("POST")
 	r.Handle("/admin/branding/{slot:logo|favicon}", s.basicAuthHandler(http.HandlerFunc(s.adminBrandingDeleteHandler))).Methods("DELETE")
 	r.Handle("/branding/logo", s.brandingHandler(BrandingLogo)).Methods("GET")

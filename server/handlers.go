@@ -59,7 +59,6 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	blackfriday "github.com/russross/blackfriday/v2"
 	qrcode "github.com/skip2/go-qrcode"
-	"github.com/tg123/go-htpasswd"
 	"golang.org/x/net/idna"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
@@ -1279,14 +1278,16 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 			return
 		}
 
-		if s.htpasswdFile == nil && s.authHtpasswd != "" {
-			htpasswdFile, err := htpasswd.New(s.authHtpasswd, htpasswd.DefaultSystems, nil)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+		if s.authHtpasswd != "" {
+			s.htpasswdMu.RLock()
+			loaded := s.htpasswdFile != nil
+			s.htpasswdMu.RUnlock()
+			if !loaded {
+				if err := s.reloadHtpasswdFile(); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 			}
-
-			s.htpasswdFile = htpasswdFile
 		}
 
 		if s.authIPFilter == nil && s.authIPFilterOptions != nil {
@@ -1311,8 +1312,13 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 			authorized = true
 		}
 
-		if !authorized && s.htpasswdFile != nil {
-			authorized = s.htpasswdFile.Match(username, password)
+		if !authorized {
+			s.htpasswdMu.RLock()
+			f := s.htpasswdFile
+			s.htpasswdMu.RUnlock()
+			if f != nil {
+				authorized = f.Match(username, password)
+			}
 		}
 
 		if !authorized {
