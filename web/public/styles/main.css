@@ -550,6 +550,7 @@ button { font: inherit; }
 }
 .settings-form input[type=text],
 .settings-form input[type=email],
+.settings-form input[type=password],
 .settings-form select {
   width: 100%;
   background: var(--surface-2);
@@ -625,6 +626,75 @@ button { font: inherit; }
   flex: 1 1 auto;
   min-width: 0;
   font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger, #dc2626);
+  border: 1px solid var(--danger, #dc2626);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.btn-danger:hover { background: var(--danger, #dc2626); color: #fff; }
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.users-table th, .users-table td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+.users-table thead th {
+  font-weight: 600;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.users-actions-col { width: 1%; white-space: nowrap; }
+.users-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+.users-inline-form {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.users-inline-form input[type=password] {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.6rem;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  min-width: 9rem;
+}
+.users-inline-form input[type=password]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.users-name { font-weight: 500; }
+.users-badge {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-2);
+  border-radius: 999px;
   color: var(--text-dim);
 }
 

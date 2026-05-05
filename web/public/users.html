@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" data-theme-default="{{theme_default}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Users &middot; {{.Hostname}}</title>
+  <link rel="icon" href="{{favicon_url}}">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
+</head>
+<body>
+  <main class="page">
+    <header class="admin-head">
+      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
+      <h1 class="admin-title">Users</h1>
+      <nav class="admin-nav">
+        <a href="/admin/files">Files</a>
+        <a href="/admin/settings">Settings</a>
+        <span class="admin-nav-current">Users</span>
+      </nav>
+    </header>
+
+    {{if not .Available}}
+    <section class="card">
+      <p class="settings-hint">User management is disabled because no htpasswd file is configured. Set <code>HTTP_AUTH_HTPASSWD</code> to enable.</p>
+    </section>
+    {{else}}
+
+    <section class="card">
+      <h2 class="settings-section-title">Add user</h2>
+      <form method="POST" action="/admin/users" class="settings-form" autocomplete="off" novalidate>
+        <div class="settings-field">
+          <label for="new-username" class="settings-label">Username</label>
+          <input id="new-username" name="username" type="text" maxlength="64" required pattern="[A-Za-z0-9._-]+" autocomplete="off">
+          <p class="settings-hint">Letters, digits, dot, dash and underscore. Max 64 characters.</p>
+        </div>
+        <div class="settings-field">
+          <label for="new-password" class="settings-label">Password</label>
+          <input id="new-password" name="password" type="password" minlength="8" maxlength="256" required autocomplete="new-password">
+          <p class="settings-hint">At least 8 characters.</p>
+        </div>
+        <div class="settings-actions">
+          <button type="submit" class="btn-primary">Add user</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 class="settings-section-title">Existing users</h2>
+      {{if .Users}}
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th class="users-actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Users}}
+          <tr>
+            <td>
+              <span class="users-name">{{.Name}}</span>
+              {{if .IsCurrent}}<span class="users-badge">you</span>{{end}}
+            </td>
+            <td class="users-actions">
+              <form method="POST" action="/admin/users/{{.Name}}/password" class="users-inline-form" autocomplete="off">
+                <input type="password" name="password" placeholder="New password" minlength="8" maxlength="256" required autocomplete="new-password">
+                <button type="submit" class="btn-secondary">Reset</button>
+              </form>
+              {{if not .IsCurrent}}
+              <form method="POST" action="/admin/users/{{.Name}}/delete" class="users-inline-form" data-confirm="Delete user {{.Name}}? This cannot be undone.">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+              {{end}}
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="settings-hint">No users yet. Add one above.</p>
+      {{end}}
+    </section>
+
+    {{end}}
+
+    <footer class="footer">
+      <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
+      <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>
+      <a class="footer-link" href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener">
+        <i data-lucide="git-branch"></i><span>source on github</span>
+      </a>
+    </footer>
+  </main>
+  {{if or .Flash .FlashError}}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!window.toast) return;
+      {{with .Flash}}window.toast.success({{.}});{{end}}
+      {{with .FlashError}}window.toast.error({{.}});{{end}}
+    });
+  </script>
+  {{end}}
+  <script>
+    document.querySelectorAll('form[data-confirm]').forEach(function (f) {
+      f.addEventListener('submit', function (e) {
+        if (!confirm(f.getAttribute('data-confirm'))) e.preventDefault();
+      });
+    });
+  </script>
+  <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
+  <script src="{{asset "/scripts/toast.js"}}" defer></script>
+  <script src="{{asset "/scripts/changelog-modal.js"}}" defer></script>
+  <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
+</body>
+</html>
