@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="transfer" width="180">
+  <img src="assets/transfer_logo.png" alt="transfer" width="360">
 </p>
 
 <h1 align="center">transfer</h1>
