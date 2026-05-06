@@ -7,6 +7,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Optional Umami analytics. Setting `UMAMI_SCRIPT_URL` and
+  `UMAMI_WEBSITE_ID` renders the tracker on user-facing pages only;
+  admin pages stay untracked. A `UMAMI_HEARTBEAT=true` flag adds a
+  once-a-day server-side ping to `/api/send` so operators can count
+  live instances. All three settings default to off.
+
 ## [1.3.0] - 2026-05-06
 
 ### Added

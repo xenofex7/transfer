@@ -190,6 +190,19 @@ All flags can be set via CLI args or the matching environment variable.
 | `--email-contact` | `EMAIL_CONTACT` | Address rendered in the "Contact" link |
 | `--log` | `LOG` | Log file path (defaults to stderr) |
 
+### Analytics (optional)
+
+Off by default. Configuring both `UMAMI_SCRIPT_URL` and
+`UMAMI_WEBSITE_ID` injects the Umami tracker into user-facing pages
+(`/`, download views, 404). Admin pages (`/admin/*`) never carry the
+tag. Self-hosted Umami works as well as `umami.is`.
+
+| Flag | Env | Description |
+|---|---|---|
+| `--umami-script-url` | `UMAMI_SCRIPT_URL` | URL to your Umami `script.js` |
+| `--umami-website-id` | `UMAMI_WEBSITE_ID` | Umami site UUID (`data-website-id`) |
+| `--umami-heartbeat` | `UMAMI_HEARTBEAT` | Send a daily server-side beat to count live instances |
+
 ---
 
 ## Development

@@ -38,6 +38,9 @@ services:
       TAGLINE: "${TAGLINE:-Easy and fast file sharing from the command line.}"
       UPLOAD_WEBHOOK_URL: "${UPLOAD_WEBHOOK_URL:-}"
       WEBHOOK_TOKEN: "${WEBHOOK_TOKEN:-}"
+      UMAMI_SCRIPT_URL: "${UMAMI_SCRIPT_URL:-}"
+      UMAMI_WEBSITE_ID: "${UMAMI_WEBSITE_ID:-}"
+      UMAMI_HEARTBEAT: "${UMAMI_HEARTBEAT:-false}"
     volumes:
       - ${DATA_DIR:-./data}:/data
       # Mounted read-write so the /admin/users UI can add/reset/delete
