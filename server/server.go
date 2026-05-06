@@ -291,7 +291,11 @@ type Server struct {
 
 	umamiScriptURL string
 	umamiWebsiteID string
-	umamiHeartbeat bool
+
+	// Heartbeat target may be operator-overridden; defaults are baked in.
+	umamiHeartbeatURL      string
+	umamiHeartbeatID       string
+	umamiHeartbeatOverride HeartbeatOverride
 
 	deletions *deletionLog
 
@@ -340,10 +344,22 @@ func UmamiWebsiteID(s string) OptionFn {
 	return func(srvr *Server) { srvr.umamiWebsiteID = s }
 }
 
-// UmamiHeartbeat enables a once-a-day server-side ping to Umami's
-// `/api/send` endpoint so operators can count live instances.
-func UmamiHeartbeat(b bool) OptionFn {
-	return func(srvr *Server) { srvr.umamiHeartbeat = b }
+// UmamiHeartbeatURL overrides the built-in heartbeat target's
+// `script.js` URL. Empty keeps the default.
+func UmamiHeartbeatURL(s string) OptionFn {
+	return func(srvr *Server) { srvr.umamiHeartbeatURL = s }
+}
+
+// UmamiHeartbeatWebsiteID overrides the built-in heartbeat website-id.
+// Empty keeps the default.
+func UmamiHeartbeatWebsiteID(s string) OptionFn {
+	return func(srvr *Server) { srvr.umamiHeartbeatID = s }
+}
+
+// UmamiHeartbeatOverride forces the heartbeat on or off regardless of
+// the operator toggle in /admin/settings. "" defers to settings/default.
+func UmamiHeartbeatOverride(v HeartbeatOverride) OptionFn {
+	return func(srvr *Server) { srvr.umamiHeartbeatOverride = v }
 }
 
 // New is the factory fot Server
@@ -481,6 +497,8 @@ func (s *Server) Run() {
 	r.Handle("/admin/files", s.basicAuthHandler(http.HandlerFunc(s.adminFilesHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsGetHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsPostHandler))).Methods("POST")
+	r.Handle("/admin/settings/heartbeat", s.basicAuthHandler(http.HandlerFunc(s.adminHeartbeatHandler))).Methods("POST")
+	r.Handle("/admin/settings/heartbeat/payload", s.basicAuthHandler(http.HandlerFunc(s.adminHeartbeatPayloadHandler))).Methods("GET")
 	r.Handle("/admin/users", s.basicAuthHandler(http.HandlerFunc(s.adminUsersGetHandler))).Methods("GET")
 	r.Handle("/admin/users", s.basicAuthHandler(http.HandlerFunc(s.adminUsersAddHandler))).Methods("POST")
 	r.Handle("/admin/users/{name}/password", s.basicAuthHandler(http.HandlerFunc(s.adminUsersResetHandler))).Methods("POST")
@@ -593,7 +611,7 @@ func (s *Server) Run() {
 
 	heartbeatCtx, cancelHeartbeat := context.WithCancel(context.Background())
 	defer cancelHeartbeat()
-	s.startUmamiHeartbeat(heartbeatCtx)
+	s.startHeartbeat(heartbeatCtx)
 
 	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt)

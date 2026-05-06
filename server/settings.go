@@ -36,6 +36,10 @@ type Settings struct {
 	Tagline      string `json:"tagline"`
 	EmailContact string `json:"email_contact"`
 	Theme        string `json:"theme"`
+	// HeartbeatEnabled tri-states the optional anonymous instance ping.
+	// nil  -> operator never made a choice; the built-in default applies.
+	// *true / *false -> explicit operator choice persisted from the UI.
+	HeartbeatEnabled *bool `json:"heartbeat_enabled,omitempty"`
 }
 
 // settingsStore loads, returns and persists Settings. All access goes through

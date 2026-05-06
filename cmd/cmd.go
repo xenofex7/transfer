@@ -186,10 +186,23 @@ var globalFlags = []cli.Flag{
 		Value:   "",
 		EnvVars: []string{"UMAMI_WEBSITE_ID"},
 	},
-	&cli.BoolFlag{
+	&cli.StringFlag{
 		Name:    "umami-heartbeat",
-		Usage:   "send a server-side heartbeat event to Umami once a day so operators can count live instances",
+		Usage:   "force the daily anonymous heartbeat on or off (\"on\", \"off\"). Empty defers to the toggle in /admin/settings.",
+		Value:   "",
 		EnvVars: []string{"UMAMI_HEARTBEAT"},
+	},
+	&cli.StringFlag{
+		Name:    "umami-heartbeat-url",
+		Usage:   "override the built-in heartbeat target script.js URL",
+		Value:   "",
+		EnvVars: []string{"UMAMI_HEARTBEAT_URL"},
+	},
+	&cli.StringFlag{
+		Name:    "umami-heartbeat-website-id",
+		Usage:   "override the built-in heartbeat target website UUID",
+		Value:   "",
+		EnvVars: []string{"UMAMI_HEARTBEAT_WEBSITE_ID"},
 	},
 }
 
@@ -291,8 +304,17 @@ func New() *Cmd {
 		if v := c.String("umami-website-id"); v != "" {
 			options = append(options, server.UmamiWebsiteID(v))
 		}
-		if c.Bool("umami-heartbeat") {
-			options = append(options, server.UmamiHeartbeat(true))
+		switch strings.ToLower(strings.TrimSpace(c.String("umami-heartbeat"))) {
+		case "on", "true", "1", "yes":
+			options = append(options, server.UmamiHeartbeatOverride(server.HeartbeatOverrideOn))
+		case "off", "false", "0", "no":
+			options = append(options, server.UmamiHeartbeatOverride(server.HeartbeatOverrideOff))
+		}
+		if v := c.String("umami-heartbeat-url"); v != "" {
+			options = append(options, server.UmamiHeartbeatURL(v))
+		}
+		if v := c.String("umami-heartbeat-website-id"); v != "" {
+			options = append(options, server.UmamiHeartbeatWebsiteID(v))
 		}
 
 		purgeDays := c.Int("purge-days")
