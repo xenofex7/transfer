@@ -40,10 +40,12 @@ services:
       WEBHOOK_TOKEN: "${WEBHOOK_TOKEN:-}"
     volumes:
       - ${DATA_DIR:-./data}:/data
+      # Mounted read-write so the /admin/users UI can add/reset/delete
+      # users in place. Keep the file outside any world-readable path on
+      # the host.
       - type: bind
         source: ./htpasswd
         target: /etc/transfer/htpasswd
-        read_only: true
         bind:
           create_host_path: false
     networks:

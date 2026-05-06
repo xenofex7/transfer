@@ -7,6 +7,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Admin user management at `/admin/users`: list, add (bcrypt-hashed),
+  password reset and delete. Writes are atomic (temp-file + rename) and
+  the in-memory matcher reloads after every change, so freshly added
+  users can sign in immediately. Self-delete and last-user deletion are
+  blocked to prevent lockout. Requires a read-write `htpasswd` mount.
+
 ### Removed
 - ClamAV prescan, scan endpoint, sidecar service and related flags / env vars
   (`CLAMAV_HOST`, `PERFORM_CLAMAV_PRESCAN`, `CLAMAV_SCAN_TIMEOUT`). The

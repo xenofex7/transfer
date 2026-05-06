@@ -16,6 +16,8 @@ Legende: `[x]` erledigt · `[ ]` offen · `[~]` in Arbeit
 ### Optionale Features
 - [ ] Storage-Quota pro User (htpasswd-User aus Auth-Header)
 - [ ] E-Mail-Benachrichtigung bei Download (optional pro Upload)
+- [ ] Rollen (admin/uploader) — aktuell darf jeder eingeloggte User auch
+      User verwalten
 
 ### Production-Härtung
 - [ ] HTTPS-Cert mit SSL Labs gegentesten (nice-to-have)

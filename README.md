@@ -71,13 +71,15 @@ The deployment stack lives in [`docker-compose.yml`](docker-compose.yml).
 cp .env.example .env
 $EDITOR .env
 
-# 2. Auth file (one entry per allowed user)
+# 2. Auth file (seed at least one user; more can be managed in the UI)
 htpasswd -B -c htpasswd alice
-htpasswd -B    htpasswd bob
 
 # 3. Up
 docker compose up -d
 ```
+
+After the stack is up, open `/admin/users` to add, reset, or delete users
+without touching the file by hand.
 
 The transfer container exposes port 8080 only inside the compose network.
 TLS and the public hostname are expected to be handled by your reverse proxy
