@@ -95,16 +95,18 @@ button { font: inherit; }
   text-align: center;
 }
 .logo {
-  width: 96px;
-  height: 96px;
-  border-radius: 22px;
+  height: 72px;
+  width: auto;
+  max-width: min(420px, 80%);
+  object-fit: contain;
   display: block;
   margin: 0 auto 1.25rem;
 }
 .logo-small {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+  height: 28px;
+  width: auto;
+  max-width: 200px;
+  object-fit: contain;
   margin: 0;
 }
 .logo-link { display: inline-block; }
@@ -515,7 +517,7 @@ button { font: inherit; }
   margin: 0 0 0.25rem;
 }
 .admin-meta {
-  margin: 0;
+  margin: 0.75rem 0 0;
   color: var(--text-dim);
   font-size: 0.875rem;
 }
