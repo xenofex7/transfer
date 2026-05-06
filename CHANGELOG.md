@@ -7,12 +7,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-05-06
+
 ### Added
-- Optional Umami analytics. Setting `UMAMI_SCRIPT_URL` and
-  `UMAMI_WEBSITE_ID` renders the tracker on user-facing pages only;
-  admin pages stay untracked. A `UMAMI_HEARTBEAT=true` flag adds a
-  once-a-day server-side ping to `/api/send` so operators can count
-  live instances. All three settings default to off.
+- Optional Umami analytics integration with a daily server heartbeat
+- Umami tracker placeholder injected into user-facing templates
+- Umami environment variables wired into the dev launch config
+
+### Changed
+- Documented Umami env vars in compose, env files, README, and changelog
 
 ## [1.3.0] - 2026-05-06
 
