@@ -25,6 +25,7 @@ THE SOFTWARE.
 package server
 
 import (
+	"context"
 	cryptoRand "crypto/rand"
 	"encoding/binary"
 	iofs "io/fs"
@@ -288,6 +289,10 @@ type Server struct {
 	uploadWebhookURL string
 	webhookToken     string
 
+	umamiScriptURL string
+	umamiWebsiteID string
+	umamiHeartbeat bool
+
 	deletions *deletionLog
 
 	CorsDomains    string
@@ -322,6 +327,25 @@ func WebhookToken(s string) OptionFn {
 	}
 }
 
+// UmamiScriptURL points at a self-hosted Umami `script.js`. Combined with
+// UmamiWebsiteID it injects the tracker into user-facing pages. Empty
+// disables client analytics. Admin pages never carry the tag.
+func UmamiScriptURL(s string) OptionFn {
+	return func(srvr *Server) { srvr.umamiScriptURL = s }
+}
+
+// UmamiWebsiteID is the Umami site UUID (data-website-id). Required
+// alongside UmamiScriptURL for the tracker to render.
+func UmamiWebsiteID(s string) OptionFn {
+	return func(srvr *Server) { srvr.umamiWebsiteID = s }
+}
+
+// UmamiHeartbeat enables a once-a-day server-side ping to Umami's
+// `/api/send` endpoint so operators can count live instances.
+func UmamiHeartbeat(b bool) OptionFn {
+	return func(srvr *Server) { srvr.umamiHeartbeat = b }
+}
+
 // New is the factory fot Server
 func New(options ...OptionFn) (*Server, error) {
 	s := &Server{
@@ -352,6 +376,11 @@ func New(options ...OptionFn) (*Server, error) {
 	activeBranding.Store(branding)
 
 	s.users = newUserStore(s.authHtpasswd, s.reloadHtpasswdFile)
+
+	(&umamiConfig{
+		scriptURL: s.umamiScriptURL,
+		websiteID: s.umamiWebsiteID,
+	}).install()
 
 	return s, nil
 }
@@ -561,6 +590,10 @@ func (s *Server) Run() {
 	if s.purgeDays > 0 {
 		go s.purgeHandler()
 	}
+
+	heartbeatCtx, cancelHeartbeat := context.WithCancel(context.Background())
+	defer cancelHeartbeat()
+	s.startUmamiHeartbeat(heartbeatCtx)
 
 	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt)

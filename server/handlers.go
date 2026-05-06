@@ -95,6 +95,7 @@ func initHTMLTemplates() *htmlTemplate.Template {
 		"theme_bootstrap": themeBootstrap,
 		"build_version":   func() string { return BuildVersion },
 		"contact_email":   contactEmail,
+		"umami_script":    func() htmlTemplate.HTML { return htmlTemplate.HTML(umamiScript()) },
 	}
 
 	// Templates with functions available to them

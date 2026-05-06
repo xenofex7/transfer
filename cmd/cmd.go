@@ -174,6 +174,23 @@ var globalFlags = []cli.Flag{
 		Value:   "",
 		EnvVars: []string{"WEBHOOK_TOKEN"},
 	},
+	&cli.StringFlag{
+		Name:    "umami-script-url",
+		Usage:   "URL to the Umami script.js (e.g. https://umami.example.com/script.js); empty disables analytics",
+		Value:   "",
+		EnvVars: []string{"UMAMI_SCRIPT_URL"},
+	},
+	&cli.StringFlag{
+		Name:    "umami-website-id",
+		Usage:   "Umami website UUID; required alongside umami-script-url",
+		Value:   "",
+		EnvVars: []string{"UMAMI_WEBSITE_ID"},
+	},
+	&cli.BoolFlag{
+		Name:    "umami-heartbeat",
+		Usage:   "send a server-side heartbeat event to Umami once a day so operators can count live instances",
+		EnvVars: []string{"UMAMI_HEARTBEAT"},
+	},
 }
 
 // Cmd wraps cli.app
@@ -267,6 +284,15 @@ func New() *Cmd {
 		}
 		if v := c.String("webhook-token"); v != "" {
 			options = append(options, server.WebhookToken(v))
+		}
+		if v := c.String("umami-script-url"); v != "" {
+			options = append(options, server.UmamiScriptURL(v))
+		}
+		if v := c.String("umami-website-id"); v != "" {
+			options = append(options, server.UmamiWebsiteID(v))
+		}
+		if c.Bool("umami-heartbeat") {
+			options = append(options, server.UmamiHeartbeat(true))
 		}
 
 		purgeDays := c.Int("purge-days")
