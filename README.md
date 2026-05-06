@@ -29,6 +29,7 @@
 
 - [Quick start](#quick-start)
 - [Self-hosting with docker compose](#self-hosting-with-docker-compose)
+- [Admin UI](#admin-ui)
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Development](#development)
@@ -56,6 +57,18 @@ curl --upload-file ./hello.txt http://127.0.0.1:8080/hello.txt
 The response body is the download URL. The `X-Url-Delete` response header
 contains the deletion URL - keep both.
 
+> **Heads-up for the bare quick start:** this command starts the
+> container with **no authentication** - anything that can reach port
+> 8080 can upload, download and delete. It also fires the
+> [anonymous instance heartbeat](#anonymous-instance-heartbeat-on-by-default-easy-to-disable)
+> within 30 s. For anything beyond a local kick-the-tyres run, use the
+> [docker compose stack](#self-hosting-with-docker-compose) below, which
+> wires up htpasswd auth and an external reverse proxy.
+
+The container image bakes in sensible defaults (`LISTENER=:8080`,
+`BASEDIR=/data`, `TEMP_PATH=/tmp`, `PURGE_DAYS=360`,
+`PURGE_INTERVAL=24`); override them via env or CLI flags as needed.
+
 Multi-arch images (`linux/amd64`, `linux/arm64`) are published on GHCR with
 `latest`, semver (`X.Y.Z`, `X.Y`, `X`) and per-commit (`sha-<short>`) tags.
 Pin to a specific version in production.
@@ -78,14 +91,30 @@ htpasswd -B -c htpasswd alice
 docker compose up -d
 ```
 
-After the stack is up, open `/admin/users` to add, reset, or delete users
-without touching the file by hand.
+After the stack is up, open the [admin UI](#admin-ui) to manage users,
+inspect uploads, and tweak branding without touching files by hand.
 
 The transfer container exposes port 8080 only inside the compose network.
 TLS and the public hostname are expected to be handled by your reverse proxy
 of choice (nginx, Caddy, Traefik). Pass standard proxy headers
 (`X-Forwarded-Host`, `X-Forwarded-Proto`) and set `client_max_body_size` to at
 least the value of `MAX_UPLOAD_SIZE`.
+
+---
+
+## Admin UI
+
+Three pages live behind the same htpasswd auth as uploads. Authenticate
+with any user from the htpasswd file.
+
+| Path | Purpose |
+|---|---|
+| `/admin/files` | Browse stored uploads, filter, manually delete |
+| `/admin/settings` | Tagline, contact email, theme, custom logo / favicon, anonymous-heartbeat toggle |
+| `/admin/users` | Add, reset password, delete - read/write to the mounted htpasswd |
+
+Branding uploads land in `<BASEDIR>/.branding/`; persisted operator
+settings live in `<BASEDIR>/.settings.json`.
 
 ---
 
@@ -150,7 +179,7 @@ All flags can be set via CLI args or the matching environment variable.
 
 | Flag | Env | Default | Description |
 |---|---|---|---|
-| `--listener` | `LISTENER` | `127.0.0.1:8080` | Address the HTTP server binds to |
+| `--listener` | `LISTENER` | `127.0.0.1:8080` (binary) / `:8080` (container) | Address the HTTP server binds to |
 | `--proxy-path` | `PROXY_PATH` | - | Path prefix when behind a reverse proxy |
 | `--proxy-port` | `PROXY_PORT` | - | External port of the reverse proxy |
 | `--cors-domains` | `CORS_DOMAINS` | - | Comma-separated list of CORS origins |
@@ -159,8 +188,8 @@ All flags can be set via CLI args or the matching environment variable.
 
 | Flag | Env | Default | Description |
 |---|---|---|---|
-| `--basedir` | `BASEDIR` | *required* | Path to the local storage directory |
-| `--temp-path` | `TEMP_PATH` | OS temp | Path used for in-flight uploads |
+| `--basedir` | `BASEDIR` | *required* (the container image presets it to `/data`) | Path to the local storage directory |
+| `--temp-path` | `TEMP_PATH` | OS temp dir (`/tmp` in the container) | Path used for in-flight uploads |
 
 ### Lifecycle
 
@@ -168,8 +197,8 @@ All flags can be set via CLI args or the matching environment variable.
 |---|---|---|---|
 | `--purge-days` | `PURGE_DAYS` | `360` | Days after which uploads are purged |
 | `--purge-interval` | `PURGE_INTERVAL` | `24` | Hours between purge runs |
-| `--max-upload-size` | `MAX_UPLOAD_SIZE` | unlimited | Per-file limit in KB |
-| `--rate-limit` | `RATE_LIMIT` | `0` | Requests per minute (0 = off) |
+| `--max-upload-size` | `MAX_UPLOAD_SIZE` | `0` (no limit) | Per-file limit in KB |
+| `--rate-limit` | `RATE_LIMIT` | `0` (off) | Requests per minute |
 | `--random-token-length` | `RANDOM_TOKEN_LENGTH` | `10` | URL token length |
 
 ### Authentication & access control
@@ -186,9 +215,35 @@ All flags can be set via CLI args or the matching environment variable.
 
 | Flag | Env | Description |
 |---|---|---|
-| `--web-path` | `WEB_PATH` | Override the bundled web frontend directory |
+| `--tagline` | `TAGLINE` | Subtitle shown beneath the hostname on the homepage; empty hides it. The admin UI overrides this at runtime. |
 | `--email-contact` | `EMAIL_CONTACT` | Address rendered in the "Contact" link |
+| `--web-path` | `WEB_PATH` | Override the bundled web frontend directory (development only) |
 | `--log` | `LOG` | Log file path (defaults to stderr) |
+
+### Webhooks
+
+Best-effort, async, no-retry POSTs for upload, download and delete events.
+
+| Flag | Env | Description |
+|---|---|---|
+| `--upload-webhook-url` | `UPLOAD_WEBHOOK_URL` | URL that receives JSON events. Empty disables webhooks. |
+| `--webhook-token` | `WEBHOOK_TOKEN` | Optional bearer token added as `Authorization: Bearer <token>` |
+
+Body shape (`event` is one of `upload`, `download`, `delete`; optional
+fields are omitted when empty):
+
+```json
+{
+  "event": "upload",
+  "filename": "hello.txt",
+  "content_type": "text/plain",
+  "size": 123,
+  "url": "https://your-instance.example.com/<token>/hello.txt",
+  "delete_url": "https://your-instance.example.com/<token>/hello.txt/<delete-token>",
+  "user": "alice",
+  "downloads": 0
+}
+```
 
 ### Analytics
 
