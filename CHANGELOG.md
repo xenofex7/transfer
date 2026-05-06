@@ -7,14 +7,19 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-05-06
+
+### Added
+- Heartbeat status card in admin settings showing current state and target
+- Persisted toggle to enable or disable heartbeat at runtime
+
 ### Changed
-- Anonymous instance heartbeat is now ON by default and ships with a
-  built-in Umami target so forks don't have to configure anything.
-  Operators can flip the toggle from `/admin/settings`, override via
-  `UMAMI_HEARTBEAT=off`, or redirect the ping at their own Umami via
-  `UMAMI_HEARTBEAT_URL` / `UMAMI_HEARTBEAT_WEBSITE_ID`. The exact
-  payload is exposed at `/admin/settings/heartbeat/payload` and
-  carries only the running version - no IPs, no usage, no user data.
+- Heartbeat now defaults to on using a built-in target
+- Heartbeat disabled in the dev launch config to avoid noise during local development
+- Documented heartbeat default-on behavior including the source-IP caveat
+
+### Removed
+- Heartbeat-related variables from `.env.example` since configuration is now built-in and toggled in admin settings
 
 ## [1.3.1] - 2026-05-06
 
