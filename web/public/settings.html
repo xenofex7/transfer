@@ -82,6 +82,43 @@
     </section>
     {{end}}
 
+    <section class="card">
+      <h2 class="settings-section-title">Anonymous instance heartbeat</h2>
+      <p class="settings-hint">
+        Helps the project author count how many copies of this fork are running.
+        One ping per day, sent from this server (no client/visitor tracking).
+        The payload carries only the running version - see
+        <a href="/admin/settings/heartbeat/payload" target="_blank" rel="noopener">/admin/settings/heartbeat/payload</a>
+        for the exact JSON.
+      </p>
+      <p class="settings-hint">
+        Caveat: the request necessarily reveals this server's source IP
+        to the maintainer's Umami instance. No usage, no upload data, no
+        user identifiers leave the server.
+      </p>
+
+      <p class="heartbeat-status">
+        Status:
+        {{if .HeartbeatActive}}<span class="heartbeat-pill heartbeat-on">ON</span>{{else}}<span class="heartbeat-pill heartbeat-off">OFF</span>{{end}}
+        <span class="heartbeat-source">(source: {{.HeartbeatSource}})</span>
+      </p>
+
+      {{if .HeartbeatLocked}}
+      <p class="settings-hint">
+        Pinned by the <code>UMAMI_HEARTBEAT</code> environment variable.
+        Unset it to re-enable the UI toggle.
+      </p>
+      {{else}}
+      <form method="POST" action="/admin/settings/heartbeat" class="settings-actions">
+        {{if .HeartbeatActive}}
+        <button type="submit" name="enabled" value="false" class="btn-secondary">Disable</button>
+        {{else}}
+        <button type="submit" name="enabled" value="true" class="btn-primary">Enable</button>
+        {{end}}
+      </form>
+      {{end}}
+    </section>
+
     <footer class="footer">
       <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
       <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>

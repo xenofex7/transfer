@@ -7,6 +7,7 @@ Copyright (c) 2026 xenofex7
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/mail"
 	"path/filepath"
@@ -24,6 +25,15 @@ type adminSettingsData struct {
 	HasLogo         bool
 	HasFavicon      bool
 	BrandingEnabled bool
+
+	// HeartbeatActive is the resolved on/off state. HeartbeatSource is
+	// "default", "settings" or "env" for the small label shown next to
+	// the toggle. HeartbeatLocked is true when an env override pins the
+	// state and the UI toggle is read-only.
+	HeartbeatActive bool
+	HeartbeatSource string
+	HeartbeatLocked bool
+
 	// Flash + FlashError are one-shot messages surfaced via toast on the
 	// next GET render. They come from the settings_flash_* cookies that
 	// flashAndRedirect sets after a successful POST or upload.
@@ -108,7 +118,56 @@ func (s *Server) settingsData(r *http.Request, tagline, email, theme string) adm
 		d.HasLogo = s.branding.Get(BrandingLogo).exists
 		d.HasFavicon = s.branding.Get(BrandingFavicon).exists
 	}
+	d.HeartbeatActive, d.HeartbeatSource = s.HeartbeatActive()
+	d.HeartbeatLocked = s.umamiHeartbeatOverride != HeartbeatOverrideUnset
 	return d
+}
+
+// adminHeartbeatHandler flips the persisted on/off toggle for the
+// anonymous instance heartbeat. Refuses to write when an env override
+// is active (the UI shows the toggle as locked in that case anyway).
+func (s *Server) adminHeartbeatHandler(w http.ResponseWriter, r *http.Request) {
+	if s.settings == nil {
+		s.flashAndRedirect(w, r, "Settings store not configured.", true)
+		return
+	}
+	if s.umamiHeartbeatOverride != HeartbeatOverrideUnset {
+		s.flashAndRedirect(w, r, "Heartbeat is pinned by UMAMI_HEARTBEAT env; the UI toggle is read-only.", true)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		s.flashAndRedirect(w, r, "Invalid form submission", true)
+		return
+	}
+	want := strings.ToLower(strings.TrimSpace(r.PostForm.Get("enabled")))
+	val := want == "true" || want == "on" || want == "1"
+
+	cur := s.settings.Get()
+	cur.HeartbeatEnabled = &val
+	if err := s.settings.Set(cur); err != nil {
+		s.logger.Printf("admin: heartbeat toggle: %v", err)
+		s.flashAndRedirect(w, r, "Could not save toggle: "+err.Error(), true)
+		return
+	}
+	if val {
+		s.flashAndRedirect(w, r, "Anonymous heartbeat enabled", false)
+	} else {
+		s.flashAndRedirect(w, r, "Anonymous heartbeat disabled", false)
+	}
+}
+
+// adminHeartbeatPayloadHandler returns the JSON the server would POST
+// for a heartbeat. Pure transparency: no IPs, no hostname, no usage,
+// just the website-id and the running version.
+func (s *Server) adminHeartbeatPayloadHandler(w http.ResponseWriter, _ *http.Request) {
+	_, id := s.heartbeatTarget()
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(heartbeatPayload(id)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // adminBrandingUploadHandler accepts a multipart upload of a single image

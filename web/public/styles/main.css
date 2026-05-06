@@ -688,6 +688,27 @@ button { font: inherit; }
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+.heartbeat-status {
+  margin: 0.75rem 0;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.heartbeat-pill {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.heartbeat-on  { background: var(--accent); color: var(--bg); }
+.heartbeat-off { background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); }
+.heartbeat-source { color: var(--text-dim); font-size: 0.8rem; }
+
 .users-name { font-weight: 500; }
 .users-badge {
   margin-left: 0.5rem;
