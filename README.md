@@ -190,18 +190,40 @@ All flags can be set via CLI args or the matching environment variable.
 | `--email-contact` | `EMAIL_CONTACT` | Address rendered in the "Contact" link |
 | `--log` | `LOG` | Log file path (defaults to stderr) |
 
-### Analytics (optional)
+### Analytics
 
-Off by default. Configuring both `UMAMI_SCRIPT_URL` and
-`UMAMI_WEBSITE_ID` injects the Umami tracker into user-facing pages
-(`/`, download views, 404). Admin pages (`/admin/*`) never carry the
-tag. Self-hosted Umami works as well as `umami.is`.
+#### Visitor analytics (optional, off by default)
+
+Setting both `UMAMI_SCRIPT_URL` and `UMAMI_WEBSITE_ID` injects the
+Umami tracker into user-facing pages (`/`, download views, 404). Admin
+pages (`/admin/*`) never carry the tag. Self-hosted Umami works as
+well as `umami.is`.
 
 | Flag | Env | Description |
 |---|---|---|
 | `--umami-script-url` | `UMAMI_SCRIPT_URL` | URL to your Umami `script.js` |
 | `--umami-website-id` | `UMAMI_WEBSITE_ID` | Umami site UUID (`data-website-id`) |
-| `--umami-heartbeat` | `UMAMI_HEARTBEAT` | Send a daily server-side beat to count live instances |
+
+#### Anonymous instance heartbeat (on by default, easy to disable)
+
+The server pings the project maintainer's Umami once a day so the
+fork's reach is visible. The payload is the running version and a
+fixed event name; no IP, no usage, no upload data, no user identifiers
+leave the server. The HTTP request itself unavoidably exposes the
+source IP to the maintainer's Umami host - that's documented here so
+no one is surprised, and the maintainer's Umami can be configured to
+not record IPs.
+
+Toggle in `/admin/settings`, or pin via env:
+
+| Flag | Env | Description |
+|---|---|---|
+| `--umami-heartbeat` | `UMAMI_HEARTBEAT` | `on` / `off` to override the UI toggle. Empty defers to the toggle (default on). |
+| `--umami-heartbeat-url` | `UMAMI_HEARTBEAT_URL` | Redirect the beat to your own Umami |
+| `--umami-heartbeat-website-id` | `UMAMI_HEARTBEAT_WEBSITE_ID` | Custom Umami site UUID for the beat |
+
+The exact JSON the server would send is exposed at
+`/admin/settings/heartbeat/payload` for inspection.
 
 ---
 

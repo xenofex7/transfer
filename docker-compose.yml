@@ -40,7 +40,9 @@ services:
       WEBHOOK_TOKEN: "${WEBHOOK_TOKEN:-}"
       UMAMI_SCRIPT_URL: "${UMAMI_SCRIPT_URL:-}"
       UMAMI_WEBSITE_ID: "${UMAMI_WEBSITE_ID:-}"
-      UMAMI_HEARTBEAT: "${UMAMI_HEARTBEAT:-false}"
+      UMAMI_HEARTBEAT: "${UMAMI_HEARTBEAT:-}"
+      UMAMI_HEARTBEAT_URL: "${UMAMI_HEARTBEAT_URL:-}"
+      UMAMI_HEARTBEAT_WEBSITE_ID: "${UMAMI_HEARTBEAT_WEBSITE_ID:-}"
     volumes:
       - ${DATA_DIR:-./data}:/data
       # Mounted read-write so the /admin/users UI can add/reset/delete

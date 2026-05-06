@@ -7,6 +7,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Anonymous instance heartbeat is now ON by default and ships with a
+  built-in Umami target so forks don't have to configure anything.
+  Operators can flip the toggle from `/admin/settings`, override via
+  `UMAMI_HEARTBEAT=off`, or redirect the ping at their own Umami via
+  `UMAMI_HEARTBEAT_URL` / `UMAMI_HEARTBEAT_WEBSITE_ID`. The exact
+  payload is exposed at `/admin/settings/heartbeat/payload` and
+  carries only the running version - no IPs, no usage, no user data.
+
 ## [1.3.1] - 2026-05-06
 
 ### Added
