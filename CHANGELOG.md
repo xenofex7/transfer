@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-05-07
+
+Failed to authenticate. API Error: 401 Invalid authentication credentials
+
 ## [1.4.0] - 2026-05-06
 
 ### Added
