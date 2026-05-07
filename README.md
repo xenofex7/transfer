@@ -258,26 +258,24 @@ well as `umami.is`.
 | `--umami-script-url` | `UMAMI_SCRIPT_URL` | URL to your Umami `script.js` |
 | `--umami-website-id` | `UMAMI_WEBSITE_ID` | Umami site UUID (`data-website-id`) |
 
-#### Anonymous instance heartbeat (on by default, easy to disable)
+#### Anonymous instance heartbeat
 
-The server pings the project maintainer's Umami once a day so the
-fork's reach is visible. The payload is the running version and a
-fixed event name; no IP, no usage, no upload data, no user identifiers
-leave the server. The HTTP request itself unavoidably exposes the
-source IP to the maintainer's Umami host - that's documented here so
-no one is surprised, and the maintainer's Umami can be configured to
-not record IPs.
+Transfer sends one anonymous heartbeat per day so I can see how many
+instances are running and which versions are in the wild. The payload
+is just the running version - no user data, no IP, no upload metadata,
+no usernames, no request tracking, not even an instance ID. Events go
+to a privately-hosted Umami instance.
 
-Toggle in `/admin/settings`, or pin via env:
+Caveat: the request unavoidably reveals this server's source IP to the
+Umami host at the HTTP layer (that's how every outbound HTTP call
+works); IP logging on that Umami is disabled.
 
-| Flag | Env | Description |
-|---|---|---|
-| `--umami-heartbeat` | `UMAMI_HEARTBEAT` | `on` / `off` to override the UI toggle. Empty defers to the toggle (default on). |
-| `--umami-heartbeat-url` | `UMAMI_HEARTBEAT_URL` | Redirect the beat to your own Umami |
-| `--umami-heartbeat-website-id` | `UMAMI_HEARTBEAT_WEBSITE_ID` | Custom Umami site UUID for the beat |
+To opt out, toggle it off in `/admin/settings`, or set
+`UMAMI_HEARTBEAT=off` in your `.env`. The exact JSON the server would
+send is exposed at `/admin/settings/heartbeat/payload` for inspection.
 
-The exact JSON the server would send is exposed at
-`/admin/settings/heartbeat/payload` for inspection.
+To redirect the beat to your own Umami instead, set
+`UMAMI_HEARTBEAT_URL` and `UMAMI_HEARTBEAT_WEBSITE_ID`.
 
 ---
 
