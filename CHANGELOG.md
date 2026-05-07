@@ -9,7 +9,21 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [1.4.1] - 2026-05-07
 
-Failed to authenticate. API Error: 401 Invalid authentication credentials
+### Changed
+- Pin the `:latest` container tag to release pushes only. Branch
+  builds now stamp the binary with `git describe`, so the footer
+  shows e.g. `v1.4.0-3-gabc1234` instead of a generic dev string.
+- Rewrite the heartbeat section in the README in a friendlier
+  first-person voice, mirroring the sibling-project style.
+- Document the admin UI (`/admin/files`, `/admin/settings`,
+  `/admin/users`), the webhook payload and the previously missing
+  `--tagline` / `--web-path` flags. Fix mismatched defaults in the
+  configuration tables.
+
+### Fixed
+- README badges were static and misleading. Replaced with shields
+  pulling live data (latest tag, license, CI status, last commit,
+  commit activity).
 
 ## [1.4.0] - 2026-05-06
 
