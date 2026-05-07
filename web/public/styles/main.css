@@ -110,6 +110,23 @@ button { font: inherit; }
   margin: 0;
 }
 .logo-link { display: inline-block; }
+
+/* Default logo ships in two variants: dark text for light backgrounds and
+   light text for dark backgrounds. The <img src> points at the light-bg
+   asset; CSS swaps to the dark-bg asset when a dark theme is active. The
+   [src*="/images/logo.png"] guard keeps custom branding uploads unswapped. */
+:root[data-theme="dark"] .logo[src*="/images/logo.png"],
+:root[data-theme="dark"] .logo-small[src*="/images/logo.png"],
+:root:not([data-theme]) .logo[src*="/images/logo.png"],
+:root:not([data-theme]) .logo-small[src*="/images/logo.png"] {
+  content: url("/images/logo_dark.png");
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .logo[src*="/images/logo.png"],
+  :root:not([data-theme]) .logo-small[src*="/images/logo.png"] {
+    content: normal;
+  }
+}
 .hostname {
   font-weight: 500;
   font-size: 1.75rem;

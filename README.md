@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="assets/transfer_logo.png" alt="transfer" width="360">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/transfer_logo_dark.png">
+    <img src="assets/transfer_logo.png" alt="transfer" width="360">
+  </picture>
 </p>
 
 <h1 align="center">transfer</h1>
