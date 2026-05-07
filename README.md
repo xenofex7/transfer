@@ -8,7 +8,7 @@
 <h1 align="center">transfer</h1>
 
 <p align="center">
-  A small, self-hosted file-drop service. Easy and fast file sharing from the command line.
+  A self-hosted file transfer service. From one place to another - simple, secure, fast, no limits.
 </p>
 
 <p align="center">
