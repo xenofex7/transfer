@@ -7,6 +7,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-05-07
+
+### Added
+- Dark-mode logo variant displayed in the README and web UI
+
+### Fixed
+- Restored the v1.4.1 changelog entry that was lost during a failed deploy auth
+
+### Security
+- Bump Go to 1.25.10 and golang.org/x/net to v0.53.0 to address govulncheck findings
+
 ## [1.4.1] - 2026-05-07
 
 ### Changed

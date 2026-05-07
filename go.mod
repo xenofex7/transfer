@@ -11,9 +11,9 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/tg123/go-htpasswd v1.2.1
 	github.com/urfave/cli/v2 v2.25.3
-	golang.org/x/crypto v0.36.0
-	golang.org/x/net v0.38.0
-	golang.org/x/text v0.23.0
+	golang.org/x/crypto v0.50.0
+	golang.org/x/net v0.53.0
+	golang.org/x/text v0.36.0
 	golang.org/x/time v0.15.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 )
@@ -30,5 +30,5 @@ require (
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 )
