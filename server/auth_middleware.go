@@ -88,7 +88,30 @@ func (s *Server) webAuthHandler(h http.Handler) http.HandlerFunc {
 			http.Redirect(w, r, "/login?"+loginRedirectParam+"="+next, http.StatusSeeOther)
 			return
 		}
+		// 2FA enforcement: a user without TOTP on a server that
+		// requires it is funnelled to the setup flow. We exempt the
+		// setup routes themselves (otherwise the redirect would loop)
+		// and logout (so they can always sign out and walk away).
+		if s.authRequireTOTP && !isTOTPExemptPath(r.URL.Path) && s.userMeta != nil {
+			m, _ := s.userMeta.Get(sess.Username)
+			if !m.TOTPEnabled {
+				http.Redirect(w, r, "/account/2fa/setup", http.StatusSeeOther)
+				return
+			}
+		}
 		r = r.WithContext(withAuthUser(r.Context(), sess.Username))
 		h.ServeHTTP(w, r)
 	}
+}
+
+// isTOTPExemptPath returns true for routes that a not-yet-enrolled
+// user must still be able to reach when authRequireTOTP is on:
+// the enrolment screen itself and the logout endpoint. Everything
+// else funnels through the redirect.
+func isTOTPExemptPath(p string) bool {
+	switch p {
+	case "/account/2fa/setup", "/logout":
+		return true
+	}
+	return false
 }

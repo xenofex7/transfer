@@ -93,6 +93,73 @@ func TestCurrentUserFromRequestFallsBackToBasic(t *testing.T) {
 	}
 }
 
+func TestWebAuthHandlerRequireTOTPRedirectsToSetup(t *testing.T) {
+	s := newTestServerWithUser(t, "alice", "longenoughpw")
+	s.sessions = newSessionStore(time.Hour, 24*time.Hour)
+	s.authRequireTOTP = true
+
+	full, _ := s.sessions.Create("alice", false)
+
+	h := s.webAuthHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatal("user without TOTP must not reach the protected handler")
+	}))
+	req := httptest.NewRequest("GET", "/admin/files", nil)
+	req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: full.ID})
+	rec := httptest.NewRecorder()
+	h(rec, req)
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("expected 303, got %d", rec.Code)
+	}
+	if rec.Header().Get("Location") != "/account/2fa/setup" {
+		t.Fatalf("expected redirect to setup, got %q", rec.Header().Get("Location"))
+	}
+}
+
+func TestWebAuthHandlerRequireTOTPExemptsSetupAndLogout(t *testing.T) {
+	s := newTestServerWithUser(t, "alice", "longenoughpw")
+	s.sessions = newSessionStore(time.Hour, 24*time.Hour)
+	s.authRequireTOTP = true
+	full, _ := s.sessions.Create("alice", false)
+
+	for _, path := range []string{"/account/2fa/setup", "/logout"} {
+		called := false
+		h := s.webAuthHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+		}))
+		req := httptest.NewRequest("GET", path, nil)
+		req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: full.ID})
+		rec := httptest.NewRecorder()
+		h(rec, req)
+		if !called {
+			t.Fatalf("path %s must be exempt from 2FA enforcement", path)
+		}
+	}
+}
+
+func TestWebAuthHandlerRequireTOTPLetsEnrolledUserThrough(t *testing.T) {
+	s := newTestServerWithUser(t, "alice", "longenoughpw")
+	s.sessions = newSessionStore(time.Hour, 24*time.Hour)
+	s.authRequireTOTP = true
+	enr, _ := s.startTOTPEnrollment("alice")
+	c := currentTOTPCode(t, enr.Secret)
+	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, c); err != nil {
+		t.Fatal(err)
+	}
+	full, _ := s.sessions.Create("alice", false)
+
+	called := false
+	h := s.webAuthHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+	req := httptest.NewRequest("GET", "/admin/files", nil)
+	req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: full.ID})
+	rec := httptest.NewRecorder()
+	h(rec, req)
+	if !called {
+		t.Fatalf("enrolled user should reach the handler, got %d", rec.Code)
+	}
+}
+
 func TestWebAuthHandlerFallsBackWithoutSessionStore(t *testing.T) {
 	s := &Server{} // no session store, no users — basic auth disabled too
 	called := false

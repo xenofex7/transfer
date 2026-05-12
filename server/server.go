@@ -220,6 +220,20 @@ func HTTPAuthHtpasswd(htpasswdPath string) OptionFn {
 	}
 }
 
+// WebAuthSession tunes the cookie-based auth flow used by the HTML
+// admin and account routes. idleTTL is how long a cookie stays valid
+// after the last request before requiring a fresh login; maxLifetime
+// is the absolute upper bound regardless of activity. requireTOTP
+// flips the "must enrol 2FA before reaching anything else" guard.
+// Zero durations fall back to the defaults baked into sessionStore.
+func WebAuthSession(idleTTL, maxLifetime time.Duration, requireTOTP bool) OptionFn {
+	return func(srvr *Server) {
+		srvr.authSessionTTL = idleTTL
+		srvr.authSessionMaxLife = maxLifetime
+		srvr.authRequireTOTP = requireTOTP
+	}
+}
+
 // HTTPAUTHFilterOptions sets basic http auth ips whitelist
 func HTTPAUTHFilterOptions(options IPFilterOptions) OptionFn {
 	for i, allowedIP := range options.AllowedIPs {
@@ -253,13 +267,16 @@ type Server struct {
 	authHtpasswd        string
 	authIPFilterOptions *IPFilterOptions
 
-	htpasswdMu   sync.RWMutex
-	htpasswdFile *htpasswd.File
-	users        *userStore
-	userMeta     *userMetaStore
-	sessions     *sessionStore
-	authBgTasks  sync.WaitGroup
-	authIPFilter *ipFilter
+	htpasswdMu         sync.RWMutex
+	htpasswdFile       *htpasswd.File
+	users              *userStore
+	userMeta           *userMetaStore
+	sessions           *sessionStore
+	authSessionTTL     time.Duration
+	authSessionMaxLife time.Duration
+	authRequireTOTP    bool
+	authBgTasks        sync.WaitGroup
+	authIPFilter       *ipFilter
 
 	logger *log.Logger
 
@@ -409,7 +426,7 @@ func New(options ...OptionFn) (*Server, error) {
 		return s.userMeta.Delete(name)
 	})
 
-	s.sessions = newSessionStore(0, 0)
+	s.sessions = newSessionStore(s.authSessionTTL, s.authSessionMaxLife)
 	s.sessions.Start()
 
 	(&umamiConfig{

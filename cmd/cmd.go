@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/dutchcoders/transfer.sh/server"
 	"github.com/dutchcoders/transfer.sh/server/storage"
@@ -131,6 +132,24 @@ var globalFlags = []cli.Flag{
 		Usage:   "htpasswd file http basic auth",
 		Value:   "",
 		EnvVars: []string{"HTTP_AUTH_HTPASSWD"},
+	},
+	&cli.BoolFlag{
+		Name:    "auth-require-2fa",
+		Usage:   "require every user with a password to also enrol TOTP before reaching protected routes",
+		Value:   true,
+		EnvVars: []string{"AUTH_REQUIRE_2FA"},
+	},
+	&cli.DurationFlag{
+		Name:    "auth-session-ttl",
+		Usage:   "idle timeout for web session cookies (sliding); after this without activity the user must sign in again",
+		Value:   8 * time.Hour,
+		EnvVars: []string{"AUTH_SESSION_TTL"},
+	},
+	&cli.DurationFlag{
+		Name:    "auth-session-max-lifetime",
+		Usage:   "hard upper bound on the lifetime of a web session cookie, regardless of activity",
+		Value:   30 * 24 * time.Hour,
+		EnvVars: []string{"AUTH_SESSION_MAX_LIFETIME"},
 	},
 	&cli.StringFlag{
 		Name:    "http-auth-ip-whitelist",
@@ -339,6 +358,12 @@ func New() *Cmd {
 			ipFilterOptions.BlockByDefault = true
 			options = append(options, server.HTTPAUTHFilterOptions(ipFilterOptions))
 		}
+
+		options = append(options, server.WebAuthSession(
+			c.Duration("auth-session-ttl"),
+			c.Duration("auth-session-max-lifetime"),
+			c.Bool("auth-require-2fa"),
+		))
 
 		applyIPFilter := false
 		ipFilterOptions := server.IPFilterOptions{}
