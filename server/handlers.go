@@ -1309,6 +1309,30 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 			return
 		}
 
+		// API-token path: when the presented credential is shaped like
+		// a token, route it exclusively through the token store and
+		// never fall back to password checks. Mixing the two would let
+		// an attacker probe for token-shaped passwords against the
+		// htpasswd file.
+		if !authorized && looksLikeAPIToken(password) {
+			if s.userMeta != nil && username != "" {
+				if tok, err := s.userMeta.VerifyAPIToken(username, password); err == nil {
+					authorized = true
+					s.authBgTasks.Add(1)
+					go func(name, id string) {
+						defer s.authBgTasks.Done()
+						if err := s.userMeta.TouchAPIToken(name, id); err != nil {
+							s.logger.Printf("auth: touch api token %s/%s: %v", name, id, err)
+						}
+					}(username, tok.ID)
+				}
+			}
+			if !authorized {
+				http.Error(w, "Not authorized", http.StatusUnauthorized)
+				return
+			}
+		}
+
 		if !authorized && username == s.authUser && password == s.authPass {
 			authorized = true
 		}

@@ -257,6 +257,7 @@ type Server struct {
 	htpasswdFile *htpasswd.File
 	users        *userStore
 	userMeta     *userMetaStore
+	authBgTasks  sync.WaitGroup
 	authIPFilter *ipFilter
 
 	logger *log.Logger
