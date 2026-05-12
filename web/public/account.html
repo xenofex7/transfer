@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme-default="{{theme_default}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Account — {{.Hostname}}</title>
+  <link rel="icon" href="{{favicon_url}}">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
+  {{umami_script}}
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <img class="logo" src="{{logo_url}}" alt="">
+      <h1 class="hostname">{{.Hostname}}</h1>
+      <p class="tagline">Signed in as <strong>{{.CurrentUser}}</strong></p>
+    </header>
+
+    <nav class="admin-nav">
+      <a href="/">Upload</a>
+      <a href="/admin/files">Files</a>
+      <a href="/admin/users">Users</a>
+      <a href="/admin/settings">Settings</a>
+      <span class="admin-nav-current">Account</span>
+      <form method="post" action="/logout" class="admin-nav-logout">
+        <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+        <button class="link" type="submit">Sign out</button>
+      </form>
+    </nav>
+
+    {{if .FlashErr}}<p class="flash flash-error" role="alert">{{.FlashErr}}</p>{{end}}
+    {{if .Flash}}<p class="flash flash-ok">{{.Flash}}</p>{{end}}
+
+    {{if .NewToken}}
+    <section class="card card-emphasis">
+      <h2>New API token</h2>
+      <p>This is the only time the token will be shown. Copy it now.</p>
+      <pre class="token-output">{{.NewToken}}</pre>
+      <p class="muted">Use it as the password in HTTP Basic Auth:
+        <code>curl --user {{.CurrentUser}}:{{.NewToken}} ...</code></p>
+    </section>
+    {{end}}
+
+    {{if .NewRecovery}}
+    <section class="card card-emphasis">
+      <h2>New recovery codes</h2>
+      <p>Save these somewhere safe. Each code works exactly once.</p>
+      <ul class="recovery-list">
+        {{range .NewRecovery}}<li><code>{{.}}</code></li>{{end}}
+      </ul>
+    </section>
+    {{end}}
+
+    <section class="card">
+      <h2>Two-factor authentication</h2>
+      {{if .TOTPEnabled}}
+        <p>Status: <strong>enabled</strong>{{if .TOTPEnabledAt}} since {{.TOTPEnabledAt}}{{end}}.</p>
+        <p>Recovery codes remaining: <strong>{{.RecoveryLeft}}</strong>.</p>
+
+        <details>
+          <summary>Disable two-factor authentication</summary>
+          <form method="post" action="/account/2fa/disable" class="card-form">
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+            <p class="muted">Confirm by entering a current authenticator code or a recovery code.</p>
+            <label class="field">
+              <span class="field-label">Authenticator code</span>
+              <input class="field-input" type="text" name="code" inputmode="numeric"
+                     pattern="[0-9]*" maxlength="8" autocomplete="one-time-code">
+            </label>
+            <label class="field">
+              <span class="field-label">— or recovery code</span>
+              <input class="field-input" type="text" name="recovery"
+                     placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters">
+            </label>
+            <button class="btn btn-danger" type="submit">Disable 2FA</button>
+          </form>
+        </details>
+
+        <details>
+          <summary>Regenerate recovery codes</summary>
+          <form method="post" action="/account/2fa/recovery/regenerate" class="card-form">
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+            <p class="muted">Existing codes will stop working immediately.</p>
+            <label class="field">
+              <span class="field-label">Authenticator code</span>
+              <input class="field-input" type="text" name="code" inputmode="numeric"
+                     pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" required>
+            </label>
+            <button class="btn" type="submit">Regenerate</button>
+          </form>
+        </details>
+      {{else}}
+        <p>Status: <strong>not enabled</strong>.</p>
+        <p>A second factor protects this account if your password is ever leaked.</p>
+        <a class="btn btn-primary" href="/account/2fa/setup">Set up 2FA</a>
+      {{end}}
+    </section>
+
+    <section class="card">
+      <h2>API tokens</h2>
+      <p class="muted">Use API tokens with <code>curl</code> or the transfer CLI instead of your password. Each token is independently revocable.</p>
+
+      <form method="post" action="/account/tokens" class="card-form">
+        <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+        <label class="field">
+          <span class="field-label">Token name</span>
+          <input class="field-input" type="text" name="name" maxlength="64"
+                 placeholder="e.g. laptop curl" required>
+        </label>
+        <label class="field">
+          <span class="field-label">Expires after (days, optional)</span>
+          <input class="field-input" type="number" name="expires_days" min="1" max="3650"
+                 placeholder="never">
+        </label>
+        <button class="btn btn-primary" type="submit">Create token</button>
+      </form>
+
+      {{if .Tokens}}
+      <table class="data-table">
+        <thead>
+          <tr><th>Name</th><th>ID</th><th>Created</th><th>Last used</th><th>Expires</th><th></th></tr>
+        </thead>
+        <tbody>
+          {{range .Tokens}}
+          <tr>
+            <td>{{.Name}}</td>
+            <td><code>{{.ID}}</code></td>
+            <td>{{.CreatedAt}}</td>
+            <td>{{if .LastUsedAt}}{{.LastUsedAt}}{{else}}<span class="muted">never</span>{{end}}</td>
+            <td>{{if .ExpiresAt}}{{.ExpiresAt}}{{else}}<span class="muted">never</span>{{end}}</td>
+            <td>
+              <form method="post" action="/account/tokens/{{.ID}}/delete" class="inline-form"
+                    onsubmit="return confirm('Revoke this token?');">
+                <input type="hidden" name="csrf" value="{{$.CSRFToken}}">
+                <button class="link link-danger" type="submit">Revoke</button>
+              </form>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="muted">No tokens yet.</p>
+      {{end}}
+    </section>
+
+    <footer class="page-footer">
+      <small>{{build_version}}</small>
+    </footer>
+  </main>
+</body>
+</html>

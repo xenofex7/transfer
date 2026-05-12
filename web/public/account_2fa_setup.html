@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" data-theme-default="{{theme_default}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Set up 2FA — {{.Hostname}}</title>
+  <link rel="icon" href="{{favicon_url}}">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
+  {{umami_script}}
+</head>
+<body>
+  <main class="page page-narrow">
+    <header class="hero">
+      <img class="logo" src="{{logo_url}}" alt="">
+      <h1 class="hostname">{{.Hostname}}</h1>
+      <p class="tagline">Enable two-factor authentication for <strong>{{.CurrentUser}}</strong></p>
+    </header>
+
+    <section class="card">
+      {{if .FlashErr}}<p class="flash flash-error" role="alert">{{.FlashErr}}</p>{{end}}
+
+      <ol class="setup-steps">
+        <li>
+          <p>Scan this QR code with your authenticator app (Google Authenticator, 1Password, Authy, …):</p>
+          <img class="qr" src="{{.QRDataURL}}" alt="TOTP QR code" width="256" height="256">
+        </li>
+        <li>
+          <p>If you can't scan, enter this secret manually:</p>
+          <pre class="token-output">{{.Secret}}</pre>
+        </li>
+        <li>
+          <p>Enter the 6-digit code your app generates:</p>
+          <form method="post" action="/account/2fa/setup" autocomplete="off" novalidate>
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+            <input type="hidden" name="secret" value="{{.Secret}}">
+            <label class="field">
+              <span class="field-label">Authenticator code</span>
+              <input class="field-input field-code" type="text" name="code"
+                     inputmode="numeric" pattern="[0-9]*" maxlength="8"
+                     autocomplete="one-time-code" autofocus required>
+            </label>
+            <button class="btn btn-primary btn-block" type="submit">Enable 2FA</button>
+            <a class="link" href="/account">Cancel</a>
+          </form>
+        </li>
+      </ol>
+    </section>
+
+    <footer class="page-footer">
+      <small>{{build_version}}</small>
+    </footer>
+  </main>
+</body>
+</html>

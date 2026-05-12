@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" data-theme-default="{{theme_default}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2FA enabled — {{.Hostname}}</title>
+  <link rel="icon" href="{{favicon_url}}">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
+  {{umami_script}}
+</head>
+<body>
+  <main class="page page-narrow">
+    <header class="hero">
+      <img class="logo" src="{{logo_url}}" alt="">
+      <h1 class="hostname">{{.Hostname}}</h1>
+      <p class="tagline">Two-factor authentication enabled for <strong>{{.CurrentUser}}</strong></p>
+    </header>
+
+    <section class="card card-emphasis">
+      <h2>Save your recovery codes</h2>
+      <p>Each code works exactly once. Use them to sign in if you lose access to your authenticator app. <strong>This is the only time we will show them.</strong></p>
+      <ul class="recovery-list">
+        {{range .Codes}}<li><code>{{.}}</code></li>{{end}}
+      </ul>
+      <p>
+        <a class="btn btn-primary" href="/account">I have saved my codes</a>
+      </p>
+    </section>
+
+    <footer class="page-footer">
+      <small>{{build_version}}</small>
+    </footer>
+  </main>
+</body>
+</html>

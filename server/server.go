@@ -523,6 +523,16 @@ func (s *Server) Run() {
 	r.HandleFunc("/login/totp", s.loginTOTPPostHandler).Methods("POST")
 	r.HandleFunc("/logout", s.logoutHandler).Methods("POST")
 
+	// Account self-service: 2FA enrolment + API token management.
+	// requireFullSession gates each handler internally.
+	r.HandleFunc("/account", s.accountGetHandler).Methods("GET")
+	r.HandleFunc("/account/2fa/setup", s.account2FASetupGetHandler).Methods("GET")
+	r.HandleFunc("/account/2fa/setup", s.account2FASetupPostHandler).Methods("POST")
+	r.HandleFunc("/account/2fa/disable", s.account2FADisablePostHandler).Methods("POST")
+	r.HandleFunc("/account/2fa/recovery/regenerate", s.account2FARecoveryRegenPostHandler).Methods("POST")
+	r.HandleFunc("/account/tokens", s.accountTokenCreatePostHandler).Methods("POST")
+	r.HandleFunc("/account/tokens/{id}/delete", s.accountTokenDeletePostHandler).Methods("POST")
+
 	r.Handle("/admin/files", s.basicAuthHandler(http.HandlerFunc(s.adminFilesHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsGetHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsPostHandler))).Methods("POST")
