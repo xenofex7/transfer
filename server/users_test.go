@@ -26,7 +26,7 @@ func newTestStore(t *testing.T) (*userStore, string, *int) {
 	us := newUserStore(path, func() error {
 		reloads++
 		return nil
-	})
+	}, nil)
 	if us == nil {
 		t.Fatal("store nil")
 	}
@@ -100,6 +100,11 @@ func TestUserStoreSetPassword(t *testing.T) {
 
 func TestUserStoreDeleteGuards(t *testing.T) {
 	us, _, _ := newTestStore(t)
+	deleted := ""
+	us.onDelete = func(name string) error {
+		deleted = name
+		return nil
+	}
 	if err := us.Add("alice", "longenoughpw"); err != nil {
 		t.Fatal(err)
 	}
@@ -121,6 +126,9 @@ func TestUserStoreDeleteGuards(t *testing.T) {
 	// success path
 	if err := us.Delete("bob", "alice"); err != nil {
 		t.Fatalf("delete bob: %v", err)
+	}
+	if deleted != "bob" {
+		t.Fatalf("onDelete hook not invoked with bob, got %q", deleted)
 	}
 	names, _ := us.List()
 	if !reflect.DeepEqual(names, []string{"alice"}) {

@@ -256,6 +256,7 @@ type Server struct {
 	htpasswdMu   sync.RWMutex
 	htpasswdFile *htpasswd.File
 	users        *userStore
+	userMeta     *userMetaStore
 	authIPFilter *ipFilter
 
 	logger *log.Logger
@@ -391,7 +392,17 @@ func New(options ...OptionFn) (*Server, error) {
 	s.branding = branding
 	activeBranding.Store(branding)
 
-	s.users = newUserStore(s.authHtpasswd, s.reloadHtpasswdFile)
+	meta, err := newUserMetaStore(metaPathFor(s.authHtpasswd))
+	if err != nil {
+		return nil, err
+	}
+	s.userMeta = meta
+	s.users = newUserStore(s.authHtpasswd, s.reloadHtpasswdFile, func(name string) error {
+		if s.userMeta == nil {
+			return nil
+		}
+		return s.userMeta.Delete(name)
+	})
 
 	(&umamiConfig{
 		scriptURL: s.umamiScriptURL,

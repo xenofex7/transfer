@@ -45,16 +45,22 @@ var (
 // rename so a crash never leaves a partial file behind. After every
 // successful mutation the live htpasswd matcher is reloaded.
 type userStore struct {
-	mu     sync.Mutex
-	path   string
-	reload func() error
+	mu       sync.Mutex
+	path     string
+	reload   func() error
+	onDelete func(name string) error
 }
 
-func newUserStore(path string, reload func() error) *userStore {
+// newUserStore returns a store backed by the htpasswd file at path.
+// reload is invoked after every successful mutation so the live matcher
+// stays in sync with the file. onDelete is invoked after a successful
+// Delete with the removed name; use it to clean up sidecar state such
+// as TOTP secrets and API tokens. Both callbacks may be nil.
+func newUserStore(path string, reload func() error, onDelete func(name string) error) *userStore {
 	if path == "" {
 		return nil
 	}
-	return &userStore{path: path, reload: reload}
+	return &userStore{path: path, reload: reload, onDelete: onDelete}
 }
 
 // List returns the usernames in the file, sorted.
@@ -166,7 +172,15 @@ func (us *userStore) Delete(name, self string) error {
 			out = append(out, n)
 		}
 	}
-	return us.writeLocked(out, m)
+	if err := us.writeLocked(out, m); err != nil {
+		return err
+	}
+	if us.onDelete != nil {
+		if err := us.onDelete(name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // readLocked parses the htpasswd file. Returns the usernames in file
