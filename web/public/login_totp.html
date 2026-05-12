@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" data-theme-default="{{theme_default}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Two-factor — {{.Hostname}}</title>
+  <link rel="icon" href="{{favicon_url}}">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
+  {{umami_script}}
+</head>
+<body>
+  <main class="page page-narrow">
+    <header class="hero">
+      <img class="logo" src="{{logo_url}}" alt="">
+      <h1 class="hostname">{{.Hostname}}</h1>
+      <p class="tagline">Signed in as <strong>{{.Username}}</strong></p>
+    </header>
+
+    <section class="card">
+      {{if .FlashErr}}<p class="flash flash-error" role="alert">{{.FlashErr}}</p>{{end}}
+      {{if .Flash}}<p class="flash flash-ok">{{.Flash}}</p>{{end}}
+
+      <p class="card-intro">Enter the 6-digit code from your authenticator app.</p>
+
+      <form method="post" action="/login/totp" autocomplete="off" novalidate>
+        <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+        <input type="hidden" name="next" value="{{.Next}}">
+
+        <label class="field">
+          <span class="field-label">Authenticator code</span>
+          <input class="field-input field-code" type="text" name="code"
+                 inputmode="numeric" pattern="[0-9]*" maxlength="8"
+                 autocomplete="one-time-code" autocapitalize="none"
+                 autocorrect="off" spellcheck="false" autofocus>
+        </label>
+
+        <button class="btn btn-primary btn-block" type="submit">Verify</button>
+      </form>
+
+      <details class="recovery-toggle">
+        <summary>Lost your authenticator?</summary>
+        <form method="post" action="/login/totp" autocomplete="off" class="recovery-form" novalidate>
+          <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+          <input type="hidden" name="next" value="{{.Next}}">
+          <label class="field">
+            <span class="field-label">Recovery code</span>
+            <input class="field-input" type="text" name="recovery"
+                   placeholder="XXXX-XXXX-XXXX-XXXX"
+                   autocapitalize="characters" autocomplete="off"
+                   spellcheck="false">
+          </label>
+          <button class="btn btn-block" type="submit">Use recovery code</button>
+        </form>
+      </details>
+
+      <form method="post" action="/logout" class="muted-form">
+        <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+        <button class="link" type="submit">Cancel and sign out</button>
+      </form>
+    </section>
+
+    <footer class="page-footer">
+      <small>{{build_version}}</small>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" data-theme-default="{{theme_default}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — {{.Hostname}}</title>
+  <link rel="icon" href="{{favicon_url}}">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
+  {{umami_script}}
+</head>
+<body>
+  <main class="page page-narrow">
+    <header class="hero">
+      <img class="logo" src="{{logo_url}}" alt="">
+      <h1 class="hostname">{{.Hostname}}</h1>
+      <p class="tagline">Sign in to continue</p>
+    </header>
+
+    <section class="card">
+      {{if .FlashErr}}<p class="flash flash-error" role="alert">{{.FlashErr}}</p>{{end}}
+      {{if .Flash}}<p class="flash flash-ok">{{.Flash}}</p>{{end}}
+
+      <form method="post" action="/login" autocomplete="on" novalidate>
+        <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+        <input type="hidden" name="next" value="{{.Next}}">
+
+        <label class="field">
+          <span class="field-label">Username</span>
+          <input class="field-input" type="text" name="username"
+                 autocomplete="username" autocapitalize="none" autocorrect="off"
+                 spellcheck="false" required autofocus>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Password</span>
+          <input class="field-input" type="password" name="password"
+                 autocomplete="current-password" required>
+        </label>
+
+        <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+      </form>
+    </section>
+
+    <footer class="page-footer">
+      <small>{{build_version}}</small>
+    </footer>
+  </main>
+</body>
+</html>

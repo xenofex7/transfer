@@ -257,6 +257,7 @@ type Server struct {
 	htpasswdFile *htpasswd.File
 	users        *userStore
 	userMeta     *userMetaStore
+	sessions     *sessionStore
 	authBgTasks  sync.WaitGroup
 	authIPFilter *ipFilter
 
@@ -399,11 +400,17 @@ func New(options ...OptionFn) (*Server, error) {
 	}
 	s.userMeta = meta
 	s.users = newUserStore(s.authHtpasswd, s.reloadHtpasswdFile, func(name string) error {
+		if s.sessions != nil {
+			s.sessions.DestroyAllFor(name)
+		}
 		if s.userMeta == nil {
 			return nil
 		}
 		return s.userMeta.Delete(name)
 	})
+
+	s.sessions = newSessionStore(0, 0)
+	s.sessions.Start()
 
 	(&umamiConfig{
 		scriptURL: s.umamiScriptURL,
@@ -506,6 +513,16 @@ func (s *Server) Run() {
 
 	r.HandleFunc("/health.html", healthHandler).Methods("GET")
 	r.HandleFunc("/changelog.json", s.changelogHandler).Methods("GET")
+
+	// Cookie-based auth: login / TOTP / logout. These predate the
+	// basicAuthHandler-protected routes because they have to be
+	// reachable without any credentials.
+	r.HandleFunc("/login", s.loginGetHandler).Methods("GET")
+	r.HandleFunc("/login", s.loginPostHandler).Methods("POST")
+	r.HandleFunc("/login/totp", s.loginTOTPGetHandler).Methods("GET")
+	r.HandleFunc("/login/totp", s.loginTOTPPostHandler).Methods("POST")
+	r.HandleFunc("/logout", s.logoutHandler).Methods("POST")
+
 	r.Handle("/admin/files", s.basicAuthHandler(http.HandlerFunc(s.adminFilesHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsGetHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.basicAuthHandler(http.HandlerFunc(s.adminSettingsPostHandler))).Methods("POST")
