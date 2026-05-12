@@ -22,13 +22,16 @@ func newAccountTestSetup(t *testing.T) (*authTestSetup, *session) {
 	t.Helper()
 	a := newAuthTestSetup(t)
 	r := a.handler.(*mux.Router)
-	r.HandleFunc("/account", a.server.accountGetHandler).Methods("GET")
-	r.HandleFunc("/account/2fa/setup", a.server.account2FASetupGetHandler).Methods("GET")
-	r.HandleFunc("/account/2fa/setup", a.server.account2FASetupPostHandler).Methods("POST")
-	r.HandleFunc("/account/2fa/disable", a.server.account2FADisablePostHandler).Methods("POST")
-	r.HandleFunc("/account/2fa/recovery/regenerate", a.server.account2FARecoveryRegenPostHandler).Methods("POST")
-	r.HandleFunc("/account/tokens", a.server.accountTokenCreatePostHandler).Methods("POST")
-	r.HandleFunc("/account/tokens/{id}/delete", a.server.accountTokenDeletePostHandler).Methods("POST")
+	// Same wrapping as production — the account handlers themselves
+	// return 401 on an unauthenticated request; webAuthHandler turns
+	// that into the /login redirect users actually see.
+	r.Handle("/account", a.server.webAuthHandler(http.HandlerFunc(a.server.accountGetHandler))).Methods("GET")
+	r.Handle("/account/2fa/setup", a.server.webAuthHandler(http.HandlerFunc(a.server.account2FASetupGetHandler))).Methods("GET")
+	r.Handle("/account/2fa/setup", a.server.webAuthHandler(http.HandlerFunc(a.server.account2FASetupPostHandler))).Methods("POST")
+	r.Handle("/account/2fa/disable", a.server.webAuthHandler(http.HandlerFunc(a.server.account2FADisablePostHandler))).Methods("POST")
+	r.Handle("/account/2fa/recovery/regenerate", a.server.webAuthHandler(http.HandlerFunc(a.server.account2FARecoveryRegenPostHandler))).Methods("POST")
+	r.Handle("/account/tokens", a.server.webAuthHandler(http.HandlerFunc(a.server.accountTokenCreatePostHandler))).Methods("POST")
+	r.Handle("/account/tokens/{id}/delete", a.server.webAuthHandler(http.HandlerFunc(a.server.accountTokenDeletePostHandler))).Methods("POST")
 
 	sess, err := a.server.sessions.Create("alice", false)
 	if err != nil {

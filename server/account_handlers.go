@@ -83,8 +83,9 @@ type totpDonePageData struct {
 }
 
 func (s *Server) accountGetHandler(w http.ResponseWriter, r *http.Request) {
-	sess, ok := s.requireFullSession(w, r)
+	sess, ok := s.sessionForRequest(r)
 	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	data := s.buildAccountData(r, sess.Username)
@@ -134,8 +135,9 @@ func (s *Server) buildAccountData(r *http.Request, username string) accountPageD
 }
 
 func (s *Server) account2FASetupGetHandler(w http.ResponseWriter, r *http.Request) {
-	sess, ok := s.requireFullSession(w, r)
+	sess, ok := s.sessionForRequest(r)
 	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	enr, err := s.startTOTPEnrollment(sess.Username)
@@ -171,8 +173,9 @@ func (s *Server) account2FASetupGetHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (s *Server) account2FASetupPostHandler(w http.ResponseWriter, r *http.Request) {
-	sess, ok := s.requireFullSession(w, r)
+	sess, ok := s.sessionForRequest(r)
 	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -207,8 +210,9 @@ func (s *Server) account2FASetupPostHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) account2FADisablePostHandler(w http.ResponseWriter, r *http.Request) {
-	sess, ok := s.requireFullSession(w, r)
+	sess, ok := s.sessionForRequest(r)
 	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -246,8 +250,9 @@ func (s *Server) account2FADisablePostHandler(w http.ResponseWriter, r *http.Req
 }
 
 func (s *Server) account2FARecoveryRegenPostHandler(w http.ResponseWriter, r *http.Request) {
-	sess, ok := s.requireFullSession(w, r)
+	sess, ok := s.sessionForRequest(r)
 	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -280,8 +285,9 @@ func (s *Server) account2FARecoveryRegenPostHandler(w http.ResponseWriter, r *ht
 }
 
 func (s *Server) accountTokenCreatePostHandler(w http.ResponseWriter, r *http.Request) {
-	sess, ok := s.requireFullSession(w, r)
+	sess, ok := s.sessionForRequest(r)
 	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -318,8 +324,9 @@ func (s *Server) accountTokenCreatePostHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (s *Server) accountTokenDeletePostHandler(w http.ResponseWriter, r *http.Request) {
-	sess, ok := s.requireFullSession(w, r)
+	sess, ok := s.sessionForRequest(r)
 	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	if err := r.ParseForm(); err != nil {

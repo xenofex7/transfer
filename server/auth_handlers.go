@@ -347,16 +347,4 @@ func csrfCheck(presented, sessionID string) bool {
 	return hmac.Equal(a, b)
 }
 
-// requireFullSession is a tiny helper used by future webAuthHandler:
-// it returns the verified user or 401/redirects, never both. Kept in
-// this file so the auth surface lives in one place.
-func (s *Server) requireFullSession(w http.ResponseWriter, r *http.Request) (*session, bool) {
-	sess, err := s.sessions.Get(readSessionCookie(r))
-	if err != nil || sess.PendingMFA {
-		next := url.QueryEscape(r.URL.RequestURI())
-		http.Redirect(w, r, "/login?"+loginRedirectParam+"="+next, http.StatusSeeOther)
-		return nil, false
-	}
-	return sess, true
-}
 

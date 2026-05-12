@@ -92,7 +92,7 @@ func (s *Server) adminUsersDeleteHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	name := mux.Vars(r)["name"]
-	current, _, _ := r.BasicAuth()
+	current := currentUserFromRequest(r)
 	if err := s.users.Delete(name, current); err != nil {
 		s.usersFlashAndRedirect(w, r, "Delete failed: "+err.Error(), true)
 		return
@@ -101,7 +101,7 @@ func (s *Server) adminUsersDeleteHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) usersData(r *http.Request) adminUsersData {
-	current, _, _ := r.BasicAuth()
+	current := currentUserFromRequest(r)
 	d := adminUsersData{
 		Hostname:    getURL(r, s.proxyPort).Host,
 		CurrentUser: current,

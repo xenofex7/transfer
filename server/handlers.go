@@ -464,7 +464,7 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) {
 			resolvedDelete := resolveURL(r, deleteURL, s.proxyPort)
 			w.Header().Add("X-Url-Delete", resolvedDelete)
 			responseBody += fmt.Sprintln(resolvedURL)
-			user, _, _ := r.BasicAuth()
+			user := currentUserFromRequest(r)
 			s.fireUploadWebhook(uploadEvent{
 				Filename:    filename,
 				ContentType: contentType,
@@ -637,7 +637,7 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, _ = w.Write([]byte(resolvedURL))
 
-	user, _, _ := r.BasicAuth()
+	user := currentUserFromRequest(r)
 	s.fireUploadWebhook(uploadEvent{
 		Filename:    filename,
 		ContentType: contentType,
@@ -886,7 +886,7 @@ func (s *Server) deleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _, _ := r.BasicAuth()
+	user := currentUserFromRequest(r)
 	if s.deletions != nil {
 		if err := s.deletions.Append(DeletionRecord{
 			Token:     token,
@@ -1351,6 +1351,9 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 			return
 		}
 
+		if username != "" {
+			r = r.WithContext(withAuthUser(r.Context(), username))
+		}
 		h.ServeHTTP(w, r)
 	}
 }
