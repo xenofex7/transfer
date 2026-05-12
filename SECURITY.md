@@ -42,3 +42,22 @@ Out of scope:
   but a logged-in operator can always overload their own instance)
 - Configuration mistakes outside of the defaults (e.g. running the
   service open to the internet without an htpasswd file)
+
+## Authentication notes
+
+- Browser traffic runs through a cookie session (`HttpOnly`,
+  `SameSite=Lax`, `Secure` on HTTPS / `X-Forwarded-Proto: https`).
+  Server-side state is in-memory, so restarts log every user out by
+  design.
+- TOTP (RFC 6238) is enforced by default (`--auth-require-2fa=true`).
+  Disabling it for an internet-facing instance is strongly
+  discouraged.
+- Recovery codes are stored bcrypt-hashed; each one is single-use and
+  removed from the user's record as it is consumed.
+- API tokens (per user, revocable, optional expiry) are the only way
+  to authenticate `curl` / scripts when the password owner has TOTP
+  enabled. The token's secret is bcrypt-hashed; the cleartext is
+  shown exactly once at creation and never logged.
+- CSRF tokens on every state-changing POST are HMAC-SHA256 of the
+  session ID under a per-process random key; the key rotates on
+  every restart, which intentionally invalidates pending forms.

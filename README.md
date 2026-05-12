@@ -106,17 +106,43 @@ least the value of `MAX_UPLOAD_SIZE`.
 
 ## Admin UI
 
-Three pages live behind the same htpasswd auth as uploads. Authenticate
-with any user from the htpasswd file.
+Browser routes live behind a cookie-based login at `/login`. After
+signing in (password + TOTP if 2FA is enabled) the following pages
+become reachable:
 
 | Path | Purpose |
 |---|---|
 | `/admin/files` | Browse stored uploads, filter, manually delete |
 | `/admin/settings` | Tagline, contact email, theme, custom logo / favicon, anonymous-heartbeat toggle |
 | `/admin/users` | Add, reset password, delete - read/write to the mounted htpasswd |
+| `/account` | Enable / disable TOTP, manage API tokens, regenerate recovery codes |
 
 Branding uploads land in `<BASEDIR>/.branding/`; persisted operator
-settings live in `<BASEDIR>/.settings.json`.
+settings live in `<BASEDIR>/.settings.json`; TOTP secrets, recovery
+codes (bcrypt-hashed) and API token records live in
+`<htpasswd>.meta.json` next to the htpasswd file.
+
+### Authentication model
+
+- **Passwords**: bcrypt-hashed in the standard htpasswd file. Used at
+  the `/login` form and as the password component of HTTP Basic Auth
+  for uploads.
+- **TOTP (recommended)**: enrol at `/account/2fa/setup`; works with any
+  RFC 6238 authenticator app (Google Authenticator, 1Password, Authy,
+  etc.). Ten one-shot recovery codes are issued at enrolment.
+- **API tokens**: per-user named tokens for headless clients. Create
+  them at `/account` and present them as the password in HTTP Basic
+  Auth (`curl --user alice:tk_xxx....`). Each token is independently
+  revocable and may carry an expiry of 1 to 3650 days. **Use these
+  instead of passwords for `curl` / scripts** — they are the only
+  credential allowed to bypass TOTP on the API path.
+- **Session cookies**: `httpOnly`, `SameSite=Lax`, marked `Secure`
+  whenever the request is HTTPS or `X-Forwarded-Proto: https` is set.
+  Sliding 8h idle TTL, capped by a 30d max lifetime; both tunable via
+  `--auth-session-ttl` and `--auth-session-max-lifetime`.
+
+Set `--auth-require-2fa=false` if you want to allow password-only
+browser sessions (not recommended for publicly reachable instances).
 
 ---
 
@@ -210,6 +236,9 @@ All flags can be set via CLI args or the matching environment variable.
 | `--http-auth-user` / `--http-auth-pass` | `HTTP_AUTH_USER` / `HTTP_AUTH_PASS` | Single-user basic auth |
 | `--http-auth-htpasswd` | `HTTP_AUTH_HTPASSWD` | Path to a htpasswd file (multi-user) |
 | `--http-auth-ip-whitelist` | `HTTP_AUTH_IP_WHITELIST` | CIDRs that may upload without auth |
+| `--auth-require-2fa` | `AUTH_REQUIRE_2FA` | Force every user to enrol TOTP before reaching protected routes (default `true`) |
+| `--auth-session-ttl` | `AUTH_SESSION_TTL` | Idle timeout for the browser session cookie (default `8h`) |
+| `--auth-session-max-lifetime` | `AUTH_SESSION_MAX_LIFETIME` | Hard upper bound on a session cookie regardless of activity (default `720h`) |
 | `--ip-whitelist` | `IP_WHITELIST` | CIDRs allowed at the connection level |
 | `--ip-blacklist` | `IP_BLACKLIST` | CIDRs denied at the connection level |
 

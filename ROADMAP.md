@@ -23,6 +23,9 @@ Legende: `[x]` erledigt · `[ ]` offen · `[~]` in Arbeit
 - [ ] HTTPS-Cert mit SSL Labs gegentesten (nice-to-have)
 - [ ] Monitoring (Container-Health, Disk-Usage)
 - [ ] Log-Rotation
+- [ ] Argon2id-Migration der Passwort-Hashes (bcrypt bleibt vorerst,
+      transparenter Rehash beim nächsten Login wäre nett)
+- [ ] WebAuthn / Passkeys als optionaler zweiter Faktor neben TOTP
 
 ### Maintenance
 - [ ] Dependabot für Go-Module aktivieren

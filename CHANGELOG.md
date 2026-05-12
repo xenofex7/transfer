@@ -7,6 +7,22 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Cookie-based login at `/login` with TOTP second factor, one-shot
+  recovery codes, and CSRF tokens bound to the session
+- Per-user API tokens at `/account` that authenticate via HTTP Basic
+  Auth in place of the password, with optional expiry and revocation
+- `--auth-require-2fa`, `--auth-session-ttl` and
+  `--auth-session-max-lifetime` flags
+
+### Changed
+- Browser routes (`/admin/*`, `/account`) now require a session
+  cookie. API routes (upload, download, delete) continue to accept
+  HTTP Basic Auth, but a TOTP-enabled user must use an API token
+  rather than their password on those routes
+- User metadata (TOTP secret, recovery codes, API tokens) is stored
+  in `<htpasswd>.meta.json` next to the existing htpasswd file
+
 ## [1.4.2] - 2026-05-07
 
 ### Added
