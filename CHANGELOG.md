@@ -7,6 +7,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-05-13
+
 ### Added
 - Cookie-based login at `/login` with TOTP second factor, one-shot
   recovery codes, and CSRF tokens bound to the session

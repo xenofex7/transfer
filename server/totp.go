@@ -31,10 +31,13 @@ const (
 	totpSecretSize = uint(20) // 160 bits, the RFC 6238 default
 	totpSkew       = uint(1)  // accept +/- one step to cover clock drift
 
-	recoveryCodeCount      = 10
-	recoveryCodeBytes      = 8 // 16 hex chars, formatted as XXXX-XXXX-XXXX-XXXX
-	recoveryCodeBcryptCost = 12
+	recoveryCodeCount = 10
+	recoveryCodeBytes = 8 // 16 hex chars, formatted as XXXX-XXXX-XXXX-XXXX
 )
+
+// recoveryCodeBcryptCost is a var so tests can lower it; see the
+// rationale on userBcryptCost.
+var recoveryCodeBcryptCost = 12
 
 var (
 	errTOTPNotEnrolled     = errors.New("TOTP is not enabled for this user")

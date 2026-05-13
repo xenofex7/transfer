@@ -34,9 +34,12 @@ const (
 	apiTokenIDBytes   = 5  // 8 chars in base32
 	apiTokenSecretLen = 30 // 30 random bytes ~ 48 base32 chars
 	apiTokenMaxNameLen = 64
-	apiTokenBcryptCost = 12
 	apiTokenMaxPerUser = 32
 )
+
+// apiTokenBcryptCost is a var so tests can lower it; see the rationale
+// on userBcryptCost.
+var apiTokenBcryptCost = 12
 
 var (
 	errInvalidAPIToken      = errors.New("invalid API token format")

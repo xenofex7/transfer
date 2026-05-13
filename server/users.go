@@ -25,8 +25,13 @@ const (
 	userMinPasswordLen = 8
 	userMaxPasswordLen = 256
 	userMaxNameLen     = 64
-	userBcryptCost     = 12
 )
+
+// userBcryptCost is a var rather than a const so tests can lower it to
+// bcrypt.MinCost. Production keeps it at 12 (current OWASP guidance).
+// Lowering it in tests cuts the suite from minutes to seconds under
+// the race detector, where bcrypt is the dominant cost.
+var userBcryptCost = 12
 
 var (
 	errUserNotFound      = errors.New("user not found")
