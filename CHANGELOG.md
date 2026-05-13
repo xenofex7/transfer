@@ -7,6 +7,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-05-13
+
+### Changed
+- Restrict container image builds to release tags
+- Skip image workflow runs for doc-only changes and cancel superseded runs
+- Use time.Until in the account-token expiry test
+
 ## [1.5.0] - 2026-05-13
 
 ### Added
