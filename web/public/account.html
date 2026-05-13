@@ -74,7 +74,7 @@
               <input class="field-input" type="text" name="recovery"
                      placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters">
             </label>
-            <button class="btn btn-danger" type="submit">Disable 2FA</button>
+            <button class="btn-danger" type="submit">Disable 2FA</button>
           </form>
         </details>
 
@@ -88,13 +88,13 @@
               <input class="field-input" type="text" name="code" inputmode="numeric"
                      pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" required>
             </label>
-            <button class="btn" type="submit">Regenerate</button>
+            <button class="btn-secondary" type="submit">Regenerate</button>
           </form>
         </details>
       {{else}}
         <p>Status: <strong>not enabled</strong>.</p>
         <p>A second factor protects this account if your password is ever leaked.</p>
-        <a class="btn btn-primary" href="/account/2fa/setup">Set up 2FA</a>
+        <a class="btn-primary" href="/account/2fa/setup">Set up 2FA</a>
       {{end}}
     </section>
 
@@ -114,11 +114,11 @@
           <input class="field-input" type="number" name="expires_days" min="1" max="3650"
                  placeholder="never">
         </label>
-        <button class="btn btn-primary" type="submit">Create token</button>
+        <button class="btn-primary" type="submit">Create token</button>
       </form>
 
       {{if .Tokens}}
-      <table class="data-table">
+      <table class="admin-table">
         <thead>
           <tr><th>Name</th><th>ID</th><th>Created</th><th>Last used</th><th>Expires</th><th></th></tr>
         </thead>
@@ -134,7 +134,7 @@
               <form method="post" action="/account/tokens/{{.ID}}/delete" class="inline-form"
                     onsubmit="return confirm('Revoke this token?');">
                 <input type="hidden" name="csrf" value="{{$.CSRFToken}}">
-                <button class="link link-danger" type="submit">Revoke</button>
+                <button class="link danger" type="submit">Revoke</button>
               </form>
             </td>
           </tr>
