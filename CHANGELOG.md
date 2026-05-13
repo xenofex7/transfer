@@ -7,6 +7,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-05-13
+
+### Fixed
+- Fix /login silently failing on a freshly booted container
+
 ## [1.5.1] - 2026-05-13
 
 ### Changed
