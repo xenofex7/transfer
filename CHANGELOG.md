@@ -7,6 +7,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-05-13
+
+### Changed
+- Restyle the auth and account pages to match the rest of the UI
+
 ## [1.5.2] - 2026-05-13
 
 ### Fixed
