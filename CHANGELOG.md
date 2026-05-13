@@ -10,6 +10,21 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ## [1.5.0] - 2026-05-13
 
 ### Added
+- Cookie-based login flow with TOTP, recovery codes and CSRF protection
+- Server-side session store with sliding cookie expiry
+- API-token authentication path alongside basic auth
+- Account self-service pages for 2FA enrolment and API token management
+- CLI flags for session TTL and 2FA enforcement
+- `userMetaStore` for persisting TOTP secrets and API tokens
+- README documentation for the cookie login, TOTP and API token flow
+
+### Changed
+- Split authentication into a cookie `webAuthHandler` for HTML routes and basic auth for API requests
+- Lowered bcrypt cost in tests so `go test -race` completes in seconds
+
+## [1.5.0] - 2026-05-13
+
+### Added
 - Cookie-based login at `/login` with TOTP second factor, one-shot
   recovery codes, and CSRF tokens bound to the session
 - Per-user API tokens at `/account` that authenticate via HTTP Basic
