@@ -1,22 +1,11 @@
 name: Build and publish container image
 
 on:
+  # Build only on release tags. Every-main-push builds were producing
+  # unused :edge / sha-tagged images; releases are tag-driven and
+  # Watchtower tracks :latest, which only the tag job sets.
   push:
-    branches: [main]
     tags: ['v*.*.*']
-    # Doc/test-only commits do not change the produced image, so they
-    # do not need to spend ~3min of GHA time and pollute the run list.
-    # Tag pushes ignore this list (GitHub treats tag triggers
-    # separately), so a release always builds even if the tag points
-    # at a doc-only commit.
-    paths-ignore:
-      - '**.md'
-      - 'CHANGELOG.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
   pull_request:
     branches: [main]
     paths-ignore:
@@ -25,14 +14,6 @@ on:
       - 'LICENSE'
       - '.gitignore'
   workflow_dispatch:
-
-# Cancel any in-flight build for the same ref when a newer commit
-# lands — saves CI minutes when a release commit is immediately
-# followed by a cleanup commit on the same branch. Tag builds
-# (refs/tags/vX.Y.Z) get their own group and never cancel each other.
-concurrency:
-  group: docker-${{ github.ref }}
-  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
@@ -71,14 +52,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix=sha-,format=short
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=raw,value=edge,enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.licenses=MIT
 
