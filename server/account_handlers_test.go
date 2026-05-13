@@ -204,7 +204,7 @@ func TestAccountTokenCreateExpiry(t *testing.T) {
 	if len(tokens) != 1 || tokens[0].ExpiresAt == nil {
 		t.Fatalf("expected expiring token, got %+v", tokens)
 	}
-	exp := tokens[0].ExpiresAt.Sub(time.Now())
+	exp := time.Until(*tokens[0].ExpiresAt)
 	if exp < 6*24*time.Hour || exp > 8*24*time.Hour {
 		t.Fatalf("expiry should be ~7 days, got %v", exp)
 	}
