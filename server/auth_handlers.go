@@ -245,6 +245,23 @@ func (s *Server) verifyPassword(name, password string) bool {
 	if name == "" || password == "" {
 		return false
 	}
+	// Lazy-load the htpasswd matcher. basicAuthHandler used to be the
+	// only entry that ever touched the matcher, so it was the only
+	// place lazy-loading lived. After the cookie-auth split, the
+	// browser /login flow can be the first thing a freshly booted
+	// container sees — without this load, every login here silently
+	// fails because htpasswdFile is still nil.
+	if s.authHtpasswd != "" {
+		s.htpasswdMu.RLock()
+		loaded := s.htpasswdFile != nil
+		s.htpasswdMu.RUnlock()
+		if !loaded {
+			if err := s.reloadHtpasswdFile(); err != nil {
+				s.logger.Printf("auth: load htpasswd: %v", err)
+				return false
+			}
+		}
+	}
 	s.htpasswdMu.RLock()
 	f := s.htpasswdFile
 	s.htpasswdMu.RUnlock()

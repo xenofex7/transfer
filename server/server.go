@@ -429,6 +429,17 @@ func New(options ...OptionFn) (*Server, error) {
 	s.sessions = newSessionStore(s.authSessionTTL, s.authSessionMaxLife)
 	s.sessions.Start()
 
+	// Eager-load the htpasswd matcher so the first /login attempt
+	// after a cold start does not have to wait on (or worse, fail
+	// because of) a missing matcher. A non-fatal warning is enough:
+	// the lazy-load path in verifyPassword/basicAuthHandler will
+	// retry on the next request if the file shows up later.
+	if s.authHtpasswd != "" {
+		if err := s.reloadHtpasswdFile(); err != nil {
+			s.logger.Printf("auth: preload htpasswd %q: %v", s.authHtpasswd, err)
+		}
+	}
+
 	(&umamiConfig{
 		scriptURL: s.umamiScriptURL,
 		websiteID: s.umamiWebsiteID,
