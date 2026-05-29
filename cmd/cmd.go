@@ -76,7 +76,7 @@ var globalFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:    "tagline",
 		Usage:   "tagline shown beneath the hostname on the homepage; empty hides it",
-		Value:   "Like WeTransfer — but it stays at your place",
+		Value:   "Like WeTransfer - but it stays at your place",
 		EnvVars: []string{"TAGLINE"},
 	},
 	&cli.IntFlag{

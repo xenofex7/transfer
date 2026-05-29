@@ -134,7 +134,7 @@ codes (bcrypt-hashed) and API token records live in
   them at `/account` and present them as the password in HTTP Basic
   Auth (`curl --user alice:tk_xxx....`). Each token is independently
   revocable and may carry an expiry of 1 to 3650 days. **Use these
-  instead of passwords for `curl` / scripts** — they are the only
+  instead of passwords for `curl` / scripts** - they are the only
   credential allowed to bypass TOTP on the API path.
 - **Session cookies**: `httpOnly`, `SameSite=Lax`, marked `Secure`
   whenever the request is HTTPS or `X-Forwarded-Proto: https` is set.
