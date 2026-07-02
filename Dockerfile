@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-ARG GO_VERSION=1.25.10
+ARG GO_VERSION=1.25.11
 ARG ALPINE_VERSION=3.22
 
 FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
@@ -49,7 +49,7 @@ ENV LISTENER=":8080" \
     BASEDIR="/data" \
     TEMP_PATH="/tmp" \
     PURGE_DAYS="360" \
-    PURGE_INTERVAL="24"
+    PURGE_INTERVAL="1"
 
 EXPOSE 8080
 VOLUME ["/data"]
