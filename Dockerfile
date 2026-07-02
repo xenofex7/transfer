@@ -38,7 +38,8 @@ LABEL org.opencontainers.image.title="transfer" \
 RUN apk add --no-cache ca-certificates mailcap tzdata wget && \
     addgroup -S -g 65532 transfersh && \
     adduser -S -D -H -u 65532 -G transfersh transfersh && \
-    mkdir -p /data && chown transfersh:transfersh /data
+    mkdir -p /data /etc/transfer && \
+    chown transfersh:transfersh /data /etc/transfer
 
 COPY --from=build /out/transfersh /usr/local/bin/transfersh
 

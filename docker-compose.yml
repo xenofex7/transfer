@@ -1,8 +1,10 @@
 # transfer deployment stack
 #
 # Usage:
-#   cp .env.example .env             # then edit .env
-#   htpasswd -B -c htpasswd <user>   # create the auth file BEFORE first start
+#   cp .env.example .env                            # then edit .env
+#   mkdir -p auth                                   # auth directory
+#   htpasswd -B -c auth/htpasswd <user>             # create the auth file
+#   sudo chown -R 65532:65532 auth                  # match container UID
 #   docker compose up -d
 #
 # Reverse-proxy (TLS termination) is expected to live OUTSIDE this compose file
@@ -11,6 +13,10 @@
 # By default the stack joins an EXTERNAL bridge network called `proxy`.
 # Override with the PROXY_NETWORK variable in .env if your reverse-proxy lives
 # on a network with a different name.
+#
+# Migrating from <= v1.5.3 (single-file htpasswd bind):
+#   mkdir -p auth && mv htpasswd auth/htpasswd && sudo chown -R 65532:65532 auth
+#   docker compose up -d
 
 name: transfer
 
@@ -46,11 +52,13 @@ services:
     volumes:
       - ${DATA_DIR:-./data}:/data
       # Mounted read-write so the /admin/users UI can add/reset/delete
-      # users in place. Keep the file outside any world-readable path on
-      # the host.
+      # users in place. The directory (not just the file) is mounted so
+      # the userStore can atomically rename .htpasswd-*.tmp into place.
+      # Host dir must be owned by UID 65532 (the container user); keep
+      # it outside any world-readable path on the host.
       - type: bind
-        source: ./htpasswd
-        target: /etc/transfer/htpasswd
+        source: ${AUTH_DIR:-./auth}
+        target: /etc/transfer
         bind:
           create_host_path: false
     networks:

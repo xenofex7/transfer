@@ -86,8 +86,10 @@ The deployment stack lives in [`docker-compose.yml`](docker-compose.yml).
 cp .env.example .env
 $EDITOR .env
 
-# 2. Auth file (seed at least one user; more can be managed in the UI)
-htpasswd -B -c htpasswd alice
+# 2. Auth directory (seed at least one user; more can be managed in the UI)
+mkdir -p auth
+htpasswd -B -c auth/htpasswd alice
+sudo chown -R 65532:65532 auth
 
 # 3. Up
 docker compose up -d
