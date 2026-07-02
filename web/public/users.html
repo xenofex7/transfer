@@ -10,89 +10,114 @@
   {{theme_bootstrap}}
 </head>
 <body>
-  <main class="page">
-    <header class="admin-head">
-      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
-      <h1 class="admin-title">Users</h1>
-      <nav class="admin-nav">
-        <a href="/admin/files">Files</a>
-        <a href="/admin/settings">Settings</a>
-        <span class="admin-nav-current">Users</span>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
+      <div class="sidebar-brand">
+        <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
+        <button class="sidebar-icon-btn sidebar-close" id="sidebar-close" type="button" aria-label="Close menu"><i data-lucide="x"></i></button>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="sidebar-link" href="/admin/files"><i data-lucide="files"></i><span>Files</span></a>
+        <a class="sidebar-link is-active" href="/admin/users"><i data-lucide="users"></i><span>Users</span></a>
+        <a class="sidebar-link" href="/admin/settings"><i data-lucide="settings"></i><span>Settings</span></a>
+        <a class="sidebar-link" href="/account"><i data-lucide="user"></i><span>Account</span></a>
+        <div class="sidebar-sep" role="separator"></div>
+        <a class="sidebar-link" href="/"><i data-lucide="upload"></i><span>Upload page</span></a>
       </nav>
-    </header>
-
-    {{if not .Available}}
-    <section class="card">
-      <p class="settings-hint">User management is disabled because no htpasswd file is configured. Set <code>HTTP_AUTH_HTPASSWD</code> to enable.</p>
-    </section>
-    {{else}}
-
-    <section class="card">
-      <h2 class="settings-section-title">Add user</h2>
-      <form method="POST" action="/admin/users" class="settings-form" autocomplete="off" novalidate>
-        <div class="settings-field">
-          <label for="new-username" class="settings-label">Username</label>
-          <input id="new-username" name="username" type="text" maxlength="64" required pattern="[A-Za-z0-9._-]+" autocomplete="off">
-          <p class="settings-hint">Letters, digits, dot, dash and underscore. Max 64 characters.</p>
+      <div class="sidebar-foot">
+        <div class="sidebar-user">
+          <span class="sidebar-user-name" title="{{.CurrentUser}}">{{.CurrentUser}}</span>
+          <form method="post" action="/logout" class="inline-form">
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+            <button class="sidebar-icon-btn" type="submit" title="Sign out" aria-label="Sign out"><i data-lucide="log-out"></i></button>
+          </form>
         </div>
-        <div class="settings-field">
-          <label for="new-password" class="settings-label">Password</label>
-          <input id="new-password" name="password" type="password" minlength="8" maxlength="256" required autocomplete="new-password">
-          <p class="settings-hint">At least 8 characters.</p>
+        <div class="sidebar-meta">
+          <span>{{if build_version}}{{build_version}}{{end}}</span>
+          <a href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener" title="Source on GitHub" aria-label="Source on GitHub"><i data-lucide="git-branch"></i></a>
         </div>
-        <div class="settings-actions">
-          <button type="submit" class="btn-primary">Add user</button>
-        </div>
-      </form>
-    </section>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" hidden></div>
 
-    <section class="card">
-      <h2 class="settings-section-title">Existing users</h2>
-      {{if .Users}}
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th class="users-actions-col">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{range .Users}}
-          <tr>
-            <td>
-              <span class="users-name">{{.Name}}</span>
-              {{if .IsCurrent}}<span class="users-badge">you</span>{{end}}
-            </td>
-            <td class="users-actions">
-              <form method="POST" action="/admin/users/{{.Name}}/password" class="users-inline-form" autocomplete="off">
-                <input type="password" name="password" placeholder="New password" minlength="8" maxlength="256" required autocomplete="new-password">
-                <button type="submit" class="btn-secondary">Reset</button>
-              </form>
-              {{if not .IsCurrent}}
-              <form method="POST" action="/admin/users/{{.Name}}/delete" class="users-inline-form" data-confirm="Delete user {{.Name}}? This cannot be undone.">
-                <button type="submit" class="btn-danger">Delete</button>
-              </form>
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar-menu" id="sidebar-open" type="button" aria-label="Open menu"><i data-lucide="menu"></i></button>
+        <a class="topbar-brand" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
+      </header>
+
+      <main class="content">
+        <header class="page-head">
+          <h1 class="page-title">Users</h1>
+          {{if .Users}}<span class="page-count">{{len .Users}} account{{if ne (len .Users) 1}}s{{end}}</span>{{end}}
+        </header>
+
+        {{if not .Available}}
+        <section class="card">
+          <p class="settings-hint">User management is disabled because no htpasswd file is configured. Set <code>HTTP_AUTH_HTPASSWD</code> to enable.</p>
+        </section>
+        {{else}}
+
+        <section class="card">
+          <h2 class="settings-section-title">Add user</h2>
+          <form method="POST" action="/admin/users" class="settings-form" autocomplete="off" novalidate>
+            <div class="settings-field">
+              <label for="new-username" class="settings-label">Username</label>
+              <input id="new-username" name="username" type="text" maxlength="64" required pattern="[A-Za-z0-9._-]+" autocomplete="off">
+              <p class="settings-hint">Letters, digits, dot, dash and underscore. Max 64 characters.</p>
+            </div>
+            <div class="settings-field">
+              <label for="new-password" class="settings-label">Password</label>
+              <input id="new-password" name="password" type="password" minlength="8" maxlength="256" required autocomplete="new-password">
+              <p class="settings-hint">At least 8 characters.</p>
+            </div>
+            <div class="settings-actions">
+              <button type="submit" class="btn-primary">Add user</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2 class="settings-section-title">Existing users</h2>
+          {{if .Users}}
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th class="users-actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Users}}
+              <tr>
+                <td>
+                  <span class="users-name">{{.Name}}</span>
+                  {{if .IsCurrent}}<span class="users-badge">you</span>{{end}}
+                </td>
+                <td class="users-actions">
+                  <form method="POST" action="/admin/users/{{.Name}}/password" class="users-inline-form" autocomplete="off">
+                    <input type="password" name="password" placeholder="New password" minlength="8" maxlength="256" required autocomplete="new-password">
+                    <button type="submit" class="btn-secondary">Reset</button>
+                  </form>
+                  {{if not .IsCurrent}}
+                  <form method="POST" action="/admin/users/{{.Name}}/delete" class="users-inline-form" data-confirm="Delete user {{.Name}}? This cannot be undone.">
+                    <button type="submit" class="btn-danger">Delete</button>
+                  </form>
+                  {{end}}
+                </td>
+              </tr>
               {{end}}
-            </td>
-          </tr>
+            </tbody>
+          </table>
+          {{else}}
+          <p class="settings-hint">No users yet. Add one above.</p>
           {{end}}
-        </tbody>
-      </table>
-      {{else}}
-      <p class="settings-hint">No users yet. Add one above.</p>
-      {{end}}
-    </section>
+        </section>
 
-    {{end}}
-
-    <footer class="footer">
-      <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
-      <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>
-      <a class="footer-link" href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener">
-        <i data-lucide="git-branch"></i><span>source on github</span>
-      </a>
-    </footer>
-  </main>
+        {{end}}
+      </main>
+    </div>
+  </div>
   {{if or .Flash .FlashError}}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -109,6 +134,7 @@
       });
     });
   </script>
+  <script src="{{asset "/scripts/sidebar.js"}}" defer></script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
   <script src="{{asset "/scripts/toast.js"}}" defer></script>
   <script src="{{asset "/scripts/changelog-modal.js"}}" defer></script>

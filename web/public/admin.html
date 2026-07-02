@@ -4,96 +4,123 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin &middot; {{.Hostname}}</title>
+  <title>Files &middot; {{.Hostname}}</title>
   <link rel="icon" href="{{favicon_url}}">
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
   {{theme_bootstrap}}
 </head>
 <body>
-  <main class="page page-wide">
-    <header class="admin-head">
-      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
-      <h1 class="admin-title">Files on {{.Hostname}}</h1>
-      <nav class="admin-nav">
-        <span class="admin-nav-current">Files</span>
-        <a href="/admin/settings">Settings</a>
-        <a href="/admin/users">Users</a>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
+      <div class="sidebar-brand">
+        <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
+        <button class="sidebar-icon-btn sidebar-close" id="sidebar-close" type="button" aria-label="Close menu"><i data-lucide="x"></i></button>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="sidebar-link is-active" href="/admin/files"><i data-lucide="files"></i><span>Files</span></a>
+        <a class="sidebar-link" href="/admin/users"><i data-lucide="users"></i><span>Users</span></a>
+        <a class="sidebar-link" href="/admin/settings"><i data-lucide="settings"></i><span>Settings</span></a>
+        <a class="sidebar-link" href="/account"><i data-lucide="user"></i><span>Account</span></a>
+        <div class="sidebar-sep" role="separator"></div>
+        <a class="sidebar-link" href="/"><i data-lucide="upload"></i><span>Upload page</span></a>
       </nav>
-      <p class="admin-meta"><span class="admin-count">{{.Total}}</span> file{{if ne .Total 1}}s{{end}} stored</p>
-    </header>
+      <div class="sidebar-foot">
+        <div class="sidebar-user">
+          <span class="sidebar-user-name" title="{{.CurrentUser}}">{{.CurrentUser}}</span>
+          <form method="post" action="/logout" class="inline-form">
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+            <button class="sidebar-icon-btn" type="submit" title="Sign out" aria-label="Sign out"><i data-lucide="log-out"></i></button>
+          </form>
+        </div>
+        <div class="sidebar-meta">
+          <span>{{if build_version}}{{build_version}}{{end}}</span>
+          <a href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener" title="Source on GitHub" aria-label="Source on GitHub"><i data-lucide="git-branch"></i></a>
+        </div>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" hidden></div>
 
-    <section class="card admin-toolbar">
-      <input id="filter" class="filter-input" type="search" placeholder="Filter by name or token..." autocomplete="off" aria-label="Filter files">
-    </section>
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar-menu" id="sidebar-open" type="button" aria-label="Open menu"><i data-lucide="menu"></i></button>
+        <a class="topbar-brand" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
+      </header>
 
-    {{if .Rows}}
-    <section class="card admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Filename</th>
-            <th>Size</th>
-            <th>Type</th>
-            <th>Uploaded</th>
-            <th>Downloads</th>
-            <th>Last download</th>
-            <th>Expires</th>
-            <th>Links</th>
-          </tr>
-        </thead>
-        <tbody id="rows">
-          {{range .Rows}}
-          <tr class="row{{if .Expired}} row-expired{{end}}" data-search="{{.Filename}} {{.Token}}">
-            <td class="cell-name" title="{{.Filename}}">{{.Filename}}</td>
-            <td class="cell-num">{{.SizeHuman}}</td>
-            <td class="cell-type">{{.ContentType}}</td>
-            <td class="cell-time" title="{{.UploadedAt}}">{{.UploadedHuman}}</td>
-            <td class="cell-num">{{.Downloads}}{{if ne .MaxDownloads -1}} <span class="muted">({{.Remaining}})</span>{{end}}</td>
-            <td class="cell-time" title="{{.LastDownloadedAt}}">{{.LastDownloadHuman}}</td>
-            <td class="cell-time">{{.ExpiresHuman}}</td>
-            <td class="cell-links">
-              <a class="icon-btn" href="{{.URL}}" target="_blank" rel="noopener" title="Open in new tab" aria-label="Open"><i data-lucide="external-link"></i></a>
-              <button class="icon-btn copy-btn" type="button" data-copy="{{.URL}}" title="Copy link" aria-label="Copy link"><i data-lucide="copy"></i></button>
-              <button class="icon-btn danger delete-btn" type="button" data-delete="{{.DeleteURL}}" data-name="{{.Filename}}" title="Delete file" aria-label="Delete"><i data-lucide="trash-2"></i></button>
-            </td>
-          </tr>
-          {{end}}
-        </tbody>
-      </table>
-    </section>
-    {{else}}
-    <section class="card admin-empty">
-      <p>No files yet. Drop one on the home page.</p>
-    </section>
-    {{end}}
+      <main class="content">
+        <header class="page-head">
+          <h1 class="page-title">Files</h1>
+          <span class="page-count">{{.Total}} file{{if ne .Total 1}}s{{end}} on {{.Hostname}}</span>
+        </header>
 
-    {{if .Recent}}
-    <section class="card admin-deletions">
-      <h2>Recently deleted</h2>
-      <ul class="deletion-list">
-        {{range .Recent}}
-        <li>
-          <span class="deletion-name">{{.Filename}}</span>
-          <span class="muted">{{.SizeHuman}}</span>
-          <span class="muted">{{.DeletedAgo}}</span>
-          {{if .User}}<span class="muted">by {{.User}}</span>{{end}}
-          <span class="muted">({{.Downloads}} downloads)</span>
-        </li>
+        <section class="card admin-toolbar">
+          <input id="filter" class="filter-input" type="search" placeholder="Filter by name, token or uploader..." autocomplete="off" aria-label="Filter files">
+        </section>
+
+        {{if .Rows}}
+        <section class="card admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Size</th>
+                <th>Type</th>
+                <th>Uploader</th>
+                <th>Uploaded</th>
+                <th>Downloads</th>
+                <th>Last download</th>
+                <th>Expires</th>
+                <th>Links</th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              {{range .Rows}}
+              <tr class="row{{if .Expired}} row-expired{{end}}" data-search="{{.Filename}} {{.Token}} {{.Uploader}}">
+                <td class="cell-name" title="{{.Filename}}">{{.Filename}}</td>
+                <td class="cell-num">{{.SizeHuman}}</td>
+                <td class="cell-type">{{.ContentType}}</td>
+                <td class="cell-type">{{if .Uploader}}{{.Uploader}}{{else}}<span class="muted">guest</span>{{end}}</td>
+                <td class="cell-time" title="{{.UploadedAt}}">{{.UploadedHuman}}</td>
+                <td class="cell-num">{{.Downloads}}{{if ne .MaxDownloads -1}} <span class="muted">({{.Remaining}})</span>{{end}}</td>
+                <td class="cell-time" title="{{.LastDownloadedAt}}">{{.LastDownloadHuman}}</td>
+                <td class="cell-time">{{.ExpiresHuman}}</td>
+                <td class="cell-links">
+                  <a class="icon-btn" href="{{.URL}}" target="_blank" rel="noopener" title="Open in new tab" aria-label="Open"><i data-lucide="external-link"></i></a>
+                  <button class="icon-btn copy-btn" type="button" data-copy="{{.URL}}" title="Copy link" aria-label="Copy link"><i data-lucide="copy"></i></button>
+                  <button class="icon-btn danger delete-btn" type="button" data-delete="{{.DeleteURL}}" data-name="{{.Filename}}" title="Delete file" aria-label="Delete"><i data-lucide="trash-2"></i></button>
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </section>
+        {{else}}
+        <section class="card admin-empty">
+          <p>No files yet. Drop one on the home page.</p>
+        </section>
         {{end}}
-      </ul>
-    </section>
-    {{end}}
 
-    <footer class="footer">
-      <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
-      <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>
-      <a class="footer-link" href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener">
-        <i data-lucide="git-branch"></i><span>source on github</span>
-      </a>
-    </footer>
-  </main>
+        {{if .Recent}}
+        <section class="card admin-deletions">
+          <h2>Recently deleted</h2>
+          <ul class="deletion-list">
+            {{range .Recent}}
+            <li>
+              <span class="deletion-name">{{.Filename}}</span>
+              <span class="muted">{{.SizeHuman}}</span>
+              <span class="muted">{{.DeletedAgo}}</span>
+              {{if .User}}<span class="muted">by {{.User}}</span>{{end}}
+              <span class="muted">({{.Downloads}} downloads)</span>
+            </li>
+            {{end}}
+          </ul>
+        </section>
+        {{end}}
+      </main>
+    </div>
+  </div>
 
   <script src="{{asset "/scripts/admin.js"}}" defer></script>
+  <script src="{{asset "/scripts/sidebar.js"}}" defer></script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
   <script src="{{asset "/scripts/toast.js"}}" defer></script>
   <script src="{{asset "/scripts/changelog-modal.js"}}" defer></script>

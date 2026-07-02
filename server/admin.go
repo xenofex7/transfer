@@ -35,14 +35,17 @@ type adminFileRow struct {
 	URL                string
 	DeleteURL          string
 	Expired            bool
+	Uploader           string
 }
 
 // adminFilesData is the template context for admin.html.
 type adminFilesData struct {
-	Hostname string
-	Rows     []adminFileRow
-	Total    int
-	Recent   []adminDeletion
+	Hostname    string
+	CurrentUser string
+	CSRFToken   string
+	Rows        []adminFileRow
+	Total       int
+	Recent      []adminDeletion
 }
 
 // adminDeletion is a single past deletion rendered in the dashboard.
@@ -88,6 +91,7 @@ func (s *Server) adminFilesHandler(w http.ResponseWriter, r *http.Request) {
 				row.Expired = !meta.MaxDate.IsZero() && time.Now().After(meta.MaxDate)
 				row.LastDownloadedAt = meta.LastDownloadedAt
 				row.LastDownloadHuman = lastDownloadLabel(meta.LastDownloadedAt)
+				row.Uploader = meta.Uploader
 
 				escFilename := url.PathEscape(e.Filename)
 				rel, _ := url.Parse(path.Join(s.proxyPath, e.Token, escFilename))
@@ -104,10 +108,14 @@ func (s *Server) adminFilesHandler(w http.ResponseWriter, r *http.Request) {
 	sort.SliceStable(rows, func(i, j int) bool { return rows[i].UploadedAt.After(rows[j].UploadedAt) })
 
 	data := adminFilesData{
-		Hostname: getURL(r, s.proxyPort).Host,
-		Rows:     rows,
-		Total:    len(rows),
-		Recent:   s.recentDeletions(),
+		Hostname:    getURL(r, s.proxyPort).Host,
+		CurrentUser: currentUserFromRequest(r),
+		Rows:        rows,
+		Total:       len(rows),
+		Recent:      s.recentDeletions(),
+	}
+	if sess, ok := s.sessionForRequest(r); ok {
+		data.CSRFToken = csrfTokenFor(sess.ID)
 	}
 
 	w.Header().Set("Cache-Control", "no-store")

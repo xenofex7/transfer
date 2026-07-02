@@ -104,6 +104,27 @@ func (s *Server) webAuthHandler(h http.Handler) http.HandlerFunc {
 	}
 }
 
+// uploadAuthHandler gates the upload endpoints. Precedence: a valid
+// web session cookie wins (browser uploads ride the login), then
+// Basic Auth / API tokens via basicAuthHandler (curl, CLI). Requests
+// without any credential pass through untagged when anonymous uploads
+// are enabled - the handlers apply the anonymous tier limits to them -
+// and hit the usual 401 otherwise.
+func (s *Server) uploadAuthHandler(h http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if sess, ok := s.sessionForRequest(r); ok {
+			r = r.WithContext(withAuthUser(r.Context(), sess.Username))
+			h.ServeHTTP(w, r)
+			return
+		}
+		if _, _, hasBasic := r.BasicAuth(); hasBasic || !s.anonUploads {
+			s.basicAuthHandler(h).ServeHTTP(w, r)
+			return
+		}
+		h.ServeHTTP(w, r)
+	}
+}
+
 // isTOTPExemptPath returns true for routes that a not-yet-enrolled
 // user must still be able to reach when authRequireTOTP is on:
 // the enrolment screen itself and the logout endpoint. Everything

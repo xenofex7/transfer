@@ -568,6 +568,48 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 .upload-copy.is-copied { color: var(--success); border-color: var(--success); }
 .upload-copy svg { width: 14px; height: 14px; }
 
+/* ----- Tier hint (homepage, under the dropzone) ----- */
+.tier-hint {
+  margin: calc(-1 * var(--space-md)) 0 0;
+  text-align: center;
+  color: var(--ink-mute);
+  font-size: 13px;
+}
+.tier-hint a { color: var(--link); }
+
+/* ----- Auth quick-links (homepage, top-right next to theme toggle) ----- */
+.top-auth {
+  position: fixed;
+  top: var(--space-md);
+  right: 64px;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 36px;
+  font-size: 13px;
+}
+.top-auth-user {
+  color: var(--ink);
+  font-weight: 600;
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.top-auth-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-mute);
+  text-decoration: none;
+}
+.top-auth-link:hover { color: var(--ink); }
+
 /* ----- Per-upload options ----- */
 .upload-options { padding: var(--space-md) var(--space-lg); }
 .upload-options-title {
@@ -578,7 +620,7 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 }
 .upload-options-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--space-sm);
 }
 .upload-option {
@@ -1236,6 +1278,203 @@ details.recovery-toggle { margin-top: var(--space-md); font-size: 14px; }
 .theme-toggle:hover { color: var(--ink); border-color: var(--ink); }
 .theme-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .theme-toggle svg { width: 16px; height: 16px; }
+
+/* =============================================================
+   App shell (signed-in admin/account area)
+   Sidebar left, content right. Mobile: off-canvas drawer + topbar.
+   ============================================================= */
+.app { display: flex; min-height: 100dvh; }
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  width: 256px;
+  background: var(--surface-card);
+  border-right: 1px solid var(--hairline-soft);
+  transform: translateX(-100%);
+  transition: transform 200ms ease;
+}
+.sidebar.is-open { transform: translateX(0); }
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 var(--space-md);
+  border-bottom: 1px solid var(--hairline-soft);
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  color: var(--ink-mute);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.sidebar-link:hover { background: var(--surface-soft); color: var(--ink); }
+.sidebar-link.is-active {
+  background: color-mix(in srgb, var(--petrol-400) 12%, transparent);
+  color: var(--petrol-600);
+}
+:root[data-theme="dark"] .sidebar-link.is-active { color: var(--petrol-100); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sidebar-link.is-active { color: var(--petrol-100); }
+}
+.sidebar-link svg { width: 16px; height: 16px; flex-shrink: 0; }
+.sidebar-sep { height: 1px; background: var(--hairline-soft); margin: var(--space-sm) var(--space-xs); }
+
+.sidebar-foot {
+  border-top: 1px solid var(--hairline-soft);
+  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: color 120ms, background 120ms;
+}
+.sidebar-icon-btn:hover { color: var(--ink); background: var(--surface-soft); }
+.sidebar-icon-btn svg { width: 15px; height: 15px; }
+.sidebar-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink-mute);
+  font-size: 11px;
+}
+.sidebar-meta a { color: var(--ink-mute); display: inline-flex; }
+.sidebar-meta a:hover { color: var(--ink); }
+.sidebar-meta svg { width: 13px; height: 13px; }
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  background: rgb(0 0 0 / 0.5);
+}
+.sidebar-overlay[hidden] { display: none; }
+body.sidebar-locked { overflow: hidden; }
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 56px;
+  padding: 0 64px 0 var(--space-md); /* right gap keeps the floating theme toggle clear */
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.topbar-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--ink-mute);
+  cursor: pointer;
+}
+.topbar-menu:hover { color: var(--ink); background: var(--surface-soft); }
+.topbar-menu svg { width: 18px; height: 18px; }
+.topbar-brand { display: inline-flex; }
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md) var(--space-xxl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+.page-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+  margin: 0;
+}
+.page-count { color: var(--ink-mute); font-weight: 400; font-size: 16px; }
+.page-sub { margin: 0; color: var(--ink-mute); font-size: 14px; width: 100%; }
+
+@media (min-width: 768px) {
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    flex-shrink: 0;
+    transform: none;
+    transition: none;
+  }
+  .sidebar-close { display: none; }
+  .topbar { display: none; }
+  .sidebar-overlay { display: none !important; }
+  .content { padding: var(--space-xl) var(--space-xl) var(--space-xxl); }
+}
 
 /* =============================================================
    Toast / Notification (baseline-spec)

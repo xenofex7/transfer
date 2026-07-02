@@ -69,7 +69,7 @@ contains the deletion URL - keep both.
 
 The container image bakes in sensible defaults (`LISTENER=:8080`,
 `BASEDIR=/data`, `TEMP_PATH=/tmp`, `PURGE_DAYS=360`,
-`PURGE_INTERVAL=24`); override them via env or CLI flags as needed.
+`PURGE_INTERVAL=1`); override them via env or CLI flags as needed.
 
 Multi-arch images (`linux/amd64`, `linux/arm64`) are published on GHCR with
 `latest`, semver (`X.Y.Z`, `X.Y`, `X`) and per-commit (`sha-<short>`) tags.
@@ -221,15 +221,28 @@ All flags can be set via CLI args or the matching environment variable.
 | `--basedir` | `BASEDIR` | *required* (the container image presets it to `/data`) | Path to the local storage directory |
 | `--temp-path` | `TEMP_PATH` | OS temp dir (`/tmp` in the container) | Path used for in-flight uploads |
 
-### Lifecycle
+### Upload tiers & lifecycle
+
+Uploads work in two tiers. Anonymous visitors can upload without any
+credentials (small files, short retention); signed-in users - via the
+web login, HTTP Basic Auth or an API token - get the big limits. Every
+upload carries its own expiry date; the purge loop deletes expired
+files from disk.
 
 | Flag | Env | Default | Description |
 |---|---|---|---|
-| `--purge-days` | `PURGE_DAYS` | `360` | Days after which uploads are purged |
-| `--purge-interval` | `PURGE_INTERVAL` | `24` | Hours between purge runs |
-| `--max-upload-size` | `MAX_UPLOAD_SIZE` | `0` (no limit) | Per-file limit in KB |
+| `--anon-uploads` | `ANON_UPLOADS` | `true` | Allow uploads without credentials; `false` requires a login for every upload |
+| `--anon-max-upload-size` | `ANON_MAX_UPLOAD_SIZE` | `51200` (50 MB) | Per-file limit in KB for anonymous uploads |
+| `--anon-upload-ttl` | `ANON_UPLOAD_TTL` | `24h` | Retention for anonymous uploads |
+| `--max-upload-size` | `MAX_UPLOAD_SIZE` | `0` (no limit) | Per-file limit in KB for signed-in uploads |
+| `--auth-upload-ttl` | `AUTH_UPLOAD_TTL` | `4320h` (180 days) | Default and maximum retention for signed-in uploads; `0` disables the forced expiry |
+| `--purge-days` | `PURGE_DAYS` | `360` | Hard age cap: uploads older than this are purged regardless of expiry |
+| `--purge-interval` | `PURGE_INTERVAL` | `1` | Hours between purge runs |
 | `--rate-limit` | `RATE_LIMIT` | `0` (off) | Requests per minute |
 | `--random-token-length` | `RANDOM_TOKEN_LENGTH` | `10` | URL token length |
+
+A `Max-Days` request header shortens the retention per upload; values
+above the tier TTL are capped to it.
 
 ### Authentication & access control
 

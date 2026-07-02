@@ -224,7 +224,7 @@ func formatSize(size int64) string {
 	var round float64
 	pow := math.Pow(10, float64(2))
 	digit := pow * sizeOn
-	round = math.Floor(digit)
+	round = math.Round(digit)
 
 	newVal := round / pow
 
@@ -245,4 +245,20 @@ func formatDurationDays(durationDays time.Duration) string {
 		return fmt.Sprintf("%d day", days)
 	}
 	return fmt.Sprintf("%d days", days)
+}
+
+// formatRetention renders a tier TTL for the UI: sub-2-day values in
+// hours, multiples of 30 days as months, everything else in days.
+func formatRetention(d time.Duration) string {
+	if d <= 0 {
+		return ""
+	}
+	if d < 48*time.Hour {
+		return fmt.Sprintf("%d hours", int(d.Hours()))
+	}
+	days := int(d.Hours() / 24)
+	if days >= 60 && days%30 == 0 {
+		return fmt.Sprintf("%d months", days/30)
+	}
+	return formatDurationDays(d)
 }

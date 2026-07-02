@@ -94,14 +94,38 @@ var globalFlags = []cli.Flag{
 	&cli.IntFlag{
 		Name:    "purge-interval",
 		Usage:   "interval in hours to run the automatic purge for",
-		Value:   24,
+		Value:   1,
 		EnvVars: []string{"PURGE_INTERVAL"},
 	},
 	&cli.Int64Flag{
 		Name:    "max-upload-size",
-		Usage:   "max limit for upload, in kilobytes",
+		Usage:   "max limit for uploads by signed-in users, in kilobytes",
 		Value:   0,
 		EnvVars: []string{"MAX_UPLOAD_SIZE"},
+	},
+	&cli.BoolFlag{
+		Name:    "anon-uploads",
+		Usage:   "allow uploads without credentials (anonymous tier)",
+		Value:   true,
+		EnvVars: []string{"ANON_UPLOADS"},
+	},
+	&cli.Int64Flag{
+		Name:    "anon-max-upload-size",
+		Usage:   "max size for anonymous uploads, in kilobytes",
+		Value:   51200,
+		EnvVars: []string{"ANON_MAX_UPLOAD_SIZE"},
+	},
+	&cli.DurationFlag{
+		Name:    "anon-upload-ttl",
+		Usage:   "retention for anonymous uploads; files expire and are purged after this",
+		Value:   24 * time.Hour,
+		EnvVars: []string{"ANON_UPLOAD_TTL"},
+	},
+	&cli.DurationFlag{
+		Name:    "auth-upload-ttl",
+		Usage:   "default and maximum retention for uploads by signed-in users; 0 disables the forced expiry",
+		Value:   180 * 24 * time.Hour,
+		EnvVars: []string{"AUTH_UPLOAD_TTL"},
 	},
 	&cli.StringFlag{
 		Name:    "log",
@@ -303,6 +327,13 @@ func New() *Cmd {
 		if v := c.Int64("max-upload-size"); v > 0 {
 			options = append(options, server.MaxUploadSize(v))
 		}
+
+		options = append(options,
+			server.AnonUploads(c.Bool("anon-uploads")),
+			server.AnonMaxUploadSize(c.Int64("anon-max-upload-size")),
+			server.AnonUploadTTL(c.Duration("anon-upload-ttl")),
+			server.AuthUploadTTL(c.Duration("auth-upload-ttl")),
+		)
 
 		if v := c.Int("rate-limit"); v > 0 {
 			options = append(options, server.RateLimit(v))

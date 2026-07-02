@@ -90,7 +90,8 @@
 
     var maxDays = optMaxDays && parseInt(optMaxDays.value, 10);
     if (maxDays && maxDays > 0) {
-      if (maxDays > 365) maxDays = 365;
+      var maxDaysCap = parseInt(optMaxDays.getAttribute('max'), 10) || 365;
+      if (maxDays > maxDaysCap) maxDays = maxDaysCap;
       xhr.setRequestHeader('Max-Days', String(maxDays));
     }
     var maxDownloads = optMaxDownloads && parseInt(optMaxDownloads.value, 10);

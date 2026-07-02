@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -81,26 +82,72 @@ func (s *LocalStorage) Delete(_ context.Context, token string, filename string) 
 	return
 }
 
-// Purge cleans up the storage
+// purgeMetadata is the subset of the upload metadata Purge needs to
+// honor per-file expiry.
+type purgeMetadata struct {
+	MaxDate time.Time
+}
+
+// Purge cleans up the storage: uploads whose metadata MaxDate has
+// passed and uploads older than the server-wide age cap are removed
+// together with their metadata sidecar. Dot-directories (.branding)
+// and top-level dotfiles (.settings.json, .deletions.jsonl) are never
+// touched.
 func (s *LocalStorage) Purge(_ context.Context, days time.Duration) (err error) {
-	err = filepath.Walk(s.basedir,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				return nil
-			}
+	cutoff := time.Now().Add(-1 * days)
 
-			if info.ModTime().Before(time.Now().Add(-1 * days)) {
-				err = os.Remove(path)
-				return err
-			}
-
+	tokenDirs, rdErr := os.ReadDir(s.basedir)
+	if rdErr != nil {
+		if os.IsNotExist(rdErr) {
 			return nil
-		})
+		}
+		return rdErr
+	}
 
-	return
+	for _, d := range tokenDirs {
+		if !d.IsDir() || strings.HasPrefix(d.Name(), ".") {
+			continue
+		}
+		tokenPath := filepath.Join(s.basedir, d.Name())
+
+		files, ferr := os.ReadDir(tokenPath)
+		if ferr != nil {
+			s.logger.Printf("purge: skipping %s: %v", tokenPath, ferr)
+			continue
+		}
+
+		for _, f := range files {
+			name := f.Name()
+			if f.IsDir() || strings.HasSuffix(name, ".metadata") {
+				continue
+			}
+			info, infoErr := f.Info()
+			if infoErr != nil {
+				continue
+			}
+
+			expired := info.ModTime().Before(cutoff)
+			if !expired {
+				if b, mErr := os.ReadFile(filepath.Join(tokenPath, name+".metadata")); mErr == nil {
+					var meta purgeMetadata
+					if json.Unmarshal(b, &meta) == nil && !meta.MaxDate.IsZero() && time.Now().After(meta.MaxDate) {
+						expired = true
+					}
+				}
+			}
+			if !expired {
+				continue
+			}
+
+			if rmErr := os.Remove(filepath.Join(tokenPath, name)); rmErr != nil {
+				err = rmErr
+				continue
+			}
+			_ = os.Remove(filepath.Join(tokenPath, name+".metadata"))
+		}
+	}
+
+	return err
 }
 
 // IsNotExist indicates if a file doesn't exist on storage

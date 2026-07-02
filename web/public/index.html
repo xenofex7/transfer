@@ -12,6 +12,19 @@
   {{umami_script}}
 </head>
 <body>
+  <nav class="top-auth" aria-label="Account">
+    {{if .CurrentUser}}
+      <span class="top-auth-user">{{.CurrentUser}}</span>
+      <a class="top-auth-link" href="/admin/files">Admin</a>
+      <form method="post" action="/logout" class="inline-form">
+        <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+        <button class="top-auth-link" type="submit">Sign out</button>
+      </form>
+    {{else if .LoginEnabled}}
+      <a class="top-auth-link" href="/login">Sign in</a>
+    {{end}}
+  </nav>
+
   <main class="page">
     <header class="hero">
       <img class="logo" src="{{logo_url}}" alt="">
@@ -28,16 +41,27 @@
       <ul class="uploads" id="uploads" hidden></ul>
     </section>
 
+    <p class="tier-hint">
+      {{if .CurrentUser}}
+        Signed in: files{{if .MaxUploadSize}} up to {{.MaxUploadSize}}{{end}}{{if .AuthRetention}}, kept for {{.AuthRetention}}{{end}}.
+      {{else if .AnonUploads}}
+        Guest uploads: up to {{.AnonMaxSize}}{{if .AnonRetention}}, links expire after {{.AnonRetention}}{{end}}.
+        {{if .LoginEnabled}}<a href="/login">Sign in</a> for {{if .MaxUploadSize}}files up to {{.MaxUploadSize}}{{else}}bigger files{{end}}{{if .AuthRetention}}, kept for {{.AuthRetention}}{{end}}.{{end}}
+      {{end}}
+    </p>
+
     <section class="card upload-options">
       <p class="upload-options-title">Per-upload options (optional)</p>
       <div class="upload-options-grid">
+        {{if .CurrentUser}}
         <label class="upload-option">
           <span class="upload-option-label">Auto-delete after</span>
           <span class="upload-option-input">
-            <input id="opt-max-days" type="number" min="1" max="365" step="1" placeholder="30" autocomplete="off">
+            <input id="opt-max-days" type="number" min="1" {{if .MaxDaysLimit}}max="{{.MaxDaysLimit}}" placeholder="{{.MaxDaysLimit}}"{{else}}max="365" placeholder="30"{{end}} step="1" autocomplete="off">
             <span class="upload-option-suffix">days</span>
           </span>
         </label>
+        {{end}}
         <label class="upload-option">
           <span class="upload-option-label">Max downloads</span>
           <span class="upload-option-input">

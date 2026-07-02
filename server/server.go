@@ -176,6 +176,40 @@ func MaxUploadSize(kbytes int64) OptionFn {
 
 }
 
+// AnonUploads toggles credential-less uploads. When enabled, requests
+// without a session cookie or Basic Auth pass the upload gate and get
+// the anonymous tier limits (AnonMaxUploadSize / AnonUploadTTL).
+func AnonUploads(enabled bool) OptionFn {
+	return func(srvr *Server) {
+		srvr.anonUploads = enabled
+	}
+}
+
+// AnonMaxUploadSize caps the size of a single anonymous upload.
+func AnonMaxUploadSize(kbytes int64) OptionFn {
+	return func(srvr *Server) {
+		srvr.anonMaxUploadSize = kbytes * 1024
+	}
+}
+
+// AnonUploadTTL is the forced retention for anonymous uploads: MaxDate
+// is always set to now+TTL (a smaller Max-Days request wins). Zero
+// disables the forced expiry.
+func AnonUploadTTL(d time.Duration) OptionFn {
+	return func(srvr *Server) {
+		srvr.anonUploadTTL = d
+	}
+}
+
+// AuthUploadTTL is the default and upper bound retention for uploads
+// by signed-in users. Zero keeps the legacy behavior (no forced
+// MaxDate, purge-days is the only cleanup).
+func AuthUploadTTL(d time.Duration) OptionFn {
+	return func(srvr *Server) {
+		srvr.authUploadTTL = d
+	}
+}
+
 // RateLimit set rate limit
 func RateLimit(requests int) OptionFn {
 	return func(srvr *Server) {
@@ -284,6 +318,11 @@ type Server struct {
 
 	maxUploadSize     int64
 	rateLimitRequests int
+
+	anonUploads       bool
+	anonMaxUploadSize int64
+	anonUploadTTL     time.Duration
+	authUploadTTL     time.Duration
 
 	purgeDays     time.Duration
 	purgeInterval time.Duration
@@ -537,7 +576,7 @@ func (s *Server) Run() {
 	r.HandleFunc("/robots.txt", cachedShort.ServeHTTP).Methods("GET")
 	r.HandleFunc("/llms.txt", cachedShort.ServeHTTP).Methods("GET")
 
-	r.HandleFunc("/{filename:(?:favicon\\.ico|robots\\.txt|health\\.html)}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
+	r.HandleFunc("/{filename:(?:favicon\\.ico|robots\\.txt|health\\.html)}", s.uploadAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
 
 	r.HandleFunc("/health.html", healthHandler).Methods("GET")
 	r.HandleFunc("/changelog.json", s.changelogHandler).Methods("GET")
@@ -614,10 +653,10 @@ func (s *Server) Run() {
 	r.Handle("/{token}/{filename}", getHandlerFn).Methods("GET")
 	r.Handle("/{action:(?:download|get|inline)}/{token}/{filename}", getHandlerFn).Methods("GET")
 
-	r.HandleFunc("/put/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
-	r.HandleFunc("/upload/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
-	r.HandleFunc("/{filename}", s.basicAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
-	r.HandleFunc("/", s.basicAuthHandler(http.HandlerFunc(s.postHandler))).Methods("POST")
+	r.HandleFunc("/put/{filename}", s.uploadAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
+	r.HandleFunc("/upload/{filename}", s.uploadAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
+	r.HandleFunc("/{filename}", s.uploadAuthHandler(http.HandlerFunc(s.putHandler))).Methods("PUT")
+	r.HandleFunc("/", s.uploadAuthHandler(http.HandlerFunc(s.postHandler))).Methods("POST")
 	// r.HandleFunc("/{page}", viewHandler).Methods("GET")
 
 	r.HandleFunc("/{token}/{filename}/{deletionToken}", s.deleteHandler).Methods("DELETE")

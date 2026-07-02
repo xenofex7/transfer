@@ -29,8 +29,12 @@ services:
       BASEDIR: "/data"
       TEMP_PATH: "/tmp/transfer"
       PURGE_DAYS: "${PURGE_DAYS:-360}"
-      PURGE_INTERVAL: "${PURGE_INTERVAL:-24}"
-      MAX_UPLOAD_SIZE: "${MAX_UPLOAD_SIZE:-5242880}"   # in KB, default 5 GiB
+      PURGE_INTERVAL: "${PURGE_INTERVAL:-1}"
+      MAX_UPLOAD_SIZE: "${MAX_UPLOAD_SIZE:-10485760}"  # in KB, default 10 GiB (signed-in tier)
+      ANON_UPLOADS: "${ANON_UPLOADS:-true}"
+      ANON_MAX_UPLOAD_SIZE: "${ANON_MAX_UPLOAD_SIZE:-51200}"  # in KB, default 50 MiB
+      ANON_UPLOAD_TTL: "${ANON_UPLOAD_TTL:-24h}"
+      AUTH_UPLOAD_TTL: "${AUTH_UPLOAD_TTL:-4320h}"     # 180 days
       RATE_LIMIT: "${RATE_LIMIT:-0}"
       RANDOM_TOKEN_LENGTH: "${RANDOM_TOKEN_LENGTH:-10}"
       HTTP_AUTH_HTPASSWD: "/etc/transfer/htpasswd"

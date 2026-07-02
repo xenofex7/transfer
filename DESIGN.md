@@ -174,6 +174,15 @@ The baseline ships **Inter** at weight 600 with -0.04em letter-spacing as the Di
 - **Pricing grid:** 4-up at desktop, 2-up at tablet, 1-up at mobile.
 - **Footer:** 4-column link list at desktop, wrapping to 2-up at tablet, 1-up at mobile.
 
+### App Shell (signed-in admin/account area)
+Project-specific composition built entirely from existing tokens - no new tokens.
+
+- **Sidebar left, content right.** Sidebar 256px, `{colors.surface-card}` background, 1px `{colors.hairline}`-soft right border. Structure top to bottom: brand row (56px, logo, hairline bottom border), nav list (flex 1, scrollable), foot block (hairline top border: username + sign-out icon, version + GitHub icon in `caption` size).
+- **Nav items:** Inter 14px / 500, icon 16px + label, padding 8px 12px, `{rounded.md}`. Inactive `{colors.ink-mute}`; hover `{colors.surface-soft}` + `{colors.ink}`; active = Petrol tint (`petrol-400` at 12%) with `petrol-600` text (light) / `petrol-100` (dark). The action layer (black primary) is NOT used for nav states - Petrol carries wayfinding, black stays reserved for CTAs.
+- **Content column:** max 1100px centered, page padding `{spacing.lg}`/`{spacing.xl}`, cards stack with `{spacing.lg}` gaps. Page head = h2-size title + muted count/subtitle inline.
+- **Mobile (<768px):** sidebar becomes an off-canvas drawer (translateX, 200ms) behind a 50% black overlay; a sticky 56px topbar carries the hamburger + logo. Close via X, overlay click or Escape.
+- **No dark page footer** inside the shell - version/GitHub live in the sidebar foot.
+
 ### Whitespace Philosophy
 The baseline uses generous but not excessive whitespace - section padding sits at 96px (modern-SaaS standard), and card internal padding stays at 32px. The rhythm is calibrated for fast scanning: every band has a single h1 + h2 + supporting cards, never densely packed lists. The result reads as confident-not-shouting.
 

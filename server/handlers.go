@@ -310,6 +310,19 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		purgeTime = formatDurationDays(s.purgeDays)
 	}
 
+	currentUser := ""
+	csrfToken := ""
+	if sess, ok := s.sessionForRequest(r); ok {
+		currentUser = sess.Username
+		csrfToken = csrfTokenFor(sess.ID)
+	}
+
+	anonMaxSize := ""
+	if s.anonMaxUploadSize > 0 {
+		anonMaxSize = formatSize(s.anonMaxUploadSize)
+	}
+	maxDaysLimit := int(s.authUploadTTL.Hours() / 24)
+
 	cfg := s.settings.Get()
 	data := struct {
 		Hostname      string
@@ -323,6 +336,14 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		MaxUploadSize string
 		SampleToken   string
 		SampleToken2  string
+		CurrentUser   string
+		CSRFToken     string
+		LoginEnabled  bool
+		AnonUploads   bool
+		AnonMaxSize   string
+		AnonRetention string
+		AuthRetention string
+		MaxDaysLimit  int
 	}{
 		hostname,
 		webAddress,
@@ -335,6 +356,14 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		maxUploadSize,
 		token(s.randomTokenLength),
 		token(s.randomTokenLength),
+		currentUser,
+		csrfToken,
+		s.authHtpasswd != "" || (s.authUser != "" && s.authPass != ""),
+		s.anonUploads,
+		anonMaxSize,
+		formatRetention(s.anonUploadTTL),
+		formatRetention(s.authUploadTTL),
+		maxDaysLimit,
 	}
 
 	w.Header().Set("Vary", "Accept")
@@ -377,7 +406,19 @@ func sanitize(fileName string) string {
 }
 
 func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) {
+	maxSize := s.effectiveMaxUploadSize(r)
+	if maxSize > 0 {
+		// Hard stop for clients that lie about (or omit) Content-Length.
+		// The 1 MiB headroom covers multipart boundaries and form fields.
+		r.Body = http.MaxBytesReader(w, r.Body, maxSize+(1<<20))
+	}
+
 	if err := r.ParseMultipartForm(_24K); nil != err {
+		if isBodyTooLarge(err) {
+			s.logger.Print("Entity too large")
+			http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+			return
+		}
 		s.logger.Printf("%s", err.Error())
 		http.Error(w, "Error occurred copying to output stream", http.StatusInternalServerError)
 		return
@@ -414,6 +455,11 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) {
 
 			n, err := io.Copy(file, f)
 			if err != nil {
+				if isBodyTooLarge(err) {
+					s.logger.Print("Entity too large")
+					http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+					return
+				}
 				s.logger.Printf("%s", err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -427,13 +473,13 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if s.maxUploadSize > 0 && contentLength > s.maxUploadSize {
+			if maxSize > 0 && contentLength > maxSize {
 				s.logger.Print("Entity too large")
 				http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
 				return
 			}
 
-			metadata := metadataForRequest(contentType, contentLength, s.randomTokenLength, r)
+			metadata := s.metadataForRequest(contentType, contentLength, r)
 
 			buffer := &bytes.Buffer{}
 			if err := json.NewEncoder(buffer).Encode(metadata); err != nil {
@@ -512,16 +558,20 @@ type metadata struct {
 	// LastDownloadedAt is the timestamp of the most recent successful
 	// download. Zero value means the file has never been downloaded.
 	LastDownloadedAt time.Time
+	// Uploader is the authenticated username that created the upload.
+	// Empty means anonymous.
+	Uploader string
 }
 
-func metadataForRequest(contentType string, contentLength int64, randomTokenLength int, r *http.Request) metadata {
+func (s *Server) metadataForRequest(contentType string, contentLength int64, r *http.Request) metadata {
 	metadata := metadata{
 		ContentType:   strings.ToLower(contentType),
 		ContentLength: contentLength,
 		MaxDate:       time.Time{},
 		Downloads:     0,
 		MaxDownloads:  -1,
-		DeletionToken: token(randomTokenLength) + token(randomTokenLength),
+		DeletionToken: token(s.randomTokenLength) + token(s.randomTokenLength),
+		Uploader:      currentUserFromRequest(r),
 	}
 
 	if v := r.Header.Get("Max-Downloads"); v == "" {
@@ -530,13 +580,46 @@ func metadataForRequest(contentType string, contentLength int64, randomTokenLeng
 		metadata.MaxDownloads = v
 	}
 
+	// Tier retention: anonymous uploads expire after the anon TTL,
+	// signed-in uploads after the auth TTL. A smaller Max-Days request
+	// wins; anything above the tier TTL is capped to it.
+	maxTTL := s.authUploadTTL
+	if metadata.Uploader == "" {
+		maxTTL = s.anonUploadTTL
+	}
+
 	if v := r.Header.Get("Max-Days"); v == "" {
 	} else if v, err := strconv.Atoi(v); err != nil {
-	} else {
-		metadata.MaxDate = time.Now().Add(time.Hour * 24 * time.Duration(v))
+	} else if v > 0 {
+		d := time.Hour * 24 * time.Duration(v)
+		if maxTTL > 0 && d > maxTTL {
+			d = maxTTL
+		}
+		metadata.MaxDate = time.Now().Add(d)
+	}
+
+	if metadata.MaxDate.IsZero() && maxTTL > 0 {
+		metadata.MaxDate = time.Now().Add(maxTTL)
 	}
 
 	return metadata
+}
+
+// effectiveMaxUploadSize picks the size cap for this request's tier:
+// anonymous uploads get the anonymous cap, authenticated ones the
+// server-wide max-upload-size. 0 means unlimited.
+func (s *Server) effectiveMaxUploadSize(r *http.Request) int64 {
+	if s.anonUploads && currentUserFromRequest(r) == "" {
+		return s.anonMaxUploadSize
+	}
+	return s.maxUploadSize
+}
+
+// isBodyTooLarge detects the error http.MaxBytesReader returns when a
+// request body blows past the wrapped limit.
+func isBodyTooLarge(err error) bool {
+	var mbe *http.MaxBytesError
+	return errors.As(err, &mbe) || strings.Contains(err.Error(), "request body too large")
 }
 
 func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
@@ -545,6 +628,17 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 	filename := sanitize(vars["filename"])
 
 	contentLength := r.ContentLength
+
+	maxSize := s.effectiveMaxUploadSize(r)
+	if maxSize > 0 && contentLength > maxSize {
+		s.logger.Print("Entity too large")
+		http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+		return
+	}
+	if maxSize > 0 {
+		// Hard stop for bodies that exceed the declared Content-Length.
+		r.Body = http.MaxBytesReader(w, r.Body, maxSize)
+	}
 
 	defer storage.CloseCheck(r.Body)
 
@@ -562,6 +656,11 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 		// queue file to disk, because s3 needs content length
 		n, err := io.Copy(file, r.Body)
 		if err != nil {
+			if isBodyTooLarge(err) {
+				s.logger.Print("Entity too large")
+				http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+				return
+			}
 			s.logger.Printf("%s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -581,7 +680,7 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 		reader = file
 	}
 
-	if s.maxUploadSize > 0 && contentLength > s.maxUploadSize {
+	if maxSize > 0 && contentLength > maxSize {
 		s.logger.Print("Entity too large")
 		http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
 		return
@@ -597,7 +696,7 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 
 	token := token(s.randomTokenLength)
 
-	metadata := metadataForRequest(contentType, contentLength, s.randomTokenLength, r)
+	metadata := s.metadataForRequest(contentType, contentLength, r)
 
 	buffer := &bytes.Buffer{}
 	if err := json.NewEncoder(buffer).Encode(metadata); err != nil {

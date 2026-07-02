@@ -19,6 +19,8 @@ import (
 // adminSettingsData is the template context for settings.html.
 type adminSettingsData struct {
 	Hostname        string
+	CurrentUser     string
+	CSRFToken       string
 	Tagline         string
 	EmailContact    string
 	Theme           string
@@ -109,10 +111,14 @@ func (s *Server) renderSettings(w http.ResponseWriter, _ *http.Request, data adm
 func (s *Server) settingsData(r *http.Request, tagline, email, theme string) adminSettingsData {
 	d := adminSettingsData{
 		Hostname:        getURL(r, s.proxyPort).Host,
+		CurrentUser:     currentUserFromRequest(r),
 		Tagline:         tagline,
 		EmailContact:    email,
 		Theme:           theme,
 		BrandingEnabled: s.branding != nil && s.brandingDir != "",
+	}
+	if sess, ok := s.sessionForRequest(r); ok {
+		d.CSRFToken = csrfTokenFor(sess.ID)
 	}
 	if s.branding != nil {
 		d.HasLogo = s.branding.Get(BrandingLogo).exists

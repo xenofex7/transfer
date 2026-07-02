@@ -10,123 +10,147 @@
   {{theme_bootstrap}}
 </head>
 <body>
-  <main class="page">
-    <header class="admin-head">
-      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
-      <h1 class="admin-title">Branding settings</h1>
-      <nav class="admin-nav">
-        <a href="/admin/files">Files</a>
-        <span class="admin-nav-current">Settings</span>
-        <a href="/admin/users">Users</a>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
+      <div class="sidebar-brand">
+        <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
+        <button class="sidebar-icon-btn sidebar-close" id="sidebar-close" type="button" aria-label="Close menu"><i data-lucide="x"></i></button>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="sidebar-link" href="/admin/files"><i data-lucide="files"></i><span>Files</span></a>
+        <a class="sidebar-link" href="/admin/users"><i data-lucide="users"></i><span>Users</span></a>
+        <a class="sidebar-link is-active" href="/admin/settings"><i data-lucide="settings"></i><span>Settings</span></a>
+        <a class="sidebar-link" href="/account"><i data-lucide="user"></i><span>Account</span></a>
+        <div class="sidebar-sep" role="separator"></div>
+        <a class="sidebar-link" href="/"><i data-lucide="upload"></i><span>Upload page</span></a>
       </nav>
-    </header>
-
-    <section class="card">
-      <form method="POST" action="/admin/settings" class="settings-form" novalidate>
-        <div class="settings-field">
-          <label for="tagline" class="settings-label">Tagline</label>
-          <input id="tagline" name="tagline" type="text" maxlength="200" value="{{.Tagline}}" autocomplete="off">
-          <p class="settings-hint">Shown beneath the hostname on the homepage. Leave empty to hide.</p>
-        </div>
-
-        <div class="settings-field">
-          <label for="email_contact" class="settings-label">Contact email</label>
-          <input id="email_contact" name="email_contact" type="email" maxlength="200" value="{{.EmailContact}}" autocomplete="off">
-          <p class="settings-hint">Adds a "contact" link in the footer. Leave empty to hide.</p>
-        </div>
-
-        <div class="settings-field">
-          <label for="theme" class="settings-label">Default theme</label>
-          <select id="theme" name="theme" class="settings-select">
-            <option value="system" {{if eq .Theme "system"}}selected{{end}}>Follow OS preference</option>
-            <option value="dark" {{if eq .Theme "dark"}}selected{{end}}>Dark</option>
-            <option value="light" {{if eq .Theme "light"}}selected{{end}}>Light</option>
-          </select>
-          <p class="settings-hint">First-visit fallback. Visitors can override per-browser via the toggle in the top-right.</p>
-        </div>
-
-        <div class="settings-actions">
-          <button type="submit" class="btn-primary">Save</button>
-          <button type="submit" name="reset" value="1" class="btn-secondary">Reset to defaults</button>
-        </div>
-      </form>
-    </section>
-
-    {{if .BrandingEnabled}}
-    <section class="card">
-      <h2 class="settings-section-title">Branding assets</h2>
-
-      <div class="branding-grid">
-        <div class="branding-slot">
-          <p class="settings-label">Logo</p>
-          <img class="branding-preview" src="{{logo_url}}" alt="Current logo preview">
-          <p class="settings-hint">PNG / JPG / SVG / WebP / GIF, max 1 MiB. Replaces the embedded logo across the whole site.</p>
-          <form method="POST" action="/admin/branding/logo" enctype="multipart/form-data" class="branding-form">
-            <input type="file" name="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" required>
-            <button type="submit" class="btn-primary">Upload</button>
-            {{if .HasLogo}}<button type="button" class="btn-secondary" data-branding-reset="logo">Reset</button>{{end}}
+      <div class="sidebar-foot">
+        <div class="sidebar-user">
+          <span class="sidebar-user-name" title="{{.CurrentUser}}">{{.CurrentUser}}</span>
+          <form method="post" action="/logout" class="inline-form">
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
+            <button class="sidebar-icon-btn" type="submit" title="Sign out" aria-label="Sign out"><i data-lucide="log-out"></i></button>
           </form>
         </div>
-
-        <div class="branding-slot">
-          <p class="settings-label">Favicon</p>
-          <img class="branding-preview branding-preview-small" src="{{favicon_url}}" alt="Current favicon preview">
-          <p class="settings-hint">ICO / PNG / SVG, max 1 MiB. Browsers may cache aggressively.</p>
-          <form method="POST" action="/admin/branding/favicon" enctype="multipart/form-data" class="branding-form">
-            <input type="file" name="file" accept="image/x-icon,image/png,image/svg+xml,.ico" required>
-            <button type="submit" class="btn-primary">Upload</button>
-            {{if .HasFavicon}}<button type="button" class="btn-secondary" data-branding-reset="favicon">Reset</button>{{end}}
-          </form>
+        <div class="sidebar-meta">
+          <span>{{if build_version}}{{build_version}}{{end}}</span>
+          <a href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener" title="Source on GitHub" aria-label="Source on GitHub"><i data-lucide="git-branch"></i></a>
         </div>
       </div>
-    </section>
-    {{end}}
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" hidden></div>
 
-    <section class="card">
-      <h2 class="settings-section-title">Anonymous instance heartbeat</h2>
-      <p class="settings-hint">
-        Helps the project author count how many copies of this fork are running.
-        One ping per day, sent from this server (no client/visitor tracking).
-        The payload carries only the running version - see
-        <a href="/admin/settings/heartbeat/payload" target="_blank" rel="noopener">/admin/settings/heartbeat/payload</a>
-        for the exact JSON.
-      </p>
-      <p class="settings-hint">
-        Caveat: the request necessarily reveals this server's source IP
-        to the maintainer's Umami instance. No usage, no upload data, no
-        user identifiers leave the server.
-      </p>
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar-menu" id="sidebar-open" type="button" aria-label="Open menu"><i data-lucide="menu"></i></button>
+        <a class="topbar-brand" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
+      </header>
 
-      <p class="heartbeat-status">
-        Status:
-        {{if .HeartbeatActive}}<span class="heartbeat-pill heartbeat-on">ON</span>{{else}}<span class="heartbeat-pill heartbeat-off">OFF</span>{{end}}
-        <span class="heartbeat-source">(source: {{.HeartbeatSource}})</span>
-      </p>
+      <main class="content">
+        <header class="page-head">
+          <h1 class="page-title">Settings</h1>
+        </header>
 
-      {{if .HeartbeatLocked}}
-      <p class="settings-hint">
-        Pinned by the <code>UMAMI_HEARTBEAT</code> environment variable.
-        Unset it to re-enable the UI toggle.
-      </p>
-      {{else}}
-      <form method="POST" action="/admin/settings/heartbeat" class="settings-actions">
-        {{if .HeartbeatActive}}
-        <button type="submit" name="enabled" value="false" class="btn-secondary">Disable</button>
-        {{else}}
-        <button type="submit" name="enabled" value="true" class="btn-primary">Enable</button>
+        <section class="card">
+          <form method="POST" action="/admin/settings" class="settings-form" novalidate>
+            <div class="settings-field">
+              <label for="tagline" class="settings-label">Tagline</label>
+              <input id="tagline" name="tagline" type="text" maxlength="200" value="{{.Tagline}}" autocomplete="off">
+              <p class="settings-hint">Shown beneath the hostname on the homepage. Leave empty to hide.</p>
+            </div>
+
+            <div class="settings-field">
+              <label for="email_contact" class="settings-label">Contact email</label>
+              <input id="email_contact" name="email_contact" type="email" maxlength="200" value="{{.EmailContact}}" autocomplete="off">
+              <p class="settings-hint">Adds a "contact" link in the footer. Leave empty to hide.</p>
+            </div>
+
+            <div class="settings-field">
+              <label for="theme" class="settings-label">Default theme</label>
+              <select id="theme" name="theme" class="settings-select">
+                <option value="system" {{if eq .Theme "system"}}selected{{end}}>Follow OS preference</option>
+                <option value="dark" {{if eq .Theme "dark"}}selected{{end}}>Dark</option>
+                <option value="light" {{if eq .Theme "light"}}selected{{end}}>Light</option>
+              </select>
+              <p class="settings-hint">First-visit fallback. Visitors can override per-browser via the toggle in the top-right.</p>
+            </div>
+
+            <div class="settings-actions">
+              <button type="submit" class="btn-primary">Save</button>
+              <button type="submit" name="reset" value="1" class="btn-secondary">Reset to defaults</button>
+            </div>
+          </form>
+        </section>
+
+        {{if .BrandingEnabled}}
+        <section class="card">
+          <h2 class="settings-section-title">Branding assets</h2>
+
+          <div class="branding-grid">
+            <div class="branding-slot">
+              <p class="settings-label">Logo</p>
+              <img class="branding-preview" src="{{logo_url}}" alt="Current logo preview">
+              <p class="settings-hint">PNG / JPG / SVG / WebP / GIF, max 1 MiB. Replaces the embedded logo across the whole site.</p>
+              <form method="POST" action="/admin/branding/logo" enctype="multipart/form-data" class="branding-form">
+                <input type="file" name="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" required>
+                <button type="submit" class="btn-primary">Upload</button>
+                {{if .HasLogo}}<button type="button" class="btn-secondary" data-branding-reset="logo">Reset</button>{{end}}
+              </form>
+            </div>
+
+            <div class="branding-slot">
+              <p class="settings-label">Favicon</p>
+              <img class="branding-preview branding-preview-small" src="{{favicon_url}}" alt="Current favicon preview">
+              <p class="settings-hint">ICO / PNG / SVG, max 1 MiB. Browsers may cache aggressively.</p>
+              <form method="POST" action="/admin/branding/favicon" enctype="multipart/form-data" class="branding-form">
+                <input type="file" name="file" accept="image/x-icon,image/png,image/svg+xml,.ico" required>
+                <button type="submit" class="btn-primary">Upload</button>
+                {{if .HasFavicon}}<button type="button" class="btn-secondary" data-branding-reset="favicon">Reset</button>{{end}}
+              </form>
+            </div>
+          </div>
+        </section>
         {{end}}
-      </form>
-      {{end}}
-    </section>
 
-    <footer class="footer">
-      <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
-      <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>
-      <a class="footer-link" href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener">
-        <i data-lucide="git-branch"></i><span>source on github</span>
-      </a>
-    </footer>
-  </main>
+        <section class="card">
+          <h2 class="settings-section-title">Anonymous instance heartbeat</h2>
+          <p class="settings-hint">
+            Helps the project author count how many copies of this fork are running.
+            One ping per day, sent from this server (no client/visitor tracking).
+            The payload carries only the running version - see
+            <a href="/admin/settings/heartbeat/payload" target="_blank" rel="noopener">/admin/settings/heartbeat/payload</a>
+            for the exact JSON.
+          </p>
+          <p class="settings-hint">
+            Caveat: the request necessarily reveals this server's source IP
+            to the maintainer's Umami instance. No usage, no upload data, no
+            user identifiers leave the server.
+          </p>
+
+          <p class="heartbeat-status">
+            Status:
+            {{if .HeartbeatActive}}<span class="heartbeat-pill heartbeat-on">ON</span>{{else}}<span class="heartbeat-pill heartbeat-off">OFF</span>{{end}}
+            <span class="heartbeat-source">(source: {{.HeartbeatSource}})</span>
+          </p>
+
+          {{if .HeartbeatLocked}}
+          <p class="settings-hint">
+            Pinned by the <code>UMAMI_HEARTBEAT</code> environment variable.
+            Unset it to re-enable the UI toggle.
+          </p>
+          {{else}}
+          <form method="POST" action="/admin/settings/heartbeat" class="settings-actions">
+            {{if .HeartbeatActive}}
+            <button type="submit" name="enabled" value="false" class="btn-secondary">Disable</button>
+            {{else}}
+            <button type="submit" name="enabled" value="true" class="btn-primary">Enable</button>
+            {{end}}
+          </form>
+          {{end}}
+        </section>
+      </main>
+    </div>
+  </div>
   {{if or .Flash .FlashError}}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -160,6 +184,7 @@
       });
     });
   </script>
+  <script src="{{asset "/scripts/sidebar.js"}}" defer></script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
   <script src="{{asset "/scripts/toast.js"}}" defer></script>
   <script src="{{asset "/scripts/changelog-modal.js"}}" defer></script>

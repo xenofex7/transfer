@@ -143,3 +143,49 @@ func TestLocalStorageBasedirIsolated(t *testing.T) {
 		t.Fatalf("basedir not created: %v", err)
 	}
 }
+
+func TestLocalStoragePurge(t *testing.T) {
+	s := newTestStorage(t)
+	ctx := context.Background()
+
+	put := func(token, name, meta string) {
+		t.Helper()
+		if err := s.Put(ctx, token, name, strings.NewReader("x"), "text/plain", 1); err != nil {
+			t.Fatalf("Put %s/%s: %v", token, name, err)
+		}
+		if meta != "" {
+			if err := s.Put(ctx, token, name+".metadata", strings.NewReader(meta), "text/json", uint64(len(meta))); err != nil {
+				t.Fatalf("Put metadata %s/%s: %v", token, name, err)
+			}
+		}
+	}
+
+	put("tokexp", "gone.txt", `{"MaxDate":"2001-01-01T00:00:00Z"}`)
+	put("tokfut", "keep.txt", `{"MaxDate":"2999-01-01T00:00:00Z"}`)
+	put("toknil", "nodate.txt", `{"MaxDate":"0001-01-01T00:00:00Z"}`)
+	put("tokraw", "nometa.txt", "")
+
+	// Dotfiles/dirs at the top level must survive any purge.
+	if err := os.WriteFile(s.basedir+"/.settings.json", []byte("{}"), 0600); err != nil {
+		t.Fatalf("write settings: %v", err)
+	}
+
+	if err := s.Purge(ctx, 360*24*3600*1e9); err != nil {
+		t.Fatalf("Purge: %v", err)
+	}
+
+	if _, err := s.Head(ctx, "tokexp", "gone.txt"); !os.IsNotExist(err) {
+		t.Errorf("expired file should be purged, got err=%v", err)
+	}
+	if _, err := os.Stat(s.basedir + "/tokexp/gone.txt.metadata"); !os.IsNotExist(err) {
+		t.Errorf("expired metadata should be purged, got err=%v", err)
+	}
+	for _, f := range [][2]string{{"tokfut", "keep.txt"}, {"toknil", "nodate.txt"}, {"tokraw", "nometa.txt"}} {
+		if _, err := s.Head(ctx, f[0], f[1]); err != nil {
+			t.Errorf("%s/%s should survive purge: %v", f[0], f[1], err)
+		}
+	}
+	if _, err := os.Stat(s.basedir + "/.settings.json"); err != nil {
+		t.Errorf(".settings.json should survive purge: %v", err)
+	}
+}

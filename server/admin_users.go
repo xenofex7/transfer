@@ -18,6 +18,7 @@ import (
 type adminUsersData struct {
 	Hostname    string
 	CurrentUser string
+	CSRFToken   string
 	Users       []adminUserRow
 	Available   bool
 	Flash       string
@@ -106,6 +107,9 @@ func (s *Server) usersData(r *http.Request) adminUsersData {
 		Hostname:    getURL(r, s.proxyPort).Host,
 		CurrentUser: current,
 		Available:   s.users != nil,
+	}
+	if sess, ok := s.sessionForRequest(r); ok {
+		d.CSRFToken = csrfTokenFor(sess.ID)
 	}
 	if s.users == nil {
 		return d
