@@ -72,6 +72,30 @@
       <p class="upload-options-hint">Leave blank to use the server defaults.</p>
     </section>
 
+    {{if .SecretsEnabled}}
+    <section class="card secret-card">
+      <p class="upload-options-title">One-time secret</p>
+      <p class="card-intro">Share a password or other short text. The recipient can open the link exactly once, then the secret is gone. Encrypted in your browser - the server never sees the plain text. Unopened secrets expire after {{.SecretRetention}}.</p>
+      <form id="secret-form">
+        <label class="field">
+          <span class="field-label">Secret text</span>
+          <textarea class="field-input secret-textarea" id="secret-input" rows="4"
+                    autocomplete="off" spellcheck="false"
+                    placeholder="Password, credentials, ..."></textarea>
+        </label>
+        <button class="btn-primary" id="secret-create" type="submit">Create one-time link</button>
+      </form>
+      <div class="url-box secret-result" id="secret-result" hidden>
+        <p class="url-label">One-time link - send this to the recipient</p>
+        <code class="url-value" id="secret-url"></code>
+        <div class="secret-result-actions">
+          <button class="btn-primary" id="secret-copy" type="button">Copy link</button>
+          <button class="btn-secondary" id="secret-again" type="button">Create another</button>
+        </div>
+      </div>
+    </section>
+    {{end}}
+
     <footer class="footer">
       <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
       <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>
@@ -82,6 +106,7 @@
   </main>
 
   <script src="{{asset "/scripts/main.js"}}" defer></script>
+  <script src="{{asset "/scripts/secret.js"}}" defer></script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
   <script src="{{asset "/scripts/toast.js"}}" defer></script>
   <script src="{{asset "/scripts/changelog-modal.js"}}" defer></script>

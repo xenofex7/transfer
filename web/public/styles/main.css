@@ -673,6 +673,34 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
   .upload-options-grid { grid-template-columns: 1fr; }
 }
 
+/* ----- One-time secret ----- */
+.secret-textarea {
+  height: auto;
+  min-height: 110px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.secret-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+.secret-text {
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink);
+}
+#secret-output { margin-top: var(--space-sm); }
+
 /* ----- Meta ----- */
 .meta {
   display: grid;
