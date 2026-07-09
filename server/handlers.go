@@ -344,6 +344,9 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		AnonRetention string
 		AuthRetention string
 		MaxDaysLimit  int
+
+		SecretsEnabled  bool
+		SecretRetention string
 	}{
 		hostname,
 		webAddress,
@@ -364,6 +367,8 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		formatRetention(s.anonUploadTTL),
 		formatRetention(s.authUploadTTL),
 		maxDaysLimit,
+		s.secrets != nil,
+		formatRetention(secretTTL),
 	}
 
 	w.Header().Set("Vary", "Accept")
@@ -942,6 +947,11 @@ func (s *Server) purgeHandler() {
 			err := s.storage.Purge(context.TODO(), s.purgeDays)
 			if err != nil {
 				s.logger.Printf("error cleaning up expired files: %v", err)
+			}
+			if s.secrets != nil {
+				if err := s.secrets.PurgeExpired(); err != nil {
+					s.logger.Printf("error cleaning up expired secrets: %v", err)
+				}
 			}
 		}
 	}()

@@ -425,6 +425,7 @@ func New() *Cmd {
 		options = append(options, server.UseDeletionLog(filepath.Join(basedir, ".deletions.jsonl")))
 		options = append(options, server.SettingsPath(filepath.Join(basedir, ".settings.json")))
 		options = append(options, server.BrandingDir(filepath.Join(basedir, ".branding")))
+		options = append(options, server.SecretsDir(filepath.Join(basedir, ".secrets")))
 
 		srvr, err := server.New(
 			options...,

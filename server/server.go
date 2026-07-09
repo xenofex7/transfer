@@ -108,6 +108,14 @@ func BrandingDir(dir string) OptionFn {
 	}
 }
 
+// SecretsDir is the directory where one-time secrets are stored. Empty
+// disables the feature (routes 404, homepage hides the composer).
+func SecretsDir(dir string) OptionFn {
+	return func(srvr *Server) {
+		srvr.secretsDir = dir
+	}
+}
+
 // WebPath sets web path
 func WebPath(s string) OptionFn {
 	return func(srvr *Server) {
@@ -344,6 +352,8 @@ type Server struct {
 	settingsPath string
 	branding     *brandingStore
 	brandingDir  string
+	secrets      *secretStore
+	secretsDir   string
 
 	uploadWebhookURL string
 	webhookToken     string
@@ -449,6 +459,12 @@ func New(options ...OptionFn) (*Server, error) {
 	}
 	s.branding = branding
 	activeBranding.Store(branding)
+
+	secrets, err := newSecretStore(s.secretsDir)
+	if err != nil {
+		return nil, err
+	}
+	s.secrets = secrets
 
 	meta, err := newUserMetaStore(metaPathFor(s.authHtpasswd))
 	if err != nil {
@@ -616,6 +632,15 @@ func (s *Server) Run() {
 	r.Handle("/admin/branding/{slot:logo|favicon}", s.webAuthHandler(http.HandlerFunc(s.adminBrandingDeleteHandler))).Methods("DELETE")
 	r.Handle("/branding/logo", s.brandingHandler(BrandingLogo)).Methods("GET")
 	r.Handle("/branding/favicon", s.brandingHandler(BrandingFavicon)).Methods("GET")
+
+	// One-time secrets. Registered before the generic /{token}/{filename}
+	// routes so "secret" wins the match; upload tokens are random, so a
+	// collision with the literal "secret" cannot occur. Creation rides the
+	// same gate as uploads; viewing is public (the link is the credential).
+	r.HandleFunc("/secret", s.uploadAuthHandler(http.HandlerFunc(s.secretCreateHandler))).Methods("POST")
+	r.HandleFunc("/secret/{id}", s.secretPageHandler).Methods("GET")
+	r.HandleFunc("/secret/{id}/reveal", s.secretRevealHandler).Methods("POST")
+
 	r.HandleFunc("/", s.viewHandler).Methods("GET")
 
 	r.HandleFunc("/({files:.*}).zip", s.zipHandler).Methods("GET")
