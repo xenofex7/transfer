@@ -18,7 +18,8 @@ set -euo pipefail
 #   7. Create annotated git tag with release notes
 #   8. Push commit + tag to origin
 #   9. Create GitHub Release (triggers GHCR build)
-#  10. Watchtower picks up the new image on the server
+#  10. Wait for GitHub Actions to build + push the image to GHCR
+#  11. Trigger Watchtower on the Synology (on-demand rollout)
 # ─────────────────────────────────────────────────────────
 
 cd "$(dirname "$0")/.."
@@ -236,11 +237,84 @@ else
   warn "  https://github.com/${REMOTE_PATH}/releases/new?tag=${TAG}"
 fi
 
+# ── 10. Wait for GitHub Actions (build + push to GHCR) ────
+# We must wait until the new image is on GHCR before triggering Watchtower -
+# otherwise Watchtower would just pull the previous image again.
+DEPLOY_OK=true
+if command -v gh &> /dev/null; then
+  info "Waiting for GitHub Actions (build + push to GHCR)..."
+  SHA=$(git rev-parse HEAD)
+
+  # Runs may take a few seconds to register - retry gathering their IDs.
+  RUN_IDS=""
+  for _ in 1 2 3 4 5 6; do
+    RUN_IDS=$(gh run list --limit 20 --json databaseId,headSha \
+                --jq '.[] | select(.headSha=="'"$SHA"'") | .databaseId' 2>/dev/null || echo "")
+    [[ -n "$RUN_IDS" ]] && break
+    sleep 5
+  done
+
+  if [[ -z "$RUN_IDS" ]]; then
+    warn "No CI runs found for ${SHA:0:7} - check GitHub Actions manually"
+    DEPLOY_OK=false
+  else
+    for RUN_ID in $RUN_IDS; do
+      while true; do
+        STATUS=$(gh run view "$RUN_ID" --json status --jq '.status' 2>/dev/null || echo "completed")
+        [[ "$STATUS" == "completed" ]] && break
+        sleep 15
+      done
+      CONCLUSION=$(gh run view "$RUN_ID" --json conclusion --jq '.conclusion' 2>/dev/null || echo "")
+      if [[ "$CONCLUSION" == "success" ]]; then
+        ok "CI run ${RUN_ID} passed"
+      else
+        RUN_URL=$(gh run view "$RUN_ID" --json url --jq '.url' 2>/dev/null || echo "")
+        warn "CI run ${RUN_ID} ${CONCLUSION:-failed}"
+        [[ -n "$RUN_URL" ]] && warn "  Run: ${RUN_URL}"
+        DEPLOY_OK=false
+      fi
+    done
+  fi
+else
+  warn "gh CLI not installed - cannot confirm the build; skipping Watchtower trigger"
+  DEPLOY_OK=false
+fi
+
+$DEPLOY_OK || error "Build/CI did not pass cleanly for ${TAG}. Image may not be on GHCR - Watchtower was NOT triggered."
+ok "All CI runs passed - new image is on GHCR"
+
+# ── 11. Trigger Watchtower (on-demand deploy) ─────────────
+# Watchtower on the Synology only polls at 02:00, so we trigger it via its
+# HTTP-API to roll the new image out immediately. Reuses the shared
+# trigger-watchtower.sh, which sources WATCHTOWER_URL/TOKEN from its own
+# sibling .env. Override the path via the WATCHTOWER_REFRESH env var.
+#
+# Called WITHOUT an image argument on purpose: the ?image= filter is a silent
+# no-op on the running Watchtower version (HTTP 200, nothing pulled). Watchtower
+# updates every container whose image actually changed, so a full sweep is both
+# correct and cheap.
+WATCHTOWER_REFRESH="${WATCHTOWER_REFRESH:-$HOME/Development/docker-hosts/synology/trigger-watchtower.sh}"
+
+if [[ -x "$WATCHTOWER_REFRESH" ]]; then
+  info "Triggering Watchtower on-demand update..."
+  if "$WATCHTOWER_REFRESH"; then
+    ok "Watchtower triggered - new version is rolling out"
+  else
+    warn "Watchtower trigger failed. The release is published and the image"
+    warn "is on GHCR; roll out manually with:"
+    warn "  ${WATCHTOWER_REFRESH}"
+    warn "(otherwise it goes live on the next 02:00 poll)"
+  fi
+else
+  warn "Watchtower refresh script not found/executable: ${WATCHTOWER_REFRESH}"
+  warn "Skipping on-demand deploy - Watchtower picks the image up at 02:00."
+fi
+
 echo ""
 echo -e "${GREEN}=========================================${NC}"
 echo -e "${GREEN}  Release ${TAG} complete!${NC}"
 echo -e "${GREEN}=========================================${NC}"
 echo ""
-echo "  GHCR multi-arch image will be built by GitHub Actions."
-echo "  Watchtower on the server will auto-update the running container."
+echo "  GHCR multi-arch image built and pushed by GitHub Actions."
+echo "  Watchtower was triggered - the Synology updates within a few seconds."
 echo ""
