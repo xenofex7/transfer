@@ -294,8 +294,15 @@ ok "All CI runs passed - new image is on GHCR"
 # updates every container whose image actually changed, so a full sweep is both
 # correct and cheap.
 WATCHTOWER_REFRESH="${WATCHTOWER_REFRESH:-$HOME/Development/docker-hosts/synology/trigger-watchtower.sh}"
+# Give GHCR a moment to settle the :latest pointer after the build push -
+# triggering too early makes Watchtower see no newer image.
+WATCHTOWER_PREDELAY="${WATCHTOWER_PREDELAY:-30}"
 
 if [[ -x "$WATCHTOWER_REFRESH" ]]; then
+  if (( WATCHTOWER_PREDELAY > 0 )); then
+    info "Waiting ${WATCHTOWER_PREDELAY}s for the registry tag to settle..."
+    sleep "$WATCHTOWER_PREDELAY"
+  fi
   info "Triggering Watchtower on-demand update..."
   if "$WATCHTOWER_REFRESH"; then
     ok "Watchtower triggered - new version is rolling out"
