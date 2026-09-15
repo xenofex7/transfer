@@ -18,6 +18,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -137,6 +138,49 @@ func (st *secretStore) load(id string) (secretRecord, error) {
 		return secretRecord{}, errSecretGone
 	}
 	return rec, nil
+}
+
+// secretEntry is what the admin list shows: everything except the ciphertext.
+type secretEntry struct {
+	ID        string
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	Creator   string
+}
+
+// List returns the unexpired secrets, newest first.
+func (st *secretStore) List() ([]secretEntry, error) {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+	entries, err := os.ReadDir(st.dir)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]secretEntry, 0, len(entries))
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".json") {
+			continue
+		}
+		id := strings.TrimSuffix(name, ".json")
+		rec, lErr := st.load(id)
+		if lErr != nil {
+			continue
+		}
+		out = append(out, secretEntry{ID: id, CreatedAt: rec.CreatedAt, ExpiresAt: rec.ExpiresAt, Creator: rec.Creator})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt.After(out[j].CreatedAt) })
+	return out, nil
+}
+
+// Delete removes an unopened secret; unknown ids report errSecretGone.
+func (st *secretStore) Delete(id string) error {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+	if _, err := st.load(id); err != nil {
+		return err
+	}
+	return os.Remove(st.path(id))
 }
 
 // PurgeExpired sweeps the directory; wired into the server purge loop.

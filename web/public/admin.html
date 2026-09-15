@@ -52,6 +52,11 @@
           <span class="page-count">{{.Total}} file{{if ne .Total 1}}s{{end}} on {{.Hostname}}</span>
         </header>
 
+        <nav class="nav-pill-group" aria-label="Files and secrets">
+          <a class="category-tab is-active" href="/admin/files" aria-current="page">Files</a>
+          <a class="category-tab" href="/admin/secrets">Secrets</a>
+        </nav>
+
         <section class="card admin-toolbar">
           <input id="filter" class="filter-input" type="search" placeholder="Filter by name, token or uploader..." autocomplete="off" aria-label="Filter files">
         </section>

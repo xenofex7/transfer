@@ -1526,6 +1526,30 @@ body.sidebar-locked { overflow: hidden; }
   margin: 0;
 }
 .page-count { color: var(--ink-mute); font-weight: 400; font-size: 16px; }
+.nav-pill-group {
+  display: inline-flex;
+  gap: 2px;
+  padding: 6px;
+  margin-top: var(--space-md);
+  background: var(--surface-soft);
+  border-radius: var(--radius-pill);
+}
+.category-tab {
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  color: var(--ink-mute);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  line-height: 1.2;
+}
+.category-tab:hover { color: var(--ink); }
+.category-tab.is-active {
+  background: var(--canvas);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.category-tab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .page-sub { margin: 0; color: var(--ink-mute); font-size: 14px; width: 100%; }
 
 @media (min-width: 768px) {

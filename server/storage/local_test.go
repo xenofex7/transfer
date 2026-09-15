@@ -96,6 +96,9 @@ func TestLocalStorageListFindsBothFiles(t *testing.T) {
 	if err := s.Put(ctx, "tokenB", "beta.bin", strings.NewReader("bb"), "application/octet-stream", 2); err != nil {
 		t.Fatalf("Put beta: %v", err)
 	}
+	if err := s.Put(ctx, ".secrets", "hidden.json", strings.NewReader("{}"), "application/json", 2); err != nil {
+		t.Fatalf("Put hidden: %v", err)
+	}
 
 	entries, err := s.List(ctx)
 	if err != nil {

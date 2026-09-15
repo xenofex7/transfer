@@ -115,6 +115,7 @@ become reachable:
 | Path | Purpose |
 |---|---|
 | `/admin/files` | Browse stored uploads, filter, manually delete |
+| `/admin/secrets` | List unopened one-time secrets (id, creator, expiry - never the content) and delete them |
 | `/admin/settings` | Tagline, contact email, theme, custom logo / favicon, anonymous-heartbeat toggle |
 | `/admin/users` | Add, reset password, delete - read/write to the mounted htpasswd |
 | `/account` | Enable / disable TOTP, manage API tokens, regenerate recovery codes |

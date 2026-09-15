@@ -206,7 +206,7 @@ func (s *LocalStorage) List(_ context.Context) ([]ListEntry, error) {
 	}
 
 	for _, d := range tokenDirs {
-		if !d.IsDir() {
+		if !d.IsDir() || strings.HasPrefix(d.Name(), ".") {
 			continue
 		}
 		token := d.Name()

@@ -159,3 +159,31 @@ func TestExpiresLabel(t *testing.T) {
 		}
 	}
 }
+
+func TestAdminSecretsHandlerListsAndDeletes(t *testing.T) {
+	s, _ := adminTestServer(t)
+	s.secrets = newTestSecretStore(t)
+	if err := s.secrets.Create("secretaaaa", testRecord(time.Hour)); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	rec := httptest.NewRecorder()
+	s.adminSecretsHandler(rec, httptest.NewRequest("GET", "/admin/secrets", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("GET: expected 200, got %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "secretaa") {
+		t.Fatal("GET: secret id missing from the page")
+	}
+
+	req := httptest.NewRequest("POST", "/admin/secrets/secretaaaa/delete", nil)
+	req = mux.SetURLVars(req, map[string]string{"id": "secretaaaa"})
+	rec = httptest.NewRecorder()
+	s.adminSecretsDeleteHandler(rec, req)
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("POST: expected 303, got %d", rec.Code)
+	}
+	if s.secrets.Peek("secretaaaa") {
+		t.Fatal("secret still present after admin delete")
+	}
+}

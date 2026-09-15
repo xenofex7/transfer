@@ -204,3 +204,31 @@ func TestSecretHandlersDisabledWithoutDir(t *testing.T) {
 		t.Errorf("create on disabled feature: got status %d, want 404", w.Code)
 	}
 }
+
+func TestSecretStoreListAndDelete(t *testing.T) {
+	st := newTestSecretStore(t)
+	if err := st.Create("secretaaaa", testRecord(time.Hour)); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if err := st.Create("secretbbbb", testRecord(-time.Hour)); err != nil {
+		t.Fatalf("Create expired: %v", err)
+	}
+
+	list, err := st.List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(list) != 1 || list[0].ID != "secretaaaa" {
+		t.Fatalf("List: expected only the live secret, got %+v", list)
+	}
+
+	if err := st.Delete("secretaaaa"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if st.Peek("secretaaaa") {
+		t.Fatal("secret still available after Delete")
+	}
+	if err := st.Delete("secretaaaa"); err == nil {
+		t.Fatal("Delete of a missing secret must fail")
+	}
+}

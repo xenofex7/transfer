@@ -620,6 +620,8 @@ func (s *Server) Run() {
 	r.Handle("/account/tokens/{id}/delete", s.webAuthHandler(http.HandlerFunc(s.accountTokenDeletePostHandler))).Methods("POST")
 
 	r.Handle("/admin/files", s.webAuthHandler(http.HandlerFunc(s.adminFilesHandler))).Methods("GET")
+	r.Handle("/admin/secrets", s.webAuthHandler(http.HandlerFunc(s.adminSecretsHandler))).Methods("GET")
+	r.Handle("/admin/secrets/{id}/delete", s.webAuthHandler(http.HandlerFunc(s.adminSecretsDeleteHandler))).Methods("POST")
 	r.Handle("/admin/settings", s.webAuthHandler(http.HandlerFunc(s.adminSettingsGetHandler))).Methods("GET")
 	r.Handle("/admin/settings", s.webAuthHandler(http.HandlerFunc(s.adminSettingsPostHandler))).Methods("POST")
 	r.Handle("/admin/settings/heartbeat", s.webAuthHandler(http.HandlerFunc(s.adminHeartbeatHandler))).Methods("POST")
