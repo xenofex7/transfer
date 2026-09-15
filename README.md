@@ -236,13 +236,18 @@ files from disk.
 | `--anon-upload-ttl` | `ANON_UPLOAD_TTL` | `24h` | Retention for anonymous uploads |
 | `--max-upload-size` | `MAX_UPLOAD_SIZE` | `0` (no limit) | Per-file limit in KB for signed-in uploads |
 | `--auth-upload-ttl` | `AUTH_UPLOAD_TTL` | `4320h` (180 days) | Default and maximum retention for signed-in uploads; `0` disables the forced expiry |
-| `--purge-days` | `PURGE_DAYS` | `360` | Hard age cap: uploads older than this are purged regardless of expiry |
+| `--purge-days` | `PURGE_DAYS` | `360` | Hard age cap: uploads older than this are purged regardless of expiry; `0` disables the cap, per-upload expiry still applies |
 | `--purge-interval` | `PURGE_INTERVAL` | `1` | Hours between purge runs |
 | `--rate-limit` | `RATE_LIMIT` | `0` (off) | Requests per minute |
 | `--random-token-length` | `RANDOM_TOKEN_LENGTH` | `10` | URL token length |
 
 A `Max-Days` request header shortens the retention per upload; values
 above the tier TTL are capped to it.
+
+Without any authentication configured every upload is anonymous and
+gets the anonymous limits. Raise `ANON_MAX_UPLOAD_SIZE` and
+`ANON_UPLOAD_TTL` (or set them to `0` for no limit) on such an
+instance.
 
 ### Authentication & access control
 

@@ -74,7 +74,7 @@
     body.innerHTML = html;
     if (version) {
       var title = backdrop.querySelector('#modal-title');
-      if (title) title.textContent = 'Changelog — currently running ' + version;
+      if (title) title.textContent = 'Changelog - currently running ' + version;
     }
   }
 

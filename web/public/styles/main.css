@@ -235,7 +235,7 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 }
 
 /* ----- Hero / brand wordmark ----- */
-.hero { text-align: center; }
+.hero { text-align: center; padding-bottom: var(--space-xs); }
 .logo {
   height: 72px;
   width: auto;
@@ -362,7 +362,7 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 }
 .btn-danger:hover {
   background: var(--danger);
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .btn-block {
@@ -446,7 +446,7 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 }
 .settings-section-title {
   margin: 0 0 var(--space-md);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 18px;
   font-weight: 600;
   color: var(--ink);
@@ -529,6 +529,20 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.upload-item .upload-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: var(--surface-strong);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.upload-item .upload-bar-fill {
+  height: 100%;
+  width: 0;
+  background: var(--petrol-400);
+  border-radius: var(--radius-full);
+  transition: width 120ms;
+}
 .upload-item .upload-status { color: var(--ink-mute); }
 .upload-item.is-done .upload-status { color: var(--success); }
 .upload-item.is-error .upload-status { color: var(--danger); }
@@ -570,12 +584,21 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 
 /* ----- Tier hint (homepage, under the dropzone) ----- */
 .tier-hint {
-  margin: calc(-1 * var(--space-md)) 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-xxs);
+  margin: calc(-1 * var(--space-lg)) 0 0;
   text-align: center;
   color: var(--ink-mute);
   font-size: 13px;
 }
+.tier-hint svg { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 2px; }
 .tier-hint a { color: var(--link); }
+
+.signin-card { text-align: center; }
+.signin-card p { margin: 0 0 var(--space-md); color: var(--ink-soft); font-size: 14px; }
+.signin-card p:last-child { margin-bottom: 0; }
 
 /* ----- Auth quick-links (homepage, top-right next to theme toggle) ----- */
 .top-auth {
@@ -881,27 +904,6 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 .footer-version-link:hover { color: var(--petrol-100); }
 
 /* ----- Admin dashboard ----- */
-.admin-head { text-align: center; }
-.admin-head .logo-small { margin: 0 auto var(--space-sm); }
-.admin-title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 28px;
-  line-height: 1.2;
-  letter-spacing: -0.5px;
-  color: var(--ink);
-  margin: 0 0 var(--space-xxs);
-}
-.admin-meta {
-  margin: var(--space-sm) 0 0;
-  color: var(--ink-mute);
-  font-size: 14px;
-}
-.admin-count {
-  color: var(--petrol-400);
-  font-weight: 600;
-}
-
 /* Nav-pill-group (signature interactive component) */
 .admin-nav {
   margin-top: var(--space-sm);
@@ -963,8 +965,19 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 .branding-form input[type=file] {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 12px;
+  box-sizing: border-box;
+  padding: 8px 14px;
+  background: var(--canvas);
   color: var(--ink-mute);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 13px;
+}
+.branding-form input[type=file]:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 25%, transparent);
 }
 
 /* ----- Tables ----- */
@@ -995,7 +1008,7 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
   top: 0;
 }
 .admin-table tbody tr:hover {
-  background: color-mix(in srgb, var(--petrol-50) 60%, transparent);
+  background: var(--surface-soft);
 }
 .users-actions-col { width: 1%; white-space: nowrap; }
 .users-actions {
@@ -1106,7 +1119,7 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 .icon-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .icon-btn.copied { color: var(--success); border-color: var(--success); }
 .icon-btn.danger { color: var(--danger); }
-.icon-btn.danger:hover { color: #fff; background: var(--danger); border-color: var(--danger); }
+.icon-btn.danger:hover { color: var(--on-primary); background: var(--danger); border-color: var(--danger); }
 .icon-btn svg { width: 14px; height: 14px; }
 
 .admin-empty {
@@ -1154,6 +1167,11 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
   border-color: var(--danger);
   color: var(--danger);
   background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+}
+.flash-warning {
+  border-color: var(--warning);
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface));
 }
 .flash-ok {
   border-color: var(--success);
@@ -1230,7 +1248,7 @@ details.recovery-toggle { margin-top: var(--space-md); font-size: 14px; }
   height: 28px;
   border-radius: var(--radius-full);
   background: var(--petrol-400);
-  color: #ffffff;
+  color: var(--on-primary);
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 600;
@@ -1269,6 +1287,8 @@ details.recovery-toggle { margin-top: var(--space-md); font-size: 14px; }
 /* ----- Mobile tweaks ----- */
 @media (max-width: 540px) {
   .meta { grid-template-columns: 1fr; }
+  .top-auth { gap: var(--space-xs); }
+  .top-auth-user { display: none; }
   .hostname { font-size: 22px; letter-spacing: -0.3px; }
   .preview-sandbox iframe { height: 60vh; }
   .admin-table .cell-name { max-width: 160px; }

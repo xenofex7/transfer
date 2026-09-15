@@ -30,6 +30,16 @@
       <a class="button primary" href="{{.URLGet}}" download>Download</a>
     </section>
 
+    <section class="card qr">
+      <img class="qr-image" alt="QR code for the download URL" src="data:image/png;base64,{{.QRCode}}">
+      <p class="qr-caption">Scan to download on another device</p>
+    </section>
+
+    <section class="card url-box">
+      <p class="url-label">Direct URL</p>
+      <code class="url-value">{{.URL}}</code>
+    </section>
+
     <footer class="footer">
       <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
       <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>

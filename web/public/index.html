@@ -32,6 +32,7 @@
       {{if .Tagline}}<p class="tagline">{{.Tagline}}</p>{{end}}
     </header>
 
+    {{if (or .CurrentUser .AnonUploads)}}
     <section class="card dropzone" id="dropzone" tabindex="0" aria-label="Drop files to upload">
       <input type="file" id="fileinput" multiple hidden>
       <p class="dropzone-prompt">
@@ -42,12 +43,15 @@
     </section>
 
     <p class="tier-hint">
+      <i data-lucide="info"></i>
+      <span>
       {{if .CurrentUser}}
         Signed in: files{{if .MaxUploadSize}} up to {{.MaxUploadSize}}{{end}}{{if .AuthRetention}}, kept for {{.AuthRetention}}{{end}}.
-      {{else if .AnonUploads}}
-        Guest uploads: up to {{.AnonMaxSize}}{{if .AnonRetention}}, links expire after {{.AnonRetention}}{{end}}.
+      {{else}}
+        Guest uploads{{if .AnonMaxSize}}: up to {{.AnonMaxSize}}{{end}}{{if .AnonRetention}}{{if .AnonMaxSize}},{{else}}:{{end}} links expire after {{.AnonRetention}}{{end}}.
         {{if .LoginEnabled}}<a href="/login">Sign in</a> for {{if .MaxUploadSize}}files up to {{.MaxUploadSize}}{{else}}bigger files{{end}}{{if .AuthRetention}}, kept for {{.AuthRetention}}{{end}}.{{end}}
       {{end}}
+      </span>
     </p>
 
     <section class="card upload-options">
@@ -71,8 +75,18 @@
       </div>
       <p class="upload-options-hint">Leave blank to use the server defaults.</p>
     </section>
+    {{else}}
+    <section class="card signin-card">
+      {{if .LoginEnabled}}
+      <p>Sign in to upload files or share a one-time secret.</p>
+      <a class="btn-primary" href="/login">Sign in</a>
+      {{else}}
+      <p>Uploads require credentials. Use the API with Basic Auth.</p>
+      {{end}}
+    </section>
+    {{end}}
 
-    {{if .SecretsEnabled}}
+    {{if (and .SecretsEnabled (or .CurrentUser .AnonUploads))}}
     <section class="card secret-card">
       <p class="upload-options-title">One-time secret</p>
       <p class="card-intro">Share a password or other short text. The recipient can open the link exactly once, then the secret is gone. Encrypted in your browser - the server never sees the plain text. Unopened secrets expire after {{.SecretRetention}}.</p>

@@ -80,8 +80,14 @@
     var status = document.createElement('span');
     status.className = 'upload-status';
     status.textContent = '0%';
+    var bar = document.createElement('div');
+    bar.className = 'upload-bar';
+    var barFill = document.createElement('div');
+    barFill.className = 'upload-bar-fill';
+    bar.appendChild(barFill);
     item.appendChild(name);
     item.appendChild(status);
+    item.appendChild(bar);
     uploadList.appendChild(item);
 
     var xhr = new XMLHttpRequest();
@@ -103,9 +109,11 @@
       if (!e.lengthComputable) return;
       var pct = Math.round((e.loaded / e.total) * 100);
       status.textContent = pct + '%';
+      barFill.style.width = pct + '%';
     });
 
     xhr.addEventListener('load', function () {
+      item.removeChild(bar);
       if (xhr.status >= 200 && xhr.status < 300) {
         var url = (xhr.responseText || '').trim();
         item.classList.add('is-done');
@@ -149,6 +157,7 @@
     });
 
     xhr.addEventListener('error', function () {
+      item.removeChild(bar);
       item.classList.add('is-error');
       status.textContent = 'network error';
       if (window.toast) window.toast.error('Network error uploading ' + file.name);
