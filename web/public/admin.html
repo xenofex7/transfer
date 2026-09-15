@@ -80,7 +80,7 @@
             <tbody id="rows">
               {{range .Rows}}
               <tr class="row{{if .Expired}} row-expired{{end}}" data-search="{{.Filename}} {{.Token}} {{.Uploader}}">
-                <td class="cell-name" data-tooltip="{{.Filename}}">{{.Filename}}</td>
+                <td class="cell-name" data-tooltip="{{.Filename}}">{{if .Protected}}<i class="cell-lock" data-lucide="lock" data-tooltip="Password protected" aria-label="Password protected"></i>{{end}}{{.Filename}}</td>
                 <td class="cell-num">{{.SizeHuman}}</td>
                 <td class="cell-type">{{.ContentType}}</td>
                 <td class="cell-type">{{if .Uploader}}{{.Uploader}}{{else}}<span class="muted">guest</span>{{end}}</td>

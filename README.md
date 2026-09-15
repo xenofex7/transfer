@@ -182,6 +182,13 @@ curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt \
 # Cap the download count
 curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt \
   -H "Max-Downloads: 1"
+
+# Require a password before the download (stored as a bcrypt hash)
+curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt \
+  -H "X-Password: s3cret"
+
+# Fetch a password protected file; browsers get a password form instead
+curl https://your-instance.example.com/<token>/hello.txt -H "X-Password: s3cret" -O
 ```
 
 ### Link aliases

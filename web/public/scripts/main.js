@@ -11,6 +11,7 @@
   var activePrompt = dropzone && dropzone.querySelector('.dropzone-active');
   var optMaxDays = document.getElementById('opt-max-days');
   var optMaxDownloads = document.getElementById('opt-max-downloads');
+  var optPassword = document.getElementById('opt-password');
 
   if (!dropzone || !fileinput) return;
 
@@ -103,6 +104,10 @@
     var maxDownloads = optMaxDownloads && parseInt(optMaxDownloads.value, 10);
     if (maxDownloads && maxDownloads > 0) {
       xhr.setRequestHeader('Max-Downloads', String(maxDownloads));
+    }
+    var password = optPassword && optPassword.value;
+    if (password) {
+      xhr.setRequestHeader('X-Password', password);
     }
 
     xhr.upload.addEventListener('progress', function (e) {

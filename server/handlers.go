@@ -193,6 +193,11 @@ func (s *Server) previewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !passwordSatisfied(r, metadata, token, filename) {
+		s.renderLockedPage(w, r, filename, "")
+		return
+	}
+
 	contentType := metadata.ContentType
 	contentLength, err := s.storage.Head(r.Context(), token, filename)
 	if err != nil {
@@ -484,7 +489,11 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			metadata := s.metadataForRequest(contentType, contentLength, r)
+			metadata, err := s.metadataForRequest(contentType, contentLength, r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 
 			buffer := &bytes.Buffer{}
 			if err := json.NewEncoder(buffer).Encode(metadata); err != nil {
@@ -566,9 +575,12 @@ type metadata struct {
 	// Uploader is the authenticated username that created the upload.
 	// Empty means anonymous.
 	Uploader string
+	// PasswordHash is the bcrypt hash of the optional download password.
+	// Empty means the link alone grants access.
+	PasswordHash string
 }
 
-func (s *Server) metadataForRequest(contentType string, contentLength int64, r *http.Request) metadata {
+func (s *Server) metadataForRequest(contentType string, contentLength int64, r *http.Request) (metadata, error) {
 	metadata := metadata{
 		ContentType:   strings.ToLower(contentType),
 		ContentLength: contentLength,
@@ -607,7 +619,18 @@ func (s *Server) metadataForRequest(contentType string, contentLength int64, r *
 		metadata.MaxDate = time.Now().Add(maxTTL)
 	}
 
-	return metadata
+	if pw := r.Header.Get(passwordHeader); pw != "" {
+		if len(pw) > maxUploadPassLen {
+			return metadata, errors.New("password too long")
+		}
+		h, err := hashUploadPassword(pw)
+		if err != nil {
+			return metadata, err
+		}
+		metadata.PasswordHash = h
+	}
+
+	return metadata, nil
 }
 
 // effectiveMaxUploadSize picks the size cap for this request's tier:
@@ -701,7 +724,11 @@ func (s *Server) putHandler(w http.ResponseWriter, r *http.Request) {
 
 	token := token(s.randomTokenLength)
 
-	metadata := s.metadataForRequest(contentType, contentLength, r)
+	metadata, err := s.metadataForRequest(contentType, contentLength, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	buffer := &bytes.Buffer{}
 	if err := json.NewEncoder(buffer).Encode(metadata); err != nil {
@@ -1034,8 +1061,13 @@ func (s *Server) zipHandler(w http.ResponseWriter, r *http.Request) {
 		token := strings.Split(key, "/")[0]
 		filename := sanitize(strings.Split(key, "/")[1])
 
-		if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
+		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
+			continue
+		} else if !passwordSatisfied(r, m, token, filename) {
+			s.logger.Printf("skipping password protected %s/%s", token, filename)
+			continue
+		} else if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
 			continue
 		}
 
@@ -1104,8 +1136,13 @@ func (s *Server) tarGzHandler(w http.ResponseWriter, r *http.Request) {
 		token := strings.Split(key, "/")[0]
 		filename := sanitize(strings.Split(key, "/")[1])
 
-		if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
+		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
+			continue
+		} else if !passwordSatisfied(r, m, token, filename) {
+			s.logger.Printf("skipping password protected %s/%s", token, filename)
+			continue
+		} else if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
 			continue
 		}
 
@@ -1162,8 +1199,13 @@ func (s *Server) tarHandler(w http.ResponseWriter, r *http.Request) {
 		token := strings.Split(key, "/")[0]
 		filename := strings.Split(key, "/")[1]
 
-		if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
+		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
+			continue
+		} else if !passwordSatisfied(r, m, token, filename) {
+			s.logger.Printf("skipping password protected %s/%s", token, filename)
+			continue
+		} else if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
 			continue
 		}
 
@@ -1214,6 +1256,10 @@ func (s *Server) headHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
+	if !passwordSatisfied(r, metadata, token, filename) {
+		http.Error(w, "Password required", http.StatusUnauthorized)
+		return
+	}
 
 	contentType := metadata.ContentType
 	contentLength, err := s.storage.Head(r.Context(), token, filename)
@@ -1247,10 +1293,18 @@ func (s *Server) getHandler(w http.ResponseWriter, r *http.Request) {
 	token := vars["token"]
 	filename := vars["filename"]
 
-	metadata, err := s.checkMetadata(r.Context(), token, filename, true)
+	metadata, err := s.checkMetadata(r.Context(), token, filename, false)
 
 	if err != nil {
 		s.logger.Printf("Error metadata: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+	if !passwordSatisfied(r, metadata, token, filename) {
+		http.Error(w, "Password required", http.StatusUnauthorized)
+		return
+	}
+	if metadata, err = s.checkMetadata(r.Context(), token, filename, true); err != nil {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}

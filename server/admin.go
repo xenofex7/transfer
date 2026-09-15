@@ -18,24 +18,25 @@ import (
 
 // adminFileRow is the per-file row rendered in the admin file list.
 type adminFileRow struct {
-	Token              string
-	Filename           string
-	ContentType        string
-	Size               int64
-	SizeHuman          string
-	UploadedAt         time.Time
-	UploadedHuman      string
-	Downloads          int
-	MaxDownloads       int
-	Remaining          string
-	LastDownloadedAt   time.Time
-	LastDownloadHuman  string
-	ExpiresAt          time.Time
-	ExpiresHuman       string
-	URL                string
-	DeleteURL          string
-	Expired            bool
-	Uploader           string
+	Token             string
+	Filename          string
+	ContentType       string
+	Size              int64
+	SizeHuman         string
+	UploadedAt        time.Time
+	UploadedHuman     string
+	Downloads         int
+	MaxDownloads      int
+	Remaining         string
+	LastDownloadedAt  time.Time
+	LastDownloadHuman string
+	ExpiresAt         time.Time
+	ExpiresHuman      string
+	URL               string
+	DeleteURL         string
+	Expired           bool
+	Uploader          string
+	Protected         bool
 }
 
 // adminFilesData is the template context for admin.html.
@@ -50,14 +51,14 @@ type adminFilesData struct {
 
 // adminDeletion is a single past deletion rendered in the dashboard.
 type adminDeletion struct {
-	Filename  string
-	Token     string
-	DeletedAt time.Time
+	Filename   string
+	Token      string
+	DeletedAt  time.Time
 	DeletedAgo string
-	Downloads int
-	Size      int64
-	SizeHuman string
-	User      string
+	Downloads  int
+	Size       int64
+	SizeHuman  string
+	User       string
 }
 
 func (s *Server) adminFilesHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +93,7 @@ func (s *Server) adminFilesHandler(w http.ResponseWriter, r *http.Request) {
 				row.LastDownloadedAt = meta.LastDownloadedAt
 				row.LastDownloadHuman = lastDownloadLabel(meta.LastDownloadedAt)
 				row.Uploader = meta.Uploader
+				row.Protected = meta.PasswordHash != ""
 
 				escFilename := url.PathEscape(e.Filename)
 				rel, _ := url.Parse(path.Join(s.proxyPath, e.Token, escFilename))

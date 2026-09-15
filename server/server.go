@@ -677,6 +677,7 @@ func (s *Server) Run() {
 		getHandlerFn = newIPLimiter(s.rateLimitRequests).Wrap(getHandlerFn)
 	}
 
+	r.HandleFunc("/{token}/{filename}", s.unlockHandler).Methods("POST")
 	r.Handle("/{token}/{filename}", getHandlerFn).Methods("GET")
 	r.Handle("/{action:(?:download|get|inline)}/{token}/{filename}", getHandlerFn).Methods("GET")
 

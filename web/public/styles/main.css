@@ -621,6 +621,9 @@ input.is-invalid,
 [data-tab-panel][hidden] { display: none; }
 .home-tabs .nav-pill-group { margin-top: 0; }
 .category-tab { font-family: inherit; background: transparent; border: 0; cursor: pointer; }
+.locked-card .card-form { display: flex; flex-direction: column; gap: var(--space-sm); }
+.locked-card .btn-primary { align-self: flex-start; }
+.cell-lock { width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; color: var(--ink-mute); }
 .signin-card { text-align: center; }
 .signin-card p { margin: 0 0 var(--space-md); color: var(--ink-soft); font-size: 14px; }
 .signin-card p:last-child { margin-bottom: 0; }

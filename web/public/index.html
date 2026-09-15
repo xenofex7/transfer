@@ -82,8 +82,14 @@
             <input id="opt-max-downloads" type="number" min="1" step="1" placeholder="unlimited" autocomplete="off">
           </span>
         </label>
+        <label class="upload-option">
+          <span class="upload-option-label">Password</span>
+          <span class="upload-option-input">
+            <input id="opt-password" type="text" maxlength="256" placeholder="none" autocomplete="off" spellcheck="false">
+          </span>
+        </label>
       </div>
-      <p class="upload-options-hint">Leave blank to use the server defaults.</p>
+      <p class="upload-options-hint">Leave blank to use the server defaults. A password is asked for before the download; it is never stored in plain text.</p>
     </section>
     </div>
     {{else}}

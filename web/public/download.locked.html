@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" data-theme-default="{{theme_default}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Filename}} &middot; {{.Hostname}}</title>
+  <link rel="icon" href="{{favicon_url}}">
+  <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
+  {{theme_bootstrap}}
+  {{umami_script}}
+</head>
+<body>
+  <main class="page">
+    <header class="preview-head">
+      <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
+      <h1 class="filename">{{.Filename}}</h1>
+      <p class="meta-inline"><span class="content-type">Password protected</span></p>
+    </header>
+
+    <section class="card locked-card">
+      <p class="card-intro">This file needs a password. Ask the sender if you do not have it.</p>
+      <form method="post" class="card-form" novalidate>
+        <label class="field">
+          <span class="field-label">Password</span>
+          <input class="field-input" type="password" name="password" autocomplete="off" required autofocus{{if .Error}} aria-invalid="true"{{end}}>
+        </label>
+        {{if .Error}}<p class="field-error" role="alert">{{.Error}}</p>{{end}}
+        <button class="btn-primary" type="submit">Unlock</button>
+      </form>
+    </section>
+
+    <footer class="footer">
+      <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
+      <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>
+      <a class="footer-link" href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener">
+        <i data-lucide="git-branch"></i><span>source on github</span>
+      </a>
+    </footer>
+  </main>
+  <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
+  <script src="{{asset "/scripts/toast.js"}}" defer></script>
+  <script src="{{asset "/scripts/tooltip.js"}}" defer></script>
+  <script src="{{asset "/scripts/dialog.js"}}" defer></script>
+  <script src="{{asset "/scripts/forms.js"}}" defer></script>
+  <script src="{{asset "/scripts/changelog-modal.js"}}" defer></script>
+  <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
+</body>
+</html>
