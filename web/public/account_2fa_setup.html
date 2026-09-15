@@ -39,7 +39,7 @@
               <span class="field-label">Authenticator code</span>
               <input class="field-input field-code" type="text" name="code"
                      inputmode="numeric" pattern="[0-9]*" maxlength="8"
-                     autocomplete="one-time-code" autofocus required>
+                     autocomplete="one-time-code" autofocus required data-error="Digits only">
             </label>
             <button class="btn-primary btn-block" type="submit">Enable 2FA</button>
             <a class="link" href="/account">Cancel</a>
@@ -58,6 +58,9 @@
   </main>
 
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
+  <script src="{{asset "/scripts/tooltip.js"}}" defer></script>
+  <script src="{{asset "/scripts/dialog.js"}}" defer></script>
+  <script src="{{asset "/scripts/forms.js"}}" defer></script>
   <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>

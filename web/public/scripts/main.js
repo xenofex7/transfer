@@ -76,7 +76,7 @@
     var name = document.createElement('span');
     name.className = 'upload-name';
     name.textContent = file.name;
-    name.title = file.name;
+    name.dataset.tooltip = file.name;
     var status = document.createElement('span');
     status.className = 'upload-status';
     status.textContent = '0%';
@@ -126,7 +126,7 @@
         link.href = url;
         link.className = 'upload-link';
         link.textContent = shortenUrl(url);
-        link.title = url;
+        link.dataset.tooltip = url;
         link.target = '_blank';
         link.rel = 'noopener';
         result.appendChild(link);
@@ -134,7 +134,7 @@
         var copy = document.createElement('button');
         copy.type = 'button';
         copy.className = 'upload-copy';
-        copy.title = 'Copy link';
+        copy.dataset.tooltip = 'Copy link';
         copy.setAttribute('aria-label', 'Copy link');
         copy.innerHTML = '<i data-lucide="copy"></i>';
         copy.addEventListener('click', function (e) {
@@ -181,10 +181,10 @@
   function copyToClipboard(text, btn) {
     var done = function () {
       btn.classList.add('is-copied');
-      btn.title = 'Copied';
+      btn.dataset.tooltip = 'Copied';
       setTimeout(function () {
         btn.classList.remove('is-copied');
-        btn.title = 'Copy link';
+        btn.dataset.tooltip = 'Copy link';
       }, 1500);
       if (window.toast) window.toast.success('Link copied to clipboard');
     };

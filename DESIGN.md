@@ -263,6 +263,10 @@ Avatar photos use `{rounded.full}` (perfect circles) at 36px or 40px. Product UI
 
 **`text-input-focused`** - Focus state. Border thickens or shifts to `{colors.ink}` for emphasis.
 
+**`field-error`** - Inline validation message below a field. Every form carries `novalidate`; the browser's native validity bubbles never appear. The invalid input gets `aria-invalid="true"` and a `{colors.danger}` border, the message sits directly under it in `{typography.caption}` (13px) in `{colors.danger}` and is linked via `aria-describedby`. The first invalid field receives focus; the message clears on the next input.
+
+**`file-picker`** - Replacement for the native file control. The real `<input type="file">` stays hidden; visible is a `{component.button-secondary}` "Choose file" plus the chosen file name (or "No file chosen") in `{colors.ink-mute}`, `{typography.caption}`, truncated with an ellipsis. Oversized files are rejected client-side with a `toast-danger`.
+
 ### Feedback
 
 **`toast`** - Transient notification surfaced in response to a user action (saved, copied, error). Background `{colors.canvas}`, 1px hairline border, rounded `{rounded.md}` (8px), padding 12px × 16px, subtle drop shadow (`0 4px 12px rgba(0,0,0,0.08)`). Carries a leading 16px status icon, a single-line message in `{typography.body-sm}` (`{colors.ink}`), and an optional inline close button (`{component.button-icon-circular}` at 24px). Width caps at 420px; on mobile it stretches to viewport minus 16px gutters.
@@ -278,6 +282,10 @@ Variants flag status via the icon color and a thin 3px left border:
 **Auto-dismiss:** Default 4s for `toast-success` and `toast-neutral`, 6s for `toast-warning`, **never auto-dismiss** for `toast-danger` (errors require user acknowledgement). Hovering a toast pauses its dismiss timer; the timer resumes on hover-out. Toasts with action buttons (e.g. "Undo") are sticky until clicked or explicitly dismissed.
 
 **Don't:** stack toasts more than 3 deep, use toasts for content that needs to be read carefully (use a modal or inline alert instead), or fire toasts on page load (they're a response to action, not a greeting).
+
+**`tooltip`** - Short hover hint, declared with `data-tooltip="..."` instead of the native `title` attribute (which is never used for hints). One shared bubble: background `{colors.ink}`, text `{colors.canvas}`, 12px / 500, padding 4px × 8px, rounded `{rounded.sm}`, subtle shadow, max-width 280px. Appears instantly above the trigger, flips below near the top edge, no arrow, no animation. Also shows on keyboard focus; hides on pointer down, click, scroll or Escape. Icon-only controls carry an `aria-label` in addition to the tooltip.
+
+**`dialog`** - Modal confirmation replacing native `confirm()` / `alert()`. Same shell as the changelog modal (`modal-backdrop` + `modal`) in the small size (max-width 420px): title in `{typography.title-md}`, message in `{typography.body-md}`, footer with cancel (`{component.button-secondary}`) left and the action right (`{component.button-primary}`, or `button-danger` for destructive actions). Escape and backdrop click cancel; Tab is trapped inside; focus returns to the trigger on close. Promise-based API: `dialog.confirm({...})` and `dialog.alert({...})`. Forms use `data-confirm` to route their submit through the dialog.
 
 ### Tags / Badges
 
@@ -319,6 +327,7 @@ Variants flag status via the icon color and a thin 3px left border:
 - Don't put dark surface cards anywhere except the footer and the featured pricing tier. The dark surface is a deliberate, scarce signal.
 - Don't repeat the same surface mode in two consecutive bands. The pacing alternates white → petrol-tint card → white → product-mockup-card → white → dark-footer.
 - Don't add hover state styling beyond what the system already encodes - primary darkens on press; nothing else changes.
+- Don't use native browser dialogs or hints: no `confirm()`, `alert()`, `prompt()`, no `title` attributes for hover text, no validity bubbles, no bare file controls. Use `dialog`, `tooltip`, `field-error` and `file-picker`.
 
 ## Responsive Behavior
 

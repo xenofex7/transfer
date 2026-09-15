@@ -32,7 +32,7 @@
           <span class="field-label">Authenticator code</span>
           <input class="field-input field-code" type="text" name="code"
                  inputmode="numeric" pattern="[0-9]*" maxlength="8"
-                 autocomplete="one-time-code" autocapitalize="none"
+                 autocomplete="one-time-code" autocapitalize="none" data-error="Digits only"
                  autocorrect="off" spellcheck="false" autofocus>
         </label>
 
@@ -71,6 +71,9 @@
   </main>
 
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
+  <script src="{{asset "/scripts/tooltip.js"}}" defer></script>
+  <script src="{{asset "/scripts/dialog.js"}}" defer></script>
+  <script src="{{asset "/scripts/forms.js"}}" defer></script>
   <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>

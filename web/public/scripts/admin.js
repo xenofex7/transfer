@@ -26,11 +26,11 @@
     if (!value) return;
 
     var done = function () {
-      var prevTitle = btn.title;
-      btn.title = 'Copied';
+      var prevTitle = btn.dataset.tooltip;
+      btn.dataset.tooltip = 'Copied';
       btn.classList.add('copied');
       setTimeout(function () {
-        btn.title = prevTitle;
+        btn.dataset.tooltip = prevTitle;
         btn.classList.remove('copied');
       }, 1200);
       if (window.toast) window.toast.success('Link copied to clipboard');
@@ -65,12 +65,21 @@
     var name = btn.getAttribute('data-name') || 'this file';
     if (!url) return;
 
-    if (!window.confirm('Delete "' + name + '"? This cannot be undone.')) return;
+    window.dialog.confirm({
+      title: 'Delete file',
+      message: 'Delete "' + name + '"? This cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    }).then(function (ok) {
+      if (ok) deleteFile(btn, url, name);
+    });
+  });
 
+  function deleteFile(btn, url, name) {
     var row = btn.closest('tr');
-    var prevTitle = btn.title;
+    var prevTitle = btn.dataset.tooltip;
     btn.disabled = true;
-    btn.title = 'Deleting...';
+    btn.dataset.tooltip = 'Deleting...';
 
     fetch(url, { method: 'DELETE', credentials: 'include' })
       .then(function (resp) {
@@ -85,18 +94,18 @@
           if (window.toast) window.toast.success('Deleted ' + name);
         } else {
           btn.disabled = false;
-          btn.title = 'Failed (' + resp.status + ') - click to retry';
-          setTimeout(function () { btn.title = prevTitle; }, 2000);
+          btn.dataset.tooltip = 'Failed (' + resp.status + ') - click to retry';
+          setTimeout(function () { btn.dataset.tooltip = prevTitle; }, 2000);
           if (window.toast) window.toast.error('Delete failed (' + resp.status + ')');
         }
       })
       .catch(function () {
         btn.disabled = false;
-        btn.title = 'Network error - click to retry';
-        setTimeout(function () { btn.title = prevTitle; }, 2000);
+        btn.dataset.tooltip = 'Network error - click to retry';
+        setTimeout(function () { btn.dataset.tooltip = prevTitle; }, 2000);
         if (window.toast) window.toast.error('Delete failed: network error');
       });
-  });
+  }
 
   function updateCount(delta) {
     var counter = document.querySelector('.admin-count');

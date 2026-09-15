@@ -71,7 +71,7 @@
     t.innerHTML =
       '<span class="toast-icon"><i data-lucide="' + iconFor(kind) + '"></i></span>' +
       '<span class="toast-msg"></span>' +
-      '<button type="button" class="toast-close" aria-label="Dismiss"><i data-lucide="x"></i></button>';
+      '<button type="button" class="toast-close" aria-label="Dismiss" data-tooltip="Dismiss"><i data-lucide="x"></i></button>';
     t.querySelector('.toast-msg').textContent = message;
 
     return t;

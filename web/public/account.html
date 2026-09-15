@@ -15,7 +15,7 @@
     <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
       <div class="sidebar-brand">
         <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
-        <button class="sidebar-icon-btn sidebar-close" id="sidebar-close" type="button" aria-label="Close menu"><i data-lucide="x"></i></button>
+        <button class="sidebar-icon-btn sidebar-close" id="sidebar-close" type="button" aria-label="Close menu" data-tooltip="Close menu"><i data-lucide="x"></i></button>
       </div>
       <nav class="sidebar-nav">
         <a class="sidebar-link" href="/admin/files"><i data-lucide="files"></i><span>Files</span></a>
@@ -27,15 +27,15 @@
       </nav>
       <div class="sidebar-foot">
         <div class="sidebar-user">
-          <span class="sidebar-user-name" title="{{.CurrentUser}}">{{.CurrentUser}}</span>
+          <span class="sidebar-user-name" data-tooltip="{{.CurrentUser}}">{{.CurrentUser}}</span>
           <form method="post" action="/logout" class="inline-form">
             <input type="hidden" name="csrf" value="{{.CSRFToken}}">
-            <button class="sidebar-icon-btn" type="submit" title="Sign out" aria-label="Sign out"><i data-lucide="log-out"></i></button>
+            <button class="sidebar-icon-btn" type="submit" data-tooltip="Sign out" aria-label="Sign out"><i data-lucide="log-out"></i></button>
           </form>
         </div>
         <div class="sidebar-meta">
           <span>{{if build_version}}{{build_version}}{{end}}</span>
-          <a href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener" title="Source on GitHub" aria-label="Source on GitHub"><i data-lucide="git-branch"></i></a>
+          <a href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener" data-tooltip="Source on GitHub" aria-label="Source on GitHub"><i data-lucide="git-branch"></i></a>
         </div>
       </div>
     </aside>
@@ -43,7 +43,7 @@
 
     <div class="app-main">
       <header class="topbar">
-        <button class="topbar-menu" id="sidebar-open" type="button" aria-label="Open menu"><i data-lucide="menu"></i></button>
+        <button class="topbar-menu" id="sidebar-open" type="button" aria-label="Open menu" data-tooltip="Open menu"><i data-lucide="menu"></i></button>
         <a class="topbar-brand" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
       </header>
 
@@ -84,13 +84,13 @@
 
             <details>
               <summary>Disable two-factor authentication</summary>
-              <form method="post" action="/account/2fa/disable" class="card-form">
+              <form method="post" action="/account/2fa/disable" class="card-form" novalidate>
                 <input type="hidden" name="csrf" value="{{.CSRFToken}}">
                 <p class="muted">Confirm by entering a current authenticator code or a recovery code.</p>
                 <label class="field">
                   <span class="field-label">Authenticator code</span>
                   <input class="field-input" type="text" name="code" inputmode="numeric"
-                         pattern="[0-9]*" maxlength="8" autocomplete="one-time-code">
+                         pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" data-error="Digits only">
                 </label>
                 <label class="field">
                   <span class="field-label">or recovery code</span>
@@ -103,13 +103,13 @@
 
             <details>
               <summary>Regenerate recovery codes</summary>
-              <form method="post" action="/account/2fa/recovery/regenerate" class="card-form">
+              <form method="post" action="/account/2fa/recovery/regenerate" class="card-form" novalidate>
                 <input type="hidden" name="csrf" value="{{.CSRFToken}}">
                 <p class="muted">Existing codes will stop working immediately.</p>
                 <label class="field">
                   <span class="field-label">Authenticator code</span>
                   <input class="field-input" type="text" name="code" inputmode="numeric"
-                         pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" required>
+                         pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" required data-error="Digits only">
                 </label>
                 <button class="btn-secondary" type="submit">Regenerate</button>
               </form>
@@ -125,7 +125,7 @@
           <h2 class="settings-section-title">API tokens</h2>
           <p class="muted">Use API tokens with <code>curl</code> or the transfer CLI instead of your password. Each token is independently revocable.</p>
 
-          <form method="post" action="/account/tokens" class="card-form">
+          <form method="post" action="/account/tokens" class="card-form" novalidate>
             <input type="hidden" name="csrf" value="{{.CSRFToken}}">
             <label class="field">
               <span class="field-label">Token name</span>
@@ -155,7 +155,7 @@
                 <td>{{if .ExpiresAt}}{{.ExpiresAt}}{{else}}<span class="muted">never</span>{{end}}</td>
                 <td>
                   <form method="post" action="/account/tokens/{{.ID}}/delete" class="inline-form"
-                        onsubmit="return confirm('Revoke this token?');">
+                        data-confirm="Revoke this token?" data-confirm-title="Revoke token" data-confirm-label="Revoke" data-confirm-danger>
                     <input type="hidden" name="csrf" value="{{$.CSRFToken}}">
                     <button class="link danger" type="submit">Revoke</button>
                   </form>
@@ -174,6 +174,9 @@
 
   <script src="{{asset "/scripts/sidebar.js"}}" defer></script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
+  <script src="{{asset "/scripts/tooltip.js"}}" defer></script>
+  <script src="{{asset "/scripts/dialog.js"}}" defer></script>
+  <script src="{{asset "/scripts/forms.js"}}" defer></script>
   <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>

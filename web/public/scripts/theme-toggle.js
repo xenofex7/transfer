@@ -59,7 +59,7 @@
   document.body.appendChild(btn);
 
   function render(theme) {
-    btn.title = 'Theme: ' + theme + ' (click to cycle)';
+    btn.dataset.tooltip = 'Theme: ' + theme + ' (click to cycle)';
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       btn.innerHTML = '<i data-lucide="' + iconFor(theme) + '"></i>';
       window.lucide.createIcons({ nameAttr: 'data-lucide' });

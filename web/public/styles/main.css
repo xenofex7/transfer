@@ -425,6 +425,26 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
   text-align: center;
 }
 
+.field-input.is-invalid,
+input.is-invalid,
+.settings-form input.is-invalid,
+.users-inline-form input.is-invalid,
+.btn-secondary.is-invalid {
+  border-color: var(--danger);
+}
+.field.has-error { margin-bottom: 0; }
+.field-error {
+  margin: 4px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+.field + .field-error { margin-bottom: var(--space-md); }
+.users-inline-form .field-error,
+.branding-form .field-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 .settings-form { padding: var(--space-xs) var(--space-xxs); }
 .settings-field { margin-bottom: var(--space-lg); }
 .settings-label {
@@ -962,22 +982,20 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
   align-items: center;
   margin-top: var(--space-sm);
 }
-.branding-form input[type=file] {
+.file-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
   flex: 1 1 auto;
   min-width: 0;
-  box-sizing: border-box;
-  padding: 8px 14px;
-  background: var(--canvas);
-  color: var(--ink-mute);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  font: inherit;
-  font-size: 13px;
 }
-.branding-form input[type=file]:focus-visible {
-  outline: none;
-  border-color: var(--ink);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 25%, transparent);
+.file-picker-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-mute);
+  font-size: 13px;
 }
 
 /* ----- Tables ----- */
@@ -1020,6 +1038,7 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 }
 .users-inline-form {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
 }
@@ -1613,6 +1632,25 @@ body.sidebar-locked { overflow: hidden; }
 }
 
 /* =============================================================
+   Tooltip (delegated, data-tooltip)
+   ============================================================= */
+.tooltip {
+  position: fixed;
+  z-index: 100000;
+  pointer-events: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--canvas);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  white-space: pre-line;
+  max-width: 280px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+}
+
+/* =============================================================
    Modal (changelog viewer, etc)
    ============================================================= */
 .modal-backdrop {
@@ -1642,6 +1680,15 @@ body.sidebar-locked { overflow: hidden; }
   transition: transform 160ms ease;
 }
 .modal-backdrop.is-in .modal { transform: translateY(0); }
+.modal.modal-sm { width: min(420px, 100%); }
+.modal-sm .modal-body p { margin: 0; }
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--hairline);
+}
 .modal-head {
   display: flex;
   align-items: center;

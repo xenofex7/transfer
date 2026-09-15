@@ -15,7 +15,7 @@
   trigger.classList.add('footer-version-link');
   trigger.setAttribute('role', 'button');
   trigger.setAttribute('tabindex', '0');
-  trigger.title = 'View changelog';
+  trigger.dataset.tooltip = 'View changelog';
 
   var cachedHTML = null;
   var cachedVersion = null;
@@ -29,7 +29,7 @@
       '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">' +
         '<header class="modal-head">' +
           '<h2 class="modal-title" id="modal-title">Changelog</h2>' +
-          '<button type="button" class="modal-close" aria-label="Close"><i data-lucide="x"></i></button>' +
+          '<button type="button" class="modal-close" aria-label="Close" data-tooltip="Close"><i data-lucide="x"></i></button>' +
         '</header>' +
         '<div class="modal-body" id="modal-body"><p style="color:var(--text-dim)">Loading...</p></div>' +
       '</div>';
