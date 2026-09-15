@@ -90,11 +90,13 @@ type purgeMetadata struct {
 
 // Purge cleans up the storage: uploads whose metadata MaxDate has
 // passed and uploads older than the server-wide age cap are removed
-// together with their metadata sidecar. Dot-directories (.branding)
-// and top-level dotfiles (.settings.json, .deletions.jsonl) are never
-// touched.
+// together with their metadata sidecar and, once empty, their token
+// directory. A zero age cap disables the age check so only MaxDate
+// applies. Dot-directories (.branding) and top-level dotfiles
+// (.settings.json, .deletions.jsonl) are never touched.
 func (s *LocalStorage) Purge(_ context.Context, days time.Duration) (err error) {
 	cutoff := time.Now().Add(-1 * days)
+	ageCapEnabled := days > 0
 
 	tokenDirs, rdErr := os.ReadDir(s.basedir)
 	if rdErr != nil {
@@ -126,7 +128,7 @@ func (s *LocalStorage) Purge(_ context.Context, days time.Duration) (err error) 
 				continue
 			}
 
-			expired := info.ModTime().Before(cutoff)
+			expired := ageCapEnabled && info.ModTime().Before(cutoff)
 			if !expired {
 				if b, mErr := os.ReadFile(filepath.Join(tokenPath, name+".metadata")); mErr == nil {
 					var meta purgeMetadata
@@ -144,6 +146,9 @@ func (s *LocalStorage) Purge(_ context.Context, days time.Duration) (err error) 
 				continue
 			}
 			_ = os.Remove(filepath.Join(tokenPath, name+".metadata"))
+		}
+		if remaining, rdErr := os.ReadDir(tokenPath); rdErr == nil && len(remaining) == 0 {
+			_ = os.Remove(tokenPath)
 		}
 	}
 

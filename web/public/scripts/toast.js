@@ -108,6 +108,7 @@
   function pump() {
     while (visible.length < MAX_VISIBLE && queue.length > 0) {
       var item = queue.shift();
+      if (item.dismissed) continue;
       mount(item);
     }
   }

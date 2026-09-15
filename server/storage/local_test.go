@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func newTestStorage(t *testing.T) *LocalStorage {
@@ -187,5 +188,40 @@ func TestLocalStoragePurge(t *testing.T) {
 	}
 	if _, err := os.Stat(s.basedir + "/.settings.json"); err != nil {
 		t.Errorf(".settings.json should survive purge: %v", err)
+	}
+}
+
+func TestLocalStoragePurgeWithoutAgeCap(t *testing.T) {
+	s := newTestStorage(t)
+	ctx := context.Background()
+
+	put := func(token, name, meta string) {
+		t.Helper()
+		if err := s.Put(ctx, token, name, strings.NewReader("x"), "text/plain", 1); err != nil {
+			t.Fatalf("Put %s/%s: %v", token, name, err)
+		}
+		if meta != "" {
+			if err := s.Put(ctx, token, name+".metadata", strings.NewReader(meta), "text/json", uint64(len(meta))); err != nil {
+				t.Fatalf("Put metadata %s/%s: %v", token, name, err)
+			}
+		}
+	}
+
+	put("tokexp", "gone.txt", `{"MaxDate":"2001-01-01T00:00:00Z"}`)
+	put("tokold", "old.txt", "")
+	old := time.Now().Add(-1000 * 24 * time.Hour)
+	if err := os.Chtimes(s.basedir+"/tokold/old.txt", old, old); err != nil {
+		t.Fatalf("chtimes: %v", err)
+	}
+
+	if err := s.Purge(ctx, 0); err != nil {
+		t.Fatalf("Purge: %v", err)
+	}
+
+	if _, err := os.Stat(s.basedir + "/tokexp"); !os.IsNotExist(err) {
+		t.Errorf("empty token dir should be removed after purge, got err=%v", err)
+	}
+	if _, err := s.Head(ctx, "tokold", "old.txt"); err != nil {
+		t.Errorf("old file without MaxDate must survive when the age cap is disabled: %v", err)
 	}
 }

@@ -940,21 +940,22 @@ func (s *Server) checkDeletionToken(ctx context.Context, deletionToken, token, f
 }
 
 func (s *Server) purgeHandler() {
+	s.purgeOnce()
 	ticker := time.NewTicker(s.purgeInterval)
-	go func() {
-		for {
-			<-ticker.C
-			err := s.storage.Purge(context.TODO(), s.purgeDays)
-			if err != nil {
-				s.logger.Printf("error cleaning up expired files: %v", err)
-			}
-			if s.secrets != nil {
-				if err := s.secrets.PurgeExpired(); err != nil {
-					s.logger.Printf("error cleaning up expired secrets: %v", err)
-				}
-			}
+	for range ticker.C {
+		s.purgeOnce()
+	}
+}
+
+func (s *Server) purgeOnce() {
+	if err := s.storage.Purge(context.TODO(), s.purgeDays); err != nil {
+		s.logger.Printf("error cleaning up expired files: %v", err)
+	}
+	if s.secrets != nil {
+		if err := s.secrets.PurgeExpired(); err != nil {
+			s.logger.Printf("error cleaning up expired secrets: %v", err)
 		}
-	}()
+	}
 }
 
 func (s *Server) deleteHandler(w http.ResponseWriter, r *http.Request) {

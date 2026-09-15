@@ -87,7 +87,7 @@ var globalFlags = []cli.Flag{
 	},
 	&cli.IntFlag{
 		Name:    "purge-days",
-		Usage:   "number of days after uploads are purged automatically",
+		Usage:   "number of days after uploads are purged automatically; 0 disables the age cap (per-file expiry still applies)",
 		Value:   360,
 		EnvVars: []string{"PURGE_DAYS"},
 	},
@@ -369,7 +369,7 @@ func New() *Cmd {
 
 		purgeDays := c.Int("purge-days")
 		purgeInterval := c.Int("purge-interval")
-		if purgeDays > 0 && purgeInterval > 0 {
+		if purgeInterval > 0 {
 			options = append(options, server.Purge(purgeDays, purgeInterval))
 		}
 

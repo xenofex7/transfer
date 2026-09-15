@@ -173,3 +173,23 @@ func TestWebAuthHandlerFallsBackWithoutSessionStore(t *testing.T) {
 		t.Fatal("with no auth configured at all, request should pass through")
 	}
 }
+
+func TestUploadAuthHandlerRequireTOTPRejectsUnenrolledSession(t *testing.T) {
+	s := newTestServerWithUser(t, "alice", "longenoughpw")
+	s.sessions = newSessionStore(time.Hour, 24*time.Hour)
+	s.authRequireTOTP = true
+	s.anonUploads = true
+
+	full, _ := s.sessions.Create("alice", false)
+
+	h := s.uploadAuthHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatal("user without TOTP must not reach the upload handler")
+	}))
+	req := httptest.NewRequest("PUT", "/file.txt", nil)
+	req.AddCookie(&http.Cookie{Name: sessionCookieName, Value: full.ID})
+	rec := httptest.NewRecorder()
+	h(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d", rec.Code)
+	}
+}

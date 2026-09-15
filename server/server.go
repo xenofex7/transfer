@@ -739,7 +739,7 @@ func (s *Server) Run() {
 
 	s.logger.Printf("---------------------------")
 
-	if s.purgeDays > 0 {
+	if s.purgeInterval > 0 && (s.purgeDays > 0 || s.anonUploadTTL > 0 || s.authUploadTTL > 0) {
 		go s.purgeHandler()
 	}
 

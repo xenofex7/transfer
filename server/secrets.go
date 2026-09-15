@@ -7,7 +7,9 @@ Copyright (c) 2026 xenofex7
 package server
 
 import (
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -64,6 +66,16 @@ func newSecretStore(dir string) (*secretStore, error) {
 }
 
 var errSecretGone = errors.New("secret not found, already viewed or expired")
+
+// secretID returns a 32-char hex id from crypto/rand. Secret ids must
+// not be predictable: guessing one burns the secret for its recipient.
+func secretID() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(b)
+}
 
 // secretIDPattern guards filepath.Join against traversal; ids are built
 // from token() so they are always alphanumeric.
@@ -178,7 +190,7 @@ func (s *Server) secretCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := token(s.randomTokenLength) + token(s.randomTokenLength)
+	id := secretID()
 	rec := secretRecord{
 		Ciphertext: req.Ciphertext,
 		CreatedAt:  time.Now(),

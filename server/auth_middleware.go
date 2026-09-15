@@ -92,16 +92,24 @@ func (s *Server) webAuthHandler(h http.Handler) http.HandlerFunc {
 		// requires it is funnelled to the setup flow. We exempt the
 		// setup routes themselves (otherwise the redirect would loop)
 		// and logout (so they can always sign out and walk away).
-		if s.authRequireTOTP && !isTOTPExemptPath(r.URL.Path) && s.userMeta != nil {
-			m, _ := s.userMeta.Get(sess.Username)
-			if !m.TOTPEnabled {
-				http.Redirect(w, r, "/account/2fa/setup", http.StatusSeeOther)
-				return
-			}
+		if s.authRequireTOTP && !isTOTPExemptPath(r.URL.Path) && !s.totpEnrolled(sess.Username) {
+			http.Redirect(w, r, "/account/2fa/setup", http.StatusSeeOther)
+			return
 		}
 		r = r.WithContext(withAuthUser(r.Context(), sess.Username))
 		h.ServeHTTP(w, r)
 	}
+}
+
+// totpEnrolled reports whether the user has finished TOTP setup. It
+// is only meaningful when authRequireTOTP is on; without a userMeta
+// store there is nothing to enforce and every user counts as enrolled.
+func (s *Server) totpEnrolled(username string) bool {
+	if s.userMeta == nil {
+		return true
+	}
+	m, _ := s.userMeta.Get(username)
+	return m.TOTPEnabled
 }
 
 // uploadAuthHandler gates the upload endpoints. Precedence: a valid
@@ -113,6 +121,10 @@ func (s *Server) webAuthHandler(h http.Handler) http.HandlerFunc {
 func (s *Server) uploadAuthHandler(h http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if sess, ok := s.sessionForRequest(r); ok {
+			if s.authRequireTOTP && !s.totpEnrolled(sess.Username) {
+				http.Error(w, "Two-factor setup required", http.StatusForbidden)
+				return
+			}
 			r = r.WithContext(withAuthUser(r.Context(), sess.Username))
 			h.ServeHTTP(w, r)
 			return
