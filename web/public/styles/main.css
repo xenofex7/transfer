@@ -616,6 +616,9 @@ input.is-invalid,
 .tier-hint svg { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 2px; }
 .tier-hint a { color: var(--link); }
 
+.home-tabs { display: flex; justify-content: center; margin-bottom: var(--space-md); }
+.home-tabs .nav-pill-group { margin-top: 0; }
+.category-tab { font-family: inherit; background: transparent; border: 0; cursor: pointer; }
 .signin-card { text-align: center; }
 .signin-card p { margin: 0 0 var(--space-md); color: var(--ink-soft); font-size: 14px; }
 .signin-card p:last-child { margin-bottom: 0; }

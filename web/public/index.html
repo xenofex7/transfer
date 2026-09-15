@@ -32,7 +32,17 @@
       {{if .Tagline}}<p class="tagline">{{.Tagline}}</p>{{end}}
     </header>
 
+    {{if (and .SecretsEnabled (or .CurrentUser .AnonUploads))}}
+    <div class="home-tabs" data-tabs>
+      <div class="nav-pill-group" role="tablist" aria-label="Files and secret">
+        <button class="category-tab is-active" type="button" role="tab" id="tab-files" aria-controls="panel-files" aria-selected="true" data-tab="files">Files</button>
+        <button class="category-tab" type="button" role="tab" id="tab-secret" aria-controls="panel-secret" aria-selected="false" data-tab="secret">Secret</button>
+      </div>
+    </div>
+    {{end}}
+
     {{if (or .CurrentUser .AnonUploads)}}
+    <div id="panel-files" role="tabpanel" aria-labelledby="tab-files" data-tab-panel="files">
     <section class="card dropzone" id="dropzone" tabindex="0" aria-label="Drop files to upload">
       <input type="file" id="fileinput" multiple hidden>
       <p class="dropzone-prompt">
@@ -75,6 +85,7 @@
       </div>
       <p class="upload-options-hint">Leave blank to use the server defaults.</p>
     </section>
+    </div>
     {{else}}
     <section class="card signin-card">
       {{if .LoginEnabled}}
@@ -87,6 +98,7 @@
     {{end}}
 
     {{if (and .SecretsEnabled (or .CurrentUser .AnonUploads))}}
+    <div id="panel-secret" role="tabpanel" aria-labelledby="tab-secret" data-tab-panel="secret" hidden>
     <section class="card secret-card">
       <p class="upload-options-title">One-time secret</p>
       <p class="card-intro">Share a password or other short text. The recipient can open the link exactly once, then the secret is gone. Encrypted in your browser - the server never sees the plain text. Unopened secrets expire after {{.SecretRetention}}.</p>
@@ -108,6 +120,7 @@
         </div>
       </div>
     </section>
+    </div>
     {{end}}
 
     <footer class="footer">
@@ -121,6 +134,7 @@
 
   <script src="{{asset "/scripts/main.js"}}" defer></script>
   <script src="{{asset "/scripts/secret.js"}}" defer></script>
+  <script src="{{asset "/scripts/tabs.js"}}" defer></script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
   <script src="{{asset "/scripts/toast.js"}}" defer></script>
   <script src="{{asset "/scripts/tooltip.js"}}" defer></script>
