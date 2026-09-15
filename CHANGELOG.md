@@ -7,6 +7,22 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-15
+
+### Added
+- Add one-time secrets with client-side encryption, backed by a dedicated store, handlers and routes
+- Add optional per-upload download passwords
+- Add Files and Secrets tabs to the home page and the admin area
+- Add public upload tiers and a sidebar layout for the admin area
+- Trigger Watchtower from deploy.sh after the GHCR build, delayed by 30s
+
+### Changed
+- Apply the Petrol design baseline to the web UI and replace native browser hints and dialogs with own components
+- Bind-mount the auth directory instead of the htpasswd file
+
+### Fixed
+- Fix TTL purge, the upload 2FA gate and secret id entropy; update to Go 1.25.11 and x/net v0.55.0 for govulncheck findings
+
 ## [1.5.3] - 2026-05-13
 
 ### Changed
