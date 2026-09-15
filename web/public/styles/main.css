@@ -623,7 +623,6 @@ input.is-invalid,
 .category-tab { font-family: inherit; background: transparent; border: 0; cursor: pointer; }
 .locked-card .card-form { display: flex; flex-direction: column; gap: var(--space-sm); }
 .locked-card .btn-primary { align-self: flex-start; }
-.cell-lock { width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; color: var(--ink-mute); }
 .signin-card { text-align: center; }
 .signin-card p { margin: 0 0 var(--space-md); color: var(--ink-soft); font-size: 14px; }
 .signin-card p:last-child { margin-bottom: 0; }
@@ -1021,7 +1020,11 @@ input.is-invalid,
   border-bottom: 1px solid var(--hairline-soft);
   text-align: left;
   vertical-align: middle;
+  white-space: nowrap;
 }
+.admin-table .cell-lock { width: 16px; padding-right: 0; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.admin-table .lock-icon { display: block; width: 14px; height: 14px; color: var(--ink-mute); }
 .users-table thead th,
 .admin-table th {
   font-weight: 500;
