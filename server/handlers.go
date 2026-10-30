@@ -95,7 +95,7 @@ func initHTMLTemplates() *htmlTemplate.Template {
 		"theme_default":   themeDefault,
 		"theme_bootstrap": themeBootstrap,
 		"build_version":   func() string { return BuildVersion },
-		"contact_email":   contactEmail,
+		"contact_url":     contactURL,
 		"umami_script":    func() htmlTemplate.HTML { return htmlTemplate.HTML(umamiScript()) },
 	}
 
@@ -135,14 +135,22 @@ func themeDefault() string {
 	return DefaultTheme
 }
 
-// contactEmail surfaces the operator-configured contact address from the
-// settings store so any page can render a "contact" link in its footer
-// without having to thread the value through its data context.
-func contactEmail() string {
-	if s := activeSettings.Load(); s != nil {
-		return s.Get().EmailContact
+// contactURL turns the operator-configured contact (an email address or an
+// https:// link) into the footer "contact" href, read from the settings store
+// so any page can render it without threading the value through its data.
+func contactURL() string {
+	s := activeSettings.Load()
+	if s == nil {
+		return ""
 	}
-	return ""
+	return contactHref(s.Get().EmailContact)
+}
+
+func contactHref(contact string) string {
+	if contact == "" || strings.HasPrefix(contact, "https://") {
+		return contact
+	}
+	return "mailto:" + contact
 }
 
 // themeBootstrap returns the inline <script> tag rendered into every

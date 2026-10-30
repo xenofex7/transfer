@@ -275,7 +275,7 @@ instance.
 | Flag | Env | Description |
 |---|---|---|
 | `--tagline` | `TAGLINE` | Subtitle shown beneath the hostname on the homepage; empty hides it. The admin UI overrides this at runtime. |
-| `--email-contact` | `EMAIL_CONTACT` | Address rendered in the "Contact" link |
+| `--email-contact` | `EMAIL_CONTACT` | Email address or `https://` URL rendered in the "Contact" link |
 | `--web-path` | `WEB_PATH` | Override the bundled web frontend directory (development only) |
 | `--log` | `LOG` | Log file path (defaults to stderr) |
 

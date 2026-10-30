@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -80,11 +81,9 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 		s.flashAndRedirect(w, r, "Values must be 200 characters or fewer.", true)
 		return
 	}
-	if next.EmailContact != "" {
-		if _, err := mail.ParseAddress(next.EmailContact); err != nil {
-			s.flashAndRedirect(w, r, "Contact email is not a valid address.", true)
-			return
-		}
+	if next.EmailContact != "" && !validContact(next.EmailContact) {
+		s.flashAndRedirect(w, r, "Contact must be an email address or an https:// link.", true)
+		return
 	}
 
 	if err := s.settings.Set(next); err != nil {
@@ -237,4 +236,13 @@ func (s *Server) flashAndRedirect(w http.ResponseWriter, r *http.Request, msg st
 		SameSite: http.SameSiteStrictMode,
 	})
 	http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)
+}
+
+func validContact(contact string) bool {
+	if strings.HasPrefix(contact, "https://") {
+		u, err := url.Parse(contact)
+		return err == nil && u.Host != ""
+	}
+	_, err := mail.ParseAddress(contact)
+	return err == nil
 }

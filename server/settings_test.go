@@ -135,3 +135,29 @@ func TestAdminSettingsSaveKeepsHeartbeatChoice(t *testing.T) {
 		}
 	}
 }
+
+func TestContactHref(t *testing.T) {
+	cases := map[string]string{
+		"":                              "",
+		"ops@example.com":               "mailto:ops@example.com",
+		"https://github.com/o/r/issues": "https://github.com/o/r/issues",
+	}
+	for in, want := range cases {
+		if got := contactHref(in); got != want {
+			t.Errorf("contactHref(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestValidContact(t *testing.T) {
+	for _, c := range []string{"ops@example.com", "https://github.com/o/r/issues"} {
+		if !validContact(c) {
+			t.Errorf("expected %q to be valid", c)
+		}
+	}
+	for _, c := range []string{"not an address", "http://example.com", "https://", "javascript:alert(1)"} {
+		if validContact(c) {
+			t.Errorf("expected %q to be rejected", c)
+		}
+	}
+}

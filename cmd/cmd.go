@@ -69,7 +69,7 @@ var globalFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:    "email-contact",
-		Usage:   "email address to link in Contact Us (front end)",
+		Usage:   "email address or https:// URL to link in Contact Us (front end)",
 		Value:   "",
 		EnvVars: []string{"EMAIL_CONTACT"},
 	},

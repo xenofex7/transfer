@@ -62,9 +62,9 @@
             </div>
 
             <div class="settings-field">
-              <label for="email_contact" class="settings-label">Contact email</label>
-              <input id="email_contact" name="email_contact" type="email" maxlength="200" value="{{.EmailContact}}" autocomplete="off">
-              <p class="settings-hint">Adds a "contact" link in the footer. Leave empty to hide.</p>
+              <label for="email_contact" class="settings-label">Contact</label>
+              <input id="email_contact" name="email_contact" type="text" maxlength="200" value="{{.EmailContact}}" autocomplete="off" placeholder="ops@example.com or https://...">
+              <p class="settings-hint">Email address or https:// link (e.g. GitHub issues) for the "contact" link in the footer. Leave empty to hide.</p>
             </div>
 
             <div class="settings-field">
