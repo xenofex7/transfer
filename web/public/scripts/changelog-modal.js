@@ -2,14 +2,14 @@
 // embedded CHANGELOG.md (rendered server-side via blackfriday). Cached
 // after the first fetch so reopening is instant.
 //
-// Loaded on every page after lucide so the close button can use a Lucide
-// X icon.
+// Only active when the trigger carries data-changelog (signed-in users).
+// Loaded after lucide so the close button can use a Lucide X icon.
 
 (function () {
   'use strict';
 
   var trigger = document.querySelector('.footer-version');
-  if (!trigger || !trigger.textContent.trim()) return;
+  if (!trigger || !trigger.hasAttribute('data-changelog') || !trigger.textContent.trim()) return;
 
   // Make the version look + behave like an interactive control.
   trigger.classList.add('footer-version-link');
@@ -19,10 +19,12 @@
 
   var cachedHTML = null;
   var cachedVersion = null;
-  var modal, backdrop, body, escListener;
+  var modal, backdrop, body, escListener, previous;
+  var FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   function open() {
     if (modal) return;
+    previous = document.activeElement;
     backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     backdrop.innerHTML =
@@ -38,18 +40,38 @@
     body = backdrop.querySelector('#modal-body');
 
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons({ nameAttr: 'data-lucide' });
+      window.lucide.createIcons({ nameAttr: 'data-lucide', root: backdrop });
     }
 
-    requestAnimationFrame(function () { backdrop.classList.add('is-in'); });
+    void backdrop.offsetWidth;
+    backdrop.classList.add('is-in');
 
     backdrop.addEventListener('click', function (e) {
       if (e.target === backdrop) close();
     });
     backdrop.querySelector('.modal-close').addEventListener('click', close);
+    backdrop.querySelector('.modal-close').focus();
 
-    escListener = function (e) { if (e.key === 'Escape') close(); };
-    document.addEventListener('keydown', escListener);
+    escListener = function (e) {
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      var items = backdrop.querySelectorAll(FOCUSABLE);
+      if (!items.length) return;
+      var first = items[0];
+      var last = items[items.length - 1];
+      var focused = document.activeElement;
+      if (!backdrop.contains(focused)) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && focused === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && focused === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', escListener, true);
 
     if (cachedHTML !== null) {
       render(cachedHTML, cachedVersion);
@@ -65,12 +87,14 @@
           render(cachedHTML, cachedVersion);
         })
         .catch(function (err) {
+          if (!body) return;
           body.innerHTML = '<p style="color:var(--danger)">Could not load changelog: ' + err.message + '</p>';
         });
     }
   }
 
   function render(html, version) {
+    if (!body) return;
     body.innerHTML = html;
     if (version) {
       var title = backdrop.querySelector('#modal-title');
@@ -83,8 +107,9 @@
     backdrop.classList.remove('is-in');
     var b = backdrop;
     setTimeout(function () { b.parentNode && b.parentNode.removeChild(b); }, 180);
-    document.removeEventListener('keydown', escListener);
+    document.removeEventListener('keydown', escListener, true);
     backdrop = modal = body = null;
+    if (previous && typeof previous.focus === 'function') previous.focus();
   }
 
   trigger.addEventListener('click', open);

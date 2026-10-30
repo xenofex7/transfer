@@ -7,11 +7,14 @@
   <title>{{.Hostname}}</title>
   <meta name="description" content="Like WeTransfer - but it stays at your place">
   <link rel="icon" href="{{favicon_url}}">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
   {{theme_bootstrap}}
+  <script>if (location.hash === '#secret') document.documentElement.dataset.tab = 'secret';</script>
   {{umami_script}}
 </head>
 <body>
+  <button class="theme-toggle" type="button" aria-label="Switch theme"><i data-lucide="monitor"></i></button>
   <nav class="top-auth" aria-label="Account">
     {{if .CurrentUser}}
       <span class="top-auth-user">{{.CurrentUser}}</span>
@@ -120,6 +123,10 @@
       <div class="url-box secret-result" id="secret-result" hidden>
         <p class="url-label">One-time link - send this to the recipient</p>
         <code class="url-value" id="secret-url"></code>
+        <div class="secret-qr">
+          <img class="qr-image" id="secret-qr" alt="QR code for the one-time link">
+          <p class="qr-caption">Scan to open on another device</p>
+        </div>
         <div class="secret-result-actions">
           <button class="btn-primary" id="secret-copy" type="button">Copy link</button>
           <button class="btn-secondary" id="secret-again" type="button">Create another</button>
@@ -130,7 +137,7 @@
     {{end}}
 
     <footer class="footer">
-      <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
+      <span class="footer-version"{{if $.CurrentUser}} data-changelog{{end}}>{{if build_version}}{{build_version}}{{end}}</span>
       <span class="footer-mid">{{with contact_email}}<a href="mailto:{{.}}">contact</a>{{end}}</span>
       <a class="footer-link" href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener">
         <i data-lucide="git-branch"></i><span>source on github</span>
@@ -139,6 +146,7 @@
   </main>
 
   <script src="{{asset "/scripts/main.js"}}" defer></script>
+  <script src="{{asset "/scripts/qrcode.min.js"}}" defer></script>
   <script src="{{asset "/scripts/secret.js"}}" defer></script>
   <script src="{{asset "/scripts/tabs.js"}}" defer></script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>

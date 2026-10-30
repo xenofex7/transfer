@@ -57,9 +57,9 @@
     return 'info';
   }
 
-  function renderLucide() {
+  function renderLucide(root) {
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons({ nameAttr: 'data-lucide' });
+      window.lucide.createIcons({ nameAttr: 'data-lucide', root: root });
     }
   }
 
@@ -117,10 +117,11 @@
     var c = ensureContainer();
     item.el = buildToast(item.message, item.kind);
     c.appendChild(item.el);
-    renderLucide();
+    renderLucide(item.el);
     visible.push(item);
 
-    requestAnimationFrame(function () { item.el.classList.add('is-in'); });
+    void item.el.offsetWidth;
+    item.el.classList.add('is-in');
 
     item.el.querySelector('.toast-close').addEventListener('click', function () {
       dismiss(item);

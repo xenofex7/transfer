@@ -17,10 +17,11 @@
 
   // ----- prompt + file picker -----
   dropzone.addEventListener('click', function (e) {
-    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+    if (e.target.closest('a, button, #uploads')) return;
     fileinput.click();
   });
   dropzone.addEventListener('keydown', function (e) {
+    if (e.target !== dropzone) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       fileinput.click();
@@ -51,6 +52,7 @@
     dropzone.addEventListener(ev, function (e) {
       e.preventDefault();
       e.stopPropagation();
+      if (e.type === 'dragleave' && e.relatedTarget && dropzone.contains(e.relatedTarget)) return;
       dropzone.classList.remove('is-active');
       if (defaultPrompt) defaultPrompt.hidden = false;
       if (activePrompt) activePrompt.hidden = true;
@@ -107,7 +109,7 @@
     }
     var password = optPassword && optPassword.value;
     if (password) {
-      xhr.setRequestHeader('X-Password', password);
+      xhr.setRequestHeader('X-Password', unescape(encodeURIComponent(password)));
     }
 
     xhr.upload.addEventListener('progress', function (e) {

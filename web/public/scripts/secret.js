@@ -99,6 +99,16 @@
     return e;
   }
 
+  function renderQR(img, text) {
+    if (!img || typeof window.qrcode !== 'function') return;
+    var qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    var margin = 2;
+    var cellSize = Math.max(2, Math.floor(300 / (qr.getModuleCount() + 2 * margin)));
+    img.src = qr.createDataURL(cellSize, margin);
+  }
+
   // ----- create (homepage composer) -----
   var form = document.getElementById('secret-form');
   if (form) {
@@ -106,6 +116,7 @@
     var createBtn = document.getElementById('secret-create');
     var result = document.getElementById('secret-result');
     var urlOut = document.getElementById('secret-url');
+    var qrOut = document.getElementById('secret-qr');
     var copyBtn = document.getElementById('secret-copy');
     var againBtn = document.getElementById('secret-again');
 
@@ -133,6 +144,7 @@
             return res.json();
           }).then(function (data) {
             urlOut.textContent = data.url + '#' + enc.keyFragment;
+            renderQR(qrOut, urlOut.textContent);
             form.hidden = true;
             result.hidden = false;
             input.value = '';
@@ -155,6 +167,7 @@
       againBtn.addEventListener('click', function () {
         result.hidden = true;
         urlOut.textContent = '';
+        qrOut.removeAttribute('src');
         form.hidden = false;
         input.focus();
       });
@@ -193,7 +206,13 @@
           if (!res.ok) throw userError('Could not fetch secret (' + res.status + ')');
           return res.json();
         })
-        .then(function (data) { return decryptText(data.ciphertext, keyFragment); })
+        .then(function (data) {
+          return new Promise(function (resolve) {
+            resolve(decryptText(data.ciphertext, keyFragment));
+          }).catch(function () {
+            throw userError('Could not decrypt this secret: the key in the link does not match.');
+          });
+        })
         .then(function (text) {
           textOut.textContent = text;
           // style.display, not the hidden attribute: .btn-primary sets
@@ -203,8 +222,13 @@
           output.hidden = false;
         })
         .catch(function (err) {
-          revealBtn.style.display = 'none';
-          fail((err && err.userMessage) || 'Could not decrypt this secret: the key in the link does not match.');
+          if (err && err.userMessage) {
+            revealBtn.style.display = 'none';
+            fail(err.userMessage);
+          } else {
+            revealBtn.disabled = false;
+            fail('Could not reach the server. Try again.');
+          }
         });
     });
 

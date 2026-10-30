@@ -2,8 +2,8 @@
 // system -> light -> dark on click, persists the choice in localStorage.
 //
 // The inline bootstrap script in <head> already applied the right theme
-// before paint. This file just renders the visible button and hooks up
-// the click handler.
+// before paint, and the templates render the button itself. This file sets
+// its icon and hooks up the click handler.
 
 (function () {
   'use strict';
@@ -52,17 +52,14 @@
     window.lucide.createIcons({ nameAttr: 'data-lucide' });
   }
 
-  var btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'theme-toggle';
-  btn.setAttribute('aria-label', 'Switch theme');
-  document.body.appendChild(btn);
+  var btn = document.querySelector('.theme-toggle');
+  if (!btn) return;
 
   function render(theme) {
     btn.dataset.tooltip = 'Theme: ' + theme + ' (click to cycle)';
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       btn.innerHTML = '<i data-lucide="' + iconFor(theme) + '"></i>';
-      window.lucide.createIcons({ nameAttr: 'data-lucide' });
+      window.lucide.createIcons({ nameAttr: 'data-lucide', root: btn });
     } else {
       btn.textContent = TEXT_FALLBACK[theme] || '?';
     }

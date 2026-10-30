@@ -6,11 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Set up 2FA &middot; {{.Hostname}}</title>
   <link rel="icon" href="{{favicon_url}}">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
   {{theme_bootstrap}}
   {{umami_script}}
 </head>
 <body>
+  <button class="theme-toggle" type="button" aria-label="Switch theme"><i data-lucide="monitor"></i></button>
   <main class="page page-narrow">
     <header class="hero">
       <img class="logo" src="{{logo_url}}" alt="">

@@ -232,3 +232,44 @@ func TestSecretStoreListAndDelete(t *testing.T) {
 		t.Fatal("Delete of a missing secret must fail")
 	}
 }
+
+func TestSecretCreateExpiryPerTier(t *testing.T) {
+	srvr := newSecretTestServer(t)
+
+	cases := []struct {
+		name string
+		user string
+		want time.Duration
+	}{
+		{"guest", "", 24 * time.Hour},
+		{"signed in", "alice", 7 * 24 * time.Hour},
+	}
+	for _, c := range cases {
+		req := httptest.NewRequest("POST", "http://127.0.0.1/secret",
+			strings.NewReader(`{"ciphertext":"Y2lwaGVydGV4dA=="}`))
+		if c.user != "" {
+			req = req.WithContext(withAuthUser(req.Context(), c.user))
+		}
+		w := httptest.NewRecorder()
+		srvr.secretCreateHandler(w, req)
+		if w.Code != 200 {
+			t.Fatalf("%s: got status %d", c.name, w.Code)
+		}
+		var created struct{ ID string }
+		if err := json.NewDecoder(w.Body).Decode(&created); err != nil {
+			t.Fatalf("%s: decode response: %v", c.name, err)
+		}
+		entries, err := srvr.secrets.List()
+		if err != nil {
+			t.Fatalf("%s: list: %v", c.name, err)
+		}
+		for _, e := range entries {
+			if e.ID != created.ID {
+				continue
+			}
+			if got := e.ExpiresAt.Sub(e.CreatedAt); got < c.want-time.Second || got > c.want+time.Second {
+				t.Errorf("%s: expiry %v, want %v", c.name, got, c.want)
+			}
+		}
+	}
+}

@@ -6,11 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{.Filename}} &middot; {{.Hostname}}</title>
   <link rel="icon" href="{{favicon_url}}">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
   {{theme_bootstrap}}
   {{umami_script}}
 </head>
 <body>
+  <button class="theme-toggle" type="button" aria-label="Switch theme"><i data-lucide="monitor"></i></button>
   <main class="page">
     <header class="preview-head">
       <a class="logo-link" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
@@ -50,7 +52,6 @@
   <script src="{{asset "/scripts/tooltip.js"}}" defer></script>
   <script src="{{asset "/scripts/dialog.js"}}" defer></script>
   <script src="{{asset "/scripts/forms.js"}}" defer></script>
-  <script src="{{asset "/scripts/changelog-modal.js"}}" defer></script>
   <script src="{{asset "/scripts/theme-toggle.js"}}" defer></script>
 </body>
 </html>

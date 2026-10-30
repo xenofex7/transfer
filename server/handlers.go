@@ -375,7 +375,7 @@ func (s *Server) viewHandler(w http.ResponseWriter, r *http.Request) {
 		formatRetention(s.authUploadTTL),
 		maxDaysLimit,
 		s.secrets != nil,
-		formatRetention(secretTTL),
+		formatRetention(secretTTLFor(currentUser)),
 	}
 
 	w.Header().Set("Vary", "Accept")

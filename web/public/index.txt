@@ -1,5 +1,5 @@
 {{.Hostname}}
-Easy and fast file sharing from the command line.
+File sharing from the command line.
 
 Upload a file:
 

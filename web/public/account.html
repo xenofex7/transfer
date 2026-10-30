@@ -6,11 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Account &middot; {{.Hostname}}</title>
   <link rel="icon" href="{{favicon_url}}">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
   {{theme_bootstrap}}
   {{umami_script}}
 </head>
 <body>
+  <button class="theme-toggle" type="button" aria-label="Switch theme"><i data-lucide="monitor"></i></button>
   <div class="app">
     <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
       <div class="sidebar-brand">
@@ -141,6 +143,7 @@
           </form>
 
           {{if .Tokens}}
+          <div class="admin-table-wrap">
           <table class="admin-table">
             <thead>
               <tr><th>Name</th><th>ID</th><th>Created</th><th>Last used</th><th>Expires</th><th></th></tr>
@@ -164,6 +167,7 @@
               {{end}}
             </tbody>
           </table>
+          </div>
           {{else}}
           <p class="muted">No tokens yet.</p>
           {{end}}

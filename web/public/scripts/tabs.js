@@ -18,6 +18,7 @@
       if (on && focus) tab.focus();
     });
     if (!found) return false;
+    delete document.documentElement.dataset.tab;
     panels.forEach(function (panel) {
       panel.hidden = panel.dataset.tabPanel !== name;
     });

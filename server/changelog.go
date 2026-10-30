@@ -39,8 +39,13 @@ func renderChangelog() ([]byte, error) {
 }
 
 // changelogHandler returns the rendered + sanitized changelog as JSON so
-// the client-side modal can drop it into the DOM as innerHTML.
-func (s *Server) changelogHandler(w http.ResponseWriter, _ *http.Request) {
+// the client-side modal can drop it into the DOM as innerHTML. Only
+// signed-in users may read it.
+func (s *Server) changelogHandler(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.sessionForRequest(r); !ok {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
 	body, err := renderChangelog()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -51,7 +56,7 @@ func (s *Server) changelogHandler(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "public, max-age=300")
+	w.Header().Set("Cache-Control", "private, max-age=300")
 	_ = json.NewEncoder(w).Encode(map[string]string{
 		"version": BuildVersion,
 		"html":    string(body),

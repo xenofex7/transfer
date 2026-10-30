@@ -32,8 +32,10 @@ import (
 // key travels in the URL fragment, which never reaches the server.
 
 const (
-	// secretTTL is how long an unopened secret stays retrievable.
-	secretTTL = 7 * 24 * time.Hour
+	// anonSecretTTL and authSecretTTL are how long an unopened secret
+	// stays retrievable for guests and signed-in users.
+	anonSecretTTL = 24 * time.Hour
+	authSecretTTL = 7 * 24 * time.Hour
 	// maxSecretCiphertext caps the stored base64 payload (roughly 24 KB
 	// of plaintext - plenty for passwords and credentials).
 	maxSecretCiphertext = 32 * 1024
@@ -235,11 +237,12 @@ func (s *Server) secretCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := secretID()
+	creator := currentUserFromRequest(r)
 	rec := secretRecord{
 		Ciphertext: req.Ciphertext,
 		CreatedAt:  time.Now(),
-		ExpiresAt:  time.Now().Add(secretTTL),
-		Creator:    currentUserFromRequest(r),
+		ExpiresAt:  time.Now().Add(secretTTLFor(creator)),
+		Creator:    creator,
 	}
 	if err := s.secrets.Create(id, rec); err != nil {
 		s.logger.Printf("secret create: %v", err)
@@ -254,6 +257,13 @@ func (s *Server) secretCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]string{"id": id, "url": resolvedURL})
+}
+
+func secretTTLFor(user string) time.Duration {
+	if user == "" {
+		return anonSecretTTL
+	}
+	return authSecretTTL
 }
 
 // secretPageHandler renders the reveal page. It never consumes the
