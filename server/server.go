@@ -672,6 +672,7 @@ func (s *Server) Run() {
 	// r.HandleFunc("/{page}", viewHandler).Methods("GET")
 
 	r.HandleFunc("/{token}/{filename}/{deletionToken}", s.deleteHandler).Methods("DELETE")
+	r.HandleFunc("/{token}/{filename}/{deletionToken}", s.uploadOptionsHandler).Methods("PATCH")
 
 	r.NotFoundHandler = http.HandlerFunc(s.notFoundHandler)
 

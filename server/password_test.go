@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -93,5 +94,37 @@ func TestUnlockHandlerSetsCookieForPreviewAndGet(t *testing.T) {
 	s.getHandler(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET with cookie: expected 200, got %d", rec.Code)
+	}
+}
+
+func TestUploadOptionsHandler(t *testing.T) {
+	s, store := adminTestServer(t)
+	seedFile(t, store, "tok123", "doc.txt", "hello", metadata{ContentType: "text/plain", MaxDownloads: -1, DeletionToken: "del456"})
+
+	patch := func(deletionToken, body string) int {
+		req := httptest.NewRequest("PATCH", "/tok123/doc.txt/"+deletionToken, strings.NewReader(body))
+		req = mux.SetURLVars(req, map[string]string{"token": "tok123", "filename": "doc.txt", "deletionToken": deletionToken})
+		rec := httptest.NewRecorder()
+		s.uploadOptionsHandler(rec, req)
+		return rec.Code
+	}
+
+	if code := patch("wrong", `{"maxDownloads":3,"password":"pw"}`); code != http.StatusNotFound {
+		t.Fatalf("wrong deletion token: expected 404, got %d", code)
+	}
+	if code := patch("del456", `{"maxDownloads":3,"password":"pw"}`); code != http.StatusNoContent {
+		t.Fatalf("set options: expected 204, got %d", code)
+	}
+	m, err := s.checkMetadata(context.Background(), "tok123", "doc.txt", false)
+	if err != nil || m.MaxDownloads != 3 || !m.passwordMatches("pw") {
+		t.Fatalf("options not applied: max %d, password ok %v, err %v", m.MaxDownloads, m.passwordMatches("pw"), err)
+	}
+
+	if code := patch("del456", `{"maxDownloads":0,"password":""}`); code != http.StatusNoContent {
+		t.Fatalf("clear options: expected 204, got %d", code)
+	}
+	m, _ = s.checkMetadata(context.Background(), "tok123", "doc.txt", false)
+	if m.MaxDownloads != -1 || m.PasswordHash != "" {
+		t.Fatalf("options not cleared: max %d, hash %q", m.MaxDownloads, m.PasswordHash)
 	}
 }

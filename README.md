@@ -191,6 +191,16 @@ curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt \
 curl https://your-instance.example.com/<token>/hello.txt -H "X-Password: s3cret" -O
 ```
 
+Change the download limit and password of an existing upload with the delete
+token. Both fields are replaced: `maxDownloads` 0 means unlimited, an empty
+`password` removes it.
+
+```bash
+curl -X PATCH https://your-instance.example.com/<token>/hello.txt/<delete-token> \
+  -H "Content-Type: application/json" \
+  -d '{"maxDownloads": 3, "password": "s3cret"}'
+```
+
 ### Link aliases
 
 Direct download (skip the preview page):

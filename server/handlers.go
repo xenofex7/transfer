@@ -32,6 +32,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -1049,6 +1050,69 @@ func (s *Server) deleteHandler(w http.ResponseWriter, r *http.Request) {
 		Downloads: preDownloads,
 		User:      user,
 	})
+}
+
+func (s *Server) uploadOptionsHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	filename := vars["filename"]
+
+	var req struct {
+		MaxDownloads int    `json:"maxDownloads"`
+		Password     string `json:"password"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if len(req.Password) > maxUploadPassLen {
+		http.Error(w, "Password too long", http.StatusBadRequest)
+		return
+	}
+
+	passwordHash := ""
+	if req.Password != "" {
+		h, err := hashUploadPassword(req.Password)
+		if err != nil {
+			http.Error(w, "Could not save options", http.StatusInternalServerError)
+			return
+		}
+		passwordHash = h
+	}
+
+	s.lock(token, filename)
+	defer s.unlock(token, filename)
+
+	rc, _, err := s.storage.Get(r.Context(), token, fmt.Sprintf("%s.metadata", filename), nil)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+	var meta metadata
+	err = json.NewDecoder(rc).Decode(&meta)
+	storage.CloseCheck(rc)
+	if err != nil || subtle.ConstantTimeCompare([]byte(meta.DeletionToken), []byte(vars["deletionToken"])) != 1 {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	meta.MaxDownloads = -1
+	if req.MaxDownloads > 0 {
+		meta.MaxDownloads = req.MaxDownloads
+	}
+	meta.PasswordHash = passwordHash
+
+	buffer := &bytes.Buffer{}
+	if err := json.NewEncoder(buffer).Encode(meta); err != nil {
+		http.Error(w, "Could not save options", http.StatusInternalServerError)
+		return
+	}
+	if err := s.storage.Put(r.Context(), token, fmt.Sprintf("%s.metadata", filename), buffer, "text/json", uint64(buffer.Len())); err != nil {
+		s.logger.Printf("upload options: %v", err)
+		http.Error(w, "Could not save options", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) zipHandler(w http.ResponseWriter, r *http.Request) {

@@ -152,6 +152,14 @@
         result.appendChild(copy);
         item.appendChild(result);
         renderIcons(copy);
+
+        var optionsUrl = xhr.getResponseHeader('X-Url-Delete');
+        if (optionsUrl) {
+          addOptionsEditor(item, result, optionsUrl, {
+            maxDownloads: maxDownloads > 0 ? maxDownloads : 0,
+            password: password || ''
+          });
+        }
       } else if (xhr.status === 401) {
         item.classList.add('is-error');
         status.textContent = 'auth required';
@@ -171,6 +179,123 @@
     });
 
     xhr.send(file);
+  }
+
+  function describeOptions(opts) {
+    var downloads = opts.maxDownloads > 0
+      ? 'Max ' + opts.maxDownloads + (opts.maxDownloads === 1 ? ' download' : ' downloads')
+      : 'Unlimited downloads';
+    return downloads + ' \u00b7 ' + (opts.password ? 'password' : 'no password');
+  }
+
+  function optionField(label, input) {
+    var wrap = document.createElement('label');
+    wrap.className = 'upload-option';
+    var caption = document.createElement('span');
+    caption.className = 'upload-option-label';
+    caption.textContent = label;
+    var box = document.createElement('span');
+    box.className = 'upload-option-input';
+    box.appendChild(input);
+    wrap.appendChild(caption);
+    wrap.appendChild(box);
+    return wrap;
+  }
+
+  function addOptionsEditor(item, result, optionsUrl, opts) {
+    var meta = document.createElement('span');
+    meta.className = 'upload-meta';
+    meta.textContent = describeOptions(opts);
+    item.appendChild(meta);
+
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'upload-copy';
+    toggle.dataset.tooltip = 'Edit options';
+    toggle.setAttribute('aria-label', 'Edit options');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = '<i data-lucide="sliders-horizontal"></i>';
+    result.appendChild(toggle);
+    renderIcons(toggle);
+
+    var form = document.createElement('form');
+    form.className = 'upload-edit';
+    form.noValidate = true;
+    form.hidden = true;
+
+    var maxInput = document.createElement('input');
+    maxInput.type = 'number';
+    maxInput.min = '1';
+    maxInput.step = '1';
+    maxInput.placeholder = 'unlimited';
+    maxInput.autocomplete = 'off';
+
+    var pwInput = document.createElement('input');
+    pwInput.type = 'text';
+    pwInput.maxLength = 256;
+    pwInput.placeholder = 'none';
+    pwInput.autocomplete = 'off';
+    pwInput.spellcheck = false;
+
+    var grid = document.createElement('div');
+    grid.className = 'upload-options-grid';
+    grid.appendChild(optionField('Max downloads', maxInput));
+    grid.appendChild(optionField('Password', pwInput));
+    form.appendChild(grid);
+
+    var actions = document.createElement('div');
+    actions.className = 'upload-edit-actions';
+    var save = document.createElement('button');
+    save.type = 'submit';
+    save.className = 'btn-primary';
+    save.textContent = 'Save';
+    var cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'btn-secondary';
+    cancel.textContent = 'Cancel';
+    actions.appendChild(save);
+    actions.appendChild(cancel);
+    form.appendChild(actions);
+    item.appendChild(form);
+
+    function setOpen(open) {
+      form.hidden = !open;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        maxInput.value = opts.maxDownloads > 0 ? String(opts.maxDownloads) : '';
+        pwInput.value = opts.password;
+        maxInput.focus();
+      }
+    }
+
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(form.hidden);
+    });
+    cancel.addEventListener('click', function () { setOpen(false); toggle.focus(); });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var next = {
+        maxDownloads: parseInt(maxInput.value, 10) > 0 ? parseInt(maxInput.value, 10) : 0,
+        password: pwInput.value
+      };
+      save.disabled = true;
+      fetch(optionsUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next)
+      }).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        opts = next;
+        meta.textContent = describeOptions(opts);
+        setOpen(false);
+        toggle.focus();
+        if (window.toast) window.toast.success('Options saved');
+      }).catch(function (err) {
+        if (window.toast) window.toast.error('Could not save options (' + err.message + ')');
+      }).then(function () { save.disabled = false; });
+    });
   }
 
   // ----- helpers -----
