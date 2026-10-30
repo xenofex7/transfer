@@ -18,8 +18,6 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - Make `deploy.sh` wait for the image build to finish before it continues
 
-I left out the switch of `deploy.sh` to br-docker. It only affects the internal deployment target, so it doesn't belong in a public changelog.
-
 ## [1.7.1] - 2026-10-30
 
 ### Changed
