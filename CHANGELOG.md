@@ -7,6 +7,22 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-30
+
+### Added
+- Show a QR code for one-time secret links
+- Expire secrets after 24 hours for guests and after 7 days for signed-in users
+
+### Changed
+- Show the changelog only to signed-in users, including from the admin sidebar
+- Sign out all of a user's sessions after an admin password reset
+- Trust `X-Forwarded-For` only from private or loopback proxies and use the right-most public hop
+- Generate tokens with `crypto/rand`, limit TOTP attempts to five per login and reject empty Basic Auth credentials
+
+### Fixed
+- Fix UI flicker: Inter is now self-hosted with preload, the theme toggle renders server-side, and dropzone drag and toast/modal transitions no longer flicker
+- Fix storage and request edge cases: a malformed Referer no longer crashes the server, unsatisfiable Range requests return the whole file, and the text preview reader is now closed and size-limited
+
 ## [1.6.0] - 2026-09-15
 
 ### Added
