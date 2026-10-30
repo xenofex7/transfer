@@ -64,8 +64,10 @@ func (s *LocalStorage) Get(_ context.Context, token string, filename string, rng
 	contentLength = uint64(fi.Size())
 	if rng != nil {
 		contentLength = rng.AcceptLength(contentLength)
-		if _, err = file.Seek(int64(rng.Start), 0); err != nil {
-			return
+		if rng.ContentRange() != "" {
+			if _, err = file.Seek(int64(rng.Start), 0); err != nil {
+				return
+			}
 		}
 	}
 

@@ -36,6 +36,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"html"
 	htmlTemplate "html/template"
 	"io"
@@ -224,9 +225,10 @@ func (s *Server) previewHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		defer storage.CloseCheck(reader)
+
 		var data []byte
-		data = make([]byte, _5M)
-		if _, err = reader.Read(data); err != io.EOF && err != nil {
+		if data, err = io.ReadAll(io.LimitReader(reader, _5M)); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -889,19 +891,17 @@ func (metadata metadata) remainingLimitHeaderValues() (remainingDownloads, remai
 }
 
 func (s *Server) lock(token, filename string) {
-	key := path.Join(token, filename)
-
-	lock, _ := s.locks.LoadOrStore(key, &sync.Mutex{})
-
-	lock.(*sync.Mutex).Lock()
+	s.fileLock(token, filename).Lock()
 }
 
 func (s *Server) unlock(token, filename string) {
-	key := path.Join(token, filename)
+	s.fileLock(token, filename).Unlock()
+}
 
-	lock, _ := s.locks.LoadOrStore(key, &sync.Mutex{})
-
-	lock.(*sync.Mutex).Unlock()
+func (s *Server) fileLock(token, filename string) *sync.Mutex {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(path.Join(token, filename)))
+	return &s.locks[h.Sum32()%uint32(len(s.locks))]
 }
 
 func (s *Server) checkMetadata(ctx context.Context, token, filename string, increaseDownload bool) (metadata, error) {
@@ -1497,7 +1497,7 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 			}
 		}
 
-		if !authorized && username == s.authUser && password == s.authPass {
+		if !authorized && s.authUser != "" && s.authPass != "" && username == s.authUser && password == s.authPass {
 			authorized = true
 		}
 

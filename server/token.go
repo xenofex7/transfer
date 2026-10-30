@@ -25,6 +25,8 @@ THE SOFTWARE.
 package server
 
 import (
+	"crypto/rand"
+	"math/big"
 	"strings"
 )
 
@@ -39,8 +41,8 @@ func token(length int) string {
 	builder.Grow(length)
 
 	for i := 0; i < length; i++ {
-		x := theRand.Intn(len(SYMBOLS) - 1)
-		builder.WriteByte(SYMBOLS[x])
+		x, _ := rand.Int(rand.Reader, big.NewInt(int64(len(SYMBOLS))))
+		builder.WriteByte(SYMBOLS[x.Int64()])
 	}
 
 	return builder.String()

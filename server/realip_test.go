@@ -16,13 +16,34 @@ func newReq(t *testing.T, headers map[string]string, remoteAddr string) *http.Re
 	return r
 }
 
-func TestRealIPFromXForwardedForUsesFirstPublicHop(t *testing.T) {
+func TestRealIPFromXForwardedForUsesRightmostPublicHop(t *testing.T) {
 	r := newReq(t, map[string]string{
 		"X-Forwarded-For": "203.0.113.5, 10.0.0.2, 192.168.1.1",
 	}, "10.0.0.2:1234")
 
 	if got := realIPFromRequest(r); got != "203.0.113.5" {
-		t.Errorf("got %q, want first public hop 203.0.113.5", got)
+		t.Errorf("got %q, want public hop 203.0.113.5", got)
+	}
+}
+
+func TestRealIPIgnoresSpoofedLeadingXForwardedForEntry(t *testing.T) {
+	r := newReq(t, map[string]string{
+		"X-Forwarded-For": "198.51.100.1, 203.0.113.5",
+	}, "172.17.0.1:1234")
+
+	if got := realIPFromRequest(r); got != "203.0.113.5" {
+		t.Errorf("got %q, want proxy-appended hop 203.0.113.5", got)
+	}
+}
+
+func TestRealIPIgnoresForwardedHeadersFromPublicRemote(t *testing.T) {
+	r := newReq(t, map[string]string{
+		"X-Forwarded-For": "198.51.100.1",
+		"X-Real-Ip":       "198.51.100.2",
+	}, "203.0.113.99:5500")
+
+	if got := realIPFromRequest(r); got != "203.0.113.99" {
+		t.Errorf("got %q, want RemoteAddr 203.0.113.99 for untrusted peer", got)
 	}
 }
 

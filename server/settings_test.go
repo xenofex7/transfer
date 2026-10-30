@@ -8,8 +8,14 @@ package server
 
 import (
 	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -99,5 +105,33 @@ func TestSettingsStoreEmptyValuesAreHonored(t *testing.T) {
 	}
 	if got.EmailContact != "" {
 		t.Fatalf("expected empty email, got %q", got.EmailContact)
+	}
+}
+
+func TestAdminSettingsSaveKeepsHeartbeatChoice(t *testing.T) {
+	store, err := newSettingsStore(filepath.Join(t.TempDir(), ".settings.json"), Settings{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	off := false
+	if err := store.Set(Settings{Tagline: "old", HeartbeatEnabled: &off}); err != nil {
+		t.Fatal(err)
+	}
+	s := &Server{settings: store, logger: log.New(io.Discard, "", 0)}
+
+	for _, form := range []url.Values{
+		{"tagline": {"new"}, "theme": {DefaultTheme}},
+		{"reset": {"1"}},
+	} {
+		req := httptest.NewRequest("POST", "/admin/settings", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rec := httptest.NewRecorder()
+		s.adminSettingsPostHandler(rec, req)
+		if rec.Code != http.StatusSeeOther {
+			t.Fatalf("expected 303, got %d", rec.Code)
+		}
+		if got := store.Get().HeartbeatEnabled; got == nil || *got {
+			t.Fatalf("heartbeat opt-out lost after saving %v: %v", form, got)
+		}
 	}
 }

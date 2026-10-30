@@ -13,9 +13,9 @@ import (
 )
 
 // realIPPrivateBlocks lists CIDR ranges that should not be returned as the
-// client's real IP. The upstream proxy will appear in one of these (or in
-// X-Real-Ip), and when an X-Forwarded-For chain is present we want the
-// first non-private hop in it.
+// client's real IP. A RemoteAddr in one of these is treated as the upstream
+// proxy, and when an X-Forwarded-For chain is present we want the right-most
+// non-private hop in it.
 var realIPPrivateBlocks []*net.IPNet
 
 func init() {
@@ -35,16 +35,23 @@ func init() {
 	}
 }
 
-// realIPFromRequest returns the client's IP address. It prefers the first
-// non-private hop from X-Forwarded-For, falls back to X-Real-Ip, and finally
-// to the request's RemoteAddr (without the port).
+// realIPFromRequest returns the client's IP address. Forwarded headers are
+// only honored when RemoteAddr is a private or loopback address (the reverse
+// proxy); then it prefers the right-most non-private hop from
+// X-Forwarded-For, falls back to X-Real-Ip, and finally to RemoteAddr
+// (without the port).
 func realIPFromRequest(r *http.Request) string {
-	xff := r.Header.Get("X-Forwarded-For")
-	for _, addr := range strings.Split(xff, ",") {
-		addr = strings.TrimSpace(addr)
-		if addr == "" {
-			continue
-		}
+	remote := r.RemoteAddr
+	if host, _, err := net.SplitHostPort(remote); err == nil {
+		remote = host
+	}
+	if ip := net.ParseIP(remote); ip == nil || !isPrivateIP(ip) {
+		return remote
+	}
+
+	hops := strings.Split(r.Header.Get("X-Forwarded-For"), ",")
+	for i := len(hops) - 1; i >= 0; i-- {
+		addr := strings.TrimSpace(hops[i])
 		if ip := net.ParseIP(addr); ip != nil && !isPrivateIP(ip) {
 			return addr
 		}
@@ -54,10 +61,7 @@ func realIPFromRequest(r *http.Request) string {
 		return real
 	}
 
-	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
-		return host
-	}
-	return r.RemoteAddr
+	return remote
 }
 
 func isPrivateIP(ip net.IP) bool {

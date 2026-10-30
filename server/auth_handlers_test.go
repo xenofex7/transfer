@@ -263,6 +263,65 @@ func TestLoginTOTPPostInvalidCode(t *testing.T) {
 	}
 }
 
+func TestLoginTOTPPostDestroysSessionAfterTooManyFailures(t *testing.T) {
+	a := newAuthTestSetup(t)
+	enr, _ := a.server.startTOTPEnrollment("alice")
+	code, _ := totp.GenerateCode(enr.Secret, time.Now().UTC())
+	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, code); err != nil {
+		t.Fatal(err)
+	}
+
+	csrf, _ := a.loadLoginForm()
+	rec := postForm(a.handler, "/login", url.Values{
+		"csrf":     {csrf},
+		"username": {"alice"},
+		"password": {"longenoughpw"},
+	}, nil)
+	pendingID := sessionIDFromResponse(rec)
+	pendingCookies := rec.Result().Cookies()
+
+	var last *httptest.ResponseRecorder
+	for i := 0; i < maxMFAAttempts; i++ {
+		last = postForm(a.handler, "/login/totp", url.Values{
+			"csrf": {csrfTokenFor(pendingID)},
+			"code": {"000000"},
+		}, pendingCookies)
+	}
+	if loc := last.Header().Get("Location"); loc != "/login" {
+		t.Fatalf("expected redirect to /login after %d failures, got %q", maxMFAAttempts, loc)
+	}
+	if _, err := a.server.sessions.Get(pendingID); err == nil {
+		t.Fatal("pending session must be destroyed after too many failures")
+	}
+
+	valid, _ := totp.GenerateCode(enr.Secret, time.Now().UTC())
+	rec2 := postForm(a.handler, "/login/totp", url.Values{
+		"csrf": {csrfTokenFor(pendingID)},
+		"code": {valid},
+	}, pendingCookies)
+	if loc := rec2.Header().Get("Location"); loc != "/login" {
+		t.Fatalf("destroyed pending session must not accept a valid code, got %q", loc)
+	}
+}
+
+func TestAdminPasswordResetDestroysUserSessions(t *testing.T) {
+	a := newAuthTestSetup(t)
+	sess, _ := a.server.sessions.Create("alice", false)
+
+	req := httptest.NewRequest("POST", "/admin/users/alice/reset", strings.NewReader(url.Values{"password": {"anotherlongpw"}}.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req = mux.SetURLVars(req, map[string]string{"name": "alice"})
+	rec := httptest.NewRecorder()
+	a.server.adminUsersResetHandler(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("expected 303, got %d", rec.Code)
+	}
+	if _, err := a.server.sessions.Get(sess.ID); err == nil {
+		t.Fatal("password reset must invalidate existing sessions")
+	}
+}
+
 func TestLoginTOTPPostRecoveryCode(t *testing.T) {
 	a := newAuthTestSetup(t)
 	enr, _ := a.server.startTOTPEnrollment("alice")
@@ -359,6 +418,9 @@ func TestSafeNext(t *testing.T) {
 		"relative":          "/",
 		"/login":            "/",
 		"/login/totp":       "/",
+		"/\\evil.example":   "/",
+		"/\t/evil.example":  "/",
+		"/\\/evil.example":  "/",
 	}
 	for in, want := range cases {
 		if got := safeNext(in); got != want {

@@ -76,6 +76,35 @@ func TestBasicAuthHandlerRejectsWrongPassword(t *testing.T) {
 	}
 }
 
+func TestBasicAuthHandlerRejectsEmptyCredentials(t *testing.T) {
+	_, h := buildAuthTestServer(t)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.SetBasicAuth("", "")
+	rec := httptest.NewRecorder()
+	h(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("empty credentials should 401, got %d", rec.Code)
+	}
+}
+
+func TestBasicAuthHandlerIPWhitelistIgnoresSpoofedHeaders(t *testing.T) {
+	s, h := buildAuthTestServer(t)
+	s.authIPFilterOptions = &IPFilterOptions{AllowedIPs: []string{"198.51.100.7"}, BlockByDefault: true}
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "203.0.113.99:5500"
+	req.Header.Set("X-Forwarded-For", "198.51.100.7")
+	req.Header.Set("X-Real-Ip", "198.51.100.7")
+	rec := httptest.NewRecorder()
+	h(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("spoofed forwarded headers must not pass the IP whitelist, got %d", rec.Code)
+	}
+}
+
 func TestBasicAuthHandlerAcceptsAPIToken(t *testing.T) {
 	s, h := buildAuthTestServer(t)
 

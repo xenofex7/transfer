@@ -48,6 +48,7 @@ type session struct {
 	LastSeenAt time.Time
 	ExpiresAt  time.Time
 	PendingMFA bool
+	MFATries   int
 }
 
 // sessionStore is the in-memory session table. Single-instance only,
@@ -199,6 +200,17 @@ func (s *sessionStore) Promote(id string) (*session, error) {
 	s.sessions[newID] = upgraded
 	cp := *upgraded
 	return &cp, nil
+}
+
+func (s *sessionStore) RecordMFAAttempt(id string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess, ok := s.sessions[id]
+	if !ok {
+		return 0
+	}
+	sess.MFATries++
+	return sess.MFATries
 }
 
 // Destroy invalidates a session by ID. Always safe to call, even with

@@ -84,6 +84,9 @@ func (s *Server) adminUsersResetHandler(w http.ResponseWriter, r *http.Request) 
 		s.usersFlashAndRedirect(w, r, "Reset failed: "+err.Error(), true)
 		return
 	}
+	if s.sessions != nil {
+		s.sessions.DestroyAllFor(name)
+	}
 	s.usersFlashAndRedirect(w, r, "Password for "+name+" updated", false)
 }
 

@@ -74,6 +74,7 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 			next.Theme = DefaultTheme
 		}
 	}
+	next.HeartbeatEnabled = s.settings.Get().HeartbeatEnabled
 
 	if len(next.Tagline) > 200 || len(next.EmailContact) > 200 {
 		s.flashAndRedirect(w, r, "Values must be 200 characters or fewer.", true)

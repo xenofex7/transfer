@@ -51,6 +51,34 @@ func TestLocalStoragePutGetRoundTrip(t *testing.T) {
 	}
 }
 
+func TestLocalStorageGetUnsatisfiableRangeServesWholeFile(t *testing.T) {
+	s := newTestStorage(t)
+	ctx := context.Background()
+	want := "0123456789abcdefghij"
+
+	if err := s.Put(ctx, "tok", "r.txt", strings.NewReader(want), "text/plain", uint64(len(want))); err != nil {
+		t.Fatalf("Put: %v", err)
+	}
+
+	rng := ParseRange("bytes=10-1000")
+	rc, cl, err := s.Get(ctx, "tok", "r.txt", rng)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	defer func() { _ = rc.Close() }()
+
+	got, err := io.ReadAll(rc)
+	if err != nil {
+		t.Fatalf("ReadAll: %v", err)
+	}
+	if rng.ContentRange() != "" {
+		t.Errorf("range should be rejected, got Content-Range %q", rng.ContentRange())
+	}
+	if cl != uint64(len(got)) || string(got) != want {
+		t.Errorf("got %d bytes %q with Content-Length %d, want whole file", len(got), got, cl)
+	}
+}
+
 func TestLocalStorageDeleteRemovesFile(t *testing.T) {
 	s := newTestStorage(t)
 	ctx := context.Background()

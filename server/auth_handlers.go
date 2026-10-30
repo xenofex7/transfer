@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // Login flow:
@@ -37,6 +38,7 @@ import (
 
 const (
 	loginRedirectParam = "next"
+	maxMFAAttempts     = 5
 )
 
 // authResultUser carries the verified identity into the templates and
@@ -183,6 +185,11 @@ func (s *Server) loginTOTPPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	next := safeNext(r.PostForm.Get(loginRedirectParam))
+	attempts := s.sessions.RecordMFAAttempt(sess.ID)
+	if attempts == 0 || attempts > maxMFAAttempts {
+		s.abortMFA(w, r, sess.ID)
+		return
+	}
 	code := strings.TrimSpace(r.PostForm.Get("code"))
 	recovery := strings.TrimSpace(r.PostForm.Get("recovery"))
 
@@ -198,6 +205,10 @@ func (s *Server) loginTOTPPostHandler(w http.ResponseWriter, r *http.Request) {
 	if verifyErr != nil {
 		s.logger.Printf("auth: totp verify failed for %s: %v", sess.Username, verifyErr)
 		time.Sleep(100 * time.Millisecond)
+		if attempts >= maxMFAAttempts {
+			s.abortMFA(w, r, sess.ID)
+			return
+		}
 		dest := "/login/totp"
 		if next != "" {
 			dest += "?" + loginRedirectParam + "=" + url.QueryEscape(next)
@@ -295,6 +306,12 @@ func (s *Server) flashAndBackTo(w http.ResponseWriter, r *http.Request, dest, ms
 	http.Redirect(w, r, dest, http.StatusSeeOther)
 }
 
+func (s *Server) abortMFA(w http.ResponseWriter, r *http.Request, id string) {
+	s.sessions.Destroy(id)
+	setSessionCookie(w, r, "", 0)
+	s.flashAndBackTo(w, r, "/login", "Too many invalid codes, sign in again", true, "")
+}
+
 // consumeAuthFlash reads-and-deletes the named flash cookie. kind is
 // either "ok" or "err"; anything else returns "".
 func consumeAuthFlash(w http.ResponseWriter, r *http.Request, kind string) string {
@@ -317,6 +334,9 @@ func safeNext(raw string) string {
 		return "/"
 	}
 	if strings.HasPrefix(raw, "//") || strings.Contains(raw, ":") {
+		return "/"
+	}
+	if strings.Contains(raw, "\\") || strings.IndexFunc(raw, unicode.IsControl) >= 0 {
 		return "/"
 	}
 	if !strings.HasPrefix(raw, "/") {

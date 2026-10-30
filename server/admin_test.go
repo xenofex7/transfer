@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -30,7 +29,6 @@ func adminTestServer(t *testing.T) (*Server, *storage.LocalStorage) {
 		storage:           store,
 		logger:            log.New(io.Discard, "", 0),
 		randomTokenLength: 6,
-		locks:             sync.Map{},
 	}, store
 }
 
@@ -185,5 +183,29 @@ func TestAdminSecretsHandlerListsAndDeletes(t *testing.T) {
 	}
 	if s.secrets.Peek("secretaaaa") {
 		t.Fatal("secret still present after admin delete")
+	}
+}
+
+func TestPreviewHandlerRendersTextWithoutPadding(t *testing.T) {
+	s, store := adminTestServer(t)
+	seedFile(t, store, "tok", "note.txt", "hello preview", metadata{
+		ContentType:  "text/plain",
+		MaxDownloads: -1,
+		MaxDate:      time.Now().Add(time.Hour),
+	})
+
+	req := mux.SetURLVars(httptest.NewRequest("GET", "/tok/note.txt", nil), map[string]string{"token": "tok", "filename": "note.txt"})
+	rec := httptest.NewRecorder()
+	s.previewHandler(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "<pre>hello preview</pre>") {
+		t.Fatalf("preview missing exact text content")
+	}
+	if strings.Contains(body, "\x00") {
+		t.Fatalf("preview contains NUL padding")
 	}
 }

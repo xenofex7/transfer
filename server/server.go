@@ -26,11 +26,8 @@ package server
 
 import (
 	"context"
-	cryptoRand "crypto/rand"
-	"encoding/binary"
 	iofs "io/fs"
 	"log"
-	"math/rand"
 	"mime"
 	"net/http"
 	"net/url"
@@ -322,7 +319,7 @@ type Server struct {
 
 	logger *log.Logger
 
-	locks sync.Map
+	locks [256]sync.Mutex
 
 	maxUploadSize     int64
 	rateLimitRequests int
@@ -434,7 +431,6 @@ func UmamiHeartbeatOverride(v HeartbeatOverride) OptionFn {
 // New is the factory fot Server
 func New(options ...OptionFn) (*Server, error) {
 	s := &Server{
-		locks:   sync.Map{},
 		tagline: DefaultTagline,
 	}
 
@@ -503,17 +499,6 @@ func New(options ...OptionFn) (*Server, error) {
 	return s, nil
 }
 
-var theRand *rand.Rand
-
-func init() {
-	var seedBytes [8]byte
-	if _, err := cryptoRand.Read(seedBytes[:]); err != nil {
-		panic("cannot obtain cryptographically secure seed")
-	}
-
-	theRand = rand.New(rand.NewSource(int64(binary.LittleEndian.Uint64(seedBytes[:]))))
-}
-
 var loadEmbeddedTemplatesOnce sync.Once
 
 // loadEmbeddedTemplates walks the bundled web/public filesystem once and
@@ -546,6 +531,23 @@ func loadEmbeddedTemplates(logger *log.Logger) {
 			logger.Printf("Unable to walk embedded web assets: %s", err)
 		}
 	})
+}
+
+// The file will show a preview page when opening the link in browser directly or
+// from external link. If the referer url path and current path are the same it will be
+// downloaded.
+func previewRequested(r *http.Request, _ *mux.RouteMatch) bool {
+	if !acceptsHTML(r.Header) {
+		return false
+	}
+	if r.Referer() == "" {
+		return true
+	}
+	u, err := url.Parse(r.Referer())
+	if err != nil {
+		return true
+	}
+	return u.Path != r.URL.Path
 }
 
 // Run starts Server
@@ -652,25 +654,7 @@ func (s *Server) Run() {
 	r.HandleFunc("/{token}/{filename}", s.headHandler).Methods("HEAD")
 	r.HandleFunc("/{action:(?:download|get|inline)}/{token}/{filename}", s.headHandler).Methods("HEAD")
 
-	r.HandleFunc("/{token}/{filename}", s.previewHandler).MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) (match bool) {
-		// The file will show a preview page when opening the link in browser directly or
-		// from external link. If the referer url path and current path are the same it will be
-		// downloaded.
-		if !acceptsHTML(r.Header) {
-			return false
-		}
-
-		match = r.Referer() == ""
-
-		u, err := url.Parse(r.Referer())
-		if err != nil {
-			s.logger.Fatal(err)
-			return
-		}
-
-		match = match || (u.Path != r.URL.Path)
-		return
-	}).Methods("GET")
+	r.HandleFunc("/{token}/{filename}", s.previewHandler).MatcherFunc(previewRequested).Methods("GET")
 
 	var getHandlerFn http.Handler = http.HandlerFunc(s.getHandler)
 	if s.rateLimitRequests > 0 {
