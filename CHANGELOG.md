@@ -7,6 +7,21 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-10-30
+
+### Changed
+- Use Petrol-600 for links in the light theme and Petrol-200 plus a darker danger tone in the dark theme, so text contrast improves
+- Keep success and status text in ink-soft and underline links on hover
+- Build and test on Go 1.26.10 with Alpine 3.24
+- Bump golang.org/x/text to v0.42.0 (GO-2026-5970) and golang.org/x/net to v0.60.0
+
+### Fixed
+- Reserve a fixed box for image and video previews so the layout no longer shifts while media loads
+- Align the small border radius with DESIGN.md
+
+### Removed
+- Drop unused legacy alias tokens and dead component styles from the stylesheet
+
 ## [1.7.0] - 2026-10-30
 
 ### Added
