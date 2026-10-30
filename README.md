@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://github.com/xenofex7/transfer/tags"><img src="https://img.shields.io/github/v/tag/xenofex7/transfer?sort=semver&label=version" alt="latest tag"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/xenofex7/transfer" alt="license"></a>
-  <img src="https://img.shields.io/badge/go-1.25-00ADD8?logo=go&logoColor=white" alt="go 1.25">
+  <img src="https://img.shields.io/badge/go-1.26-00ADD8?logo=go&logoColor=white" alt="go 1.26">
   <a href="https://github.com/xenofex7/transfer/pkgs/container/transfer"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ed?logo=docker&logoColor=white" alt="container image"></a>
   <a href="https://github.com/xenofex7/transfer/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/xenofex7/transfer/test.yml?branch=main&label=tests" alt="tests"></a>
   <a href="https://github.com/xenofex7/transfer/actions/workflows/docker.yml"><img src="https://img.shields.io/github/actions/workflow/status/xenofex7/transfer/docker.yml?branch=main&label=docker%20build" alt="docker build"></a>
@@ -341,7 +341,7 @@ To redirect the beat to your own Umami instead, set
 
 ## Development
 
-Requires Go 1.25+.
+Requires Go 1.26+.
 
 ```bash
 git clone git@github.com:xenofex7/transfer.git
