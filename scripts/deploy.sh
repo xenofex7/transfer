@@ -19,7 +19,7 @@ set -euo pipefail
 #   8. Push commit + tag to origin
 #   9. Create GitHub Release (triggers GHCR build)
 #  10. Wait for GitHub Actions to build + push the image to GHCR
-#  11. Trigger Watchtower on the Synology (on-demand rollout)
+#  11. Trigger Watchtower on br-docker (on-demand rollout)
 # ─────────────────────────────────────────────────────────
 
 cd "$(dirname "$0")/.."
@@ -245,17 +245,20 @@ if command -v gh &> /dev/null; then
   info "Waiting for GitHub Actions (build + push to GHCR)..."
   SHA=$(git rev-parse HEAD)
 
-  # Runs may take a few seconds to register - retry gathering their IDs.
-  RUN_IDS=""
-  for _ in 1 2 3 4 5 6; do
-    RUN_IDS=$(gh run list --limit 20 --json databaseId,headSha \
-                --jq '.[] | select(.headSha=="'"$SHA"'") | .databaseId' 2>/dev/null || echo "")
-    [[ -n "$RUN_IDS" ]] && break
+  # Runs register one by one: the test run on the main push shows up before
+  # the image build on the tag. Keep gathering until the image build is there.
+  IMAGE_WORKFLOW="Build and publish container image"
+  RUNS=""
+  for _ in $(seq 1 24); do
+    RUNS=$(gh run list --limit 20 --json databaseId,headSha,workflowName \
+             --jq '.[] | select(.headSha=="'"$SHA"'") | "\(.databaseId) \(.workflowName)"' 2>/dev/null || echo "")
+    grep -q "$IMAGE_WORKFLOW" <<< "$RUNS" && break
     sleep 5
   done
+  RUN_IDS=$(awk '{print $1}' <<< "$RUNS")
 
-  if [[ -z "$RUN_IDS" ]]; then
-    warn "No CI runs found for ${SHA:0:7} - check GitHub Actions manually"
+  if ! grep -q "$IMAGE_WORKFLOW" <<< "$RUNS"; then
+    warn "No image build found for ${SHA:0:7} - check GitHub Actions manually"
     DEPLOY_OK=false
   else
     for RUN_ID in $RUN_IDS; do
@@ -284,7 +287,7 @@ $DEPLOY_OK || error "Build/CI did not pass cleanly for ${TAG}. Image may not be 
 ok "All CI runs passed - new image is on GHCR"
 
 # ── 11. Trigger Watchtower (on-demand deploy) ─────────────
-# Watchtower on the Synology only polls at 02:00, so we trigger it via its
+# Watchtower on br-docker only polls at 02:00, so we trigger it via its
 # HTTP-API to roll the new image out immediately. Reuses the shared
 # trigger-watchtower.sh, which sources WATCHTOWER_URL/TOKEN from its own
 # sibling .env. Override the path via the WATCHTOWER_REFRESH env var.
@@ -293,7 +296,7 @@ ok "All CI runs passed - new image is on GHCR"
 # no-op on the running Watchtower version (HTTP 200, nothing pulled). Watchtower
 # updates every container whose image actually changed, so a full sweep is both
 # correct and cheap.
-WATCHTOWER_REFRESH="${WATCHTOWER_REFRESH:-$HOME/Development/docker-hosts/synology/trigger-watchtower.sh}"
+WATCHTOWER_REFRESH="${WATCHTOWER_REFRESH:-$HOME/Development/docker-hosts/br-docker/trigger-watchtower.sh}"
 # Give GHCR a moment to settle the :latest pointer after the build push -
 # triggering too early makes Watchtower see no newer image.
 WATCHTOWER_PREDELAY="${WATCHTOWER_PREDELAY:-30}"
@@ -323,5 +326,4 @@ echo -e "${GREEN}  Release ${TAG} complete!${NC}"
 echo -e "${GREEN}=========================================${NC}"
 echo ""
 echo "  GHCR multi-arch image built and pushed by GitHub Actions."
-echo "  Watchtower was triggered - the Synology updates within a few seconds."
 echo ""
