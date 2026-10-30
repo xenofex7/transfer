@@ -49,9 +49,9 @@ A 7-step Türkis-Richtung-Blau scale. Each step has a defined role - don't reach
 |---|---|---|
 | `{colors.petrol-50}` | #e0f2f7 | Selection highlight background, surface-card tint base |
 | `{colors.petrol-100}` | #9dd6e4 | Dark-theme emphasis hover |
-| `{colors.petrol-200}` | #5bbcd2 | Light accent surfaces, inline pill backgrounds |
-| `{colors.petrol-400}` | #0d8fb1 | **Primary accent** - inline links, scrollbar thumb, focus ring |
-| `{colors.petrol-600}` | #086480 | Eyebrow text, scrollbar hover, emphasis-button hover (light theme) |
+| `{colors.petrol-200}` | #5bbcd2 | Inline links on dark surfaces, light accent surfaces, inline pill backgrounds |
+| `{colors.petrol-400}` | #0d8fb1 | **Primary accent** - scrollbar thumb, focus ring, nav tint |
+| `{colors.petrol-600}` | #086480 | Inline links on light surfaces, eyebrow text, scrollbar hover, emphasis-button hover (light theme) |
 | `{colors.petrol-800}` | #054757 | Deep accent surfaces |
 | `{colors.petrol-900}` | #032e3a | Dark-theme canvas, footer background, featured-tier surface |
 
@@ -109,7 +109,8 @@ On a **light-only site** the theme system is unused at the document level - dark
 
 ### Interaction Tokens
 
-- **Link** (`{colors.link}` - #0d8fb1 = Petrol-400): Inline body links. The brand keeps body type in ink-soft and lets Petrol carry interactivity.
+- **Link** (`{colors.link}` - #086480 = Petrol-600): Inline body links on light surfaces. The brand keeps body type in ink-soft and lets Petrol carry interactivity. Petrol-600 clears WCAG AA (6.68:1 on canvas, 6.21:1 on surface-card); Petrol-400 does not (3.76:1).
+- **Link Dark** (`{colors.link-dark}` - #5bbcd2 = Petrol-200): Inline links in the dark theme (6.57:1 on surface-dark). Underline on hover in both themes.
 - **Focus Ring** (`{colors.focus-ring}` - #0d8fb1 = Petrol-400): Focus-visible outline color.
 - **Selection BG** (`{colors.selection-bg}` - #e0f2f7 = Petrol-50): Text selection background.
 - **Selection Text** (`{colors.selection-text}` - #032e3a = Petrol-900): Text selection foreground.
@@ -121,6 +122,9 @@ On a **light-only site** the theme system is unused at the document level - dark
 - **Success** (`{colors.success}` - #10b981): Confirmation states, success badges.
 - **Warning** (`{colors.warning}` - #f59e0b): Warning callouts.
 - **Danger** (`{colors.danger}` - #c0392b): Validation errors, destructive actions.
+- **Danger Dark** (`{colors.danger-dark}` - #ef7d70): Danger in the dark theme (5.38:1 on surface-dark). `{colors.danger}` drops to 2.65:1 there.
+
+Success and warning never colour message text (2.54:1 / 2.15:1 on canvas): status copy stays in `{colors.ink-soft}`, the semantic colour sits on the border or icon.
 
 ## Typography
 
@@ -237,7 +241,7 @@ Avatar photos use `{rounded.full}` (perfect circles) at 36px or 40px. Product UI
 
 **`button-text-link`** - Inline text button, no background. Used for "Sign in" in the top nav and inline CTA links inside cards.
 
-**`text-link`** - Inline body links in `{colors.ink}` (the brand keeps inline links monochrome). Underlined on hover (not documented per the no-hover policy, but mentioned for context).
+**`text-link`** - Inline body links in `{colors.link}`, or `{colors.link-dark}` on dark surfaces. Underlined on hover (not documented per the no-hover policy, but mentioned for context).
 
 ### Cards & Containers
 
