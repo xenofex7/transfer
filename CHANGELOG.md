@@ -7,6 +7,19 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.2] - 2026-10-30
+
+### Added
+- Show and edit the download limit and password of each uploaded file
+
+### Changed
+- Accept an https link as the footer contact in addition to an email address
+
+### Fixed
+- Make `deploy.sh` wait for the image build to finish before it continues
+
+I left out the switch of `deploy.sh` to br-docker. It only affects the internal deployment target, so it doesn't belong in a public changelog.
+
 ## [1.7.1] - 2026-10-30
 
 ### Changed
