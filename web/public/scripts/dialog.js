@@ -36,7 +36,9 @@
         '<footer class="modal-actions"></footer>' +
       '</div>';
     backdrop.querySelector('.modal-title').textContent = opts.title || '';
-    backdrop.querySelector('.modal-body p').textContent = opts.message || '';
+    var bodyText = backdrop.querySelector('.modal-body p');
+    if (opts.body) bodyText.parentNode.replaceChild(opts.body, bodyText);
+    else bodyText.textContent = opts.message || '';
 
     var actions = backdrop.querySelector('.modal-actions');
     var cancelBtn = null;
@@ -95,7 +97,8 @@
       if (cancelBtn) cancelBtn.addEventListener('click', function () { finish(false); });
       confirmBtn.addEventListener('click', function () { finish(true); });
 
-      (opts.danger && cancelBtn ? cancelBtn : confirmBtn).focus();
+      var firstField = opts.body && opts.body.querySelector('input, select, textarea');
+      (firstField || (opts.danger && cancelBtn ? cancelBtn : confirmBtn)).focus();
     });
   }
 
@@ -105,6 +108,7 @@
       return open({
         title: opts.title,
         message: opts.message,
+        body: opts.body,
         confirmLabel: opts.confirmLabel || 'Confirm',
         cancelLabel: opts.cancelLabel || 'Cancel',
         danger: !!opts.danger,

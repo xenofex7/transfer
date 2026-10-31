@@ -192,8 +192,8 @@ curl https://your-instance.example.com/<token>/hello.txt -H "X-Password: s3cret"
 ```
 
 Change the download limit and password of an existing upload with the delete
-token. Both fields are replaced: `maxDownloads` 0 means unlimited, an empty
-`password` removes it.
+token. `maxDownloads` 0 means unlimited. An empty `password` removes it, and
+leaving `password` out keeps the current one.
 
 ```bash
 curl -X PATCH https://your-instance.example.com/<token>/hello.txt/<delete-token> \

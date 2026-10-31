@@ -1040,6 +1040,15 @@ img.qr {
 .admin-table .cell-time { color: var(--ink-mute); font-size: 13px; }
 .admin-table .cell-type { color: var(--ink-mute); font-size: 13px; }
 .admin-table .cell-links { white-space: nowrap; }
+.options-form .settings-field:last-child { margin-bottom: 0; }
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  color: var(--ink);
+}
+.field-check input { accent-color: var(--link); }
 .admin-table .row-expired td { color: var(--ink-mute); text-decoration: line-through; }
 .admin-table .row-expired .cell-links { text-decoration: none; }
 .muted { color: var(--ink-mute); }

@@ -1058,21 +1058,21 @@ func (s *Server) uploadOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	filename := vars["filename"]
 
 	var req struct {
-		MaxDownloads int    `json:"maxDownloads"`
-		Password     string `json:"password"`
+		MaxDownloads int     `json:"maxDownloads"`
+		Password     *string `json:"password"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	if len(req.Password) > maxUploadPassLen {
+	if req.Password != nil && len(*req.Password) > maxUploadPassLen {
 		http.Error(w, "Password too long", http.StatusBadRequest)
 		return
 	}
 
 	passwordHash := ""
-	if req.Password != "" {
-		h, err := hashUploadPassword(req.Password)
+	if req.Password != nil && *req.Password != "" {
+		h, err := hashUploadPassword(*req.Password)
 		if err != nil {
 			http.Error(w, "Could not save options", http.StatusInternalServerError)
 			return
@@ -1100,7 +1100,9 @@ func (s *Server) uploadOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	if req.MaxDownloads > 0 {
 		meta.MaxDownloads = req.MaxDownloads
 	}
-	meta.PasswordHash = passwordHash
+	if req.Password != nil {
+		meta.PasswordHash = passwordHash
+	}
 
 	buffer := &bytes.Buffer{}
 	if err := json.NewEncoder(buffer).Encode(meta); err != nil {

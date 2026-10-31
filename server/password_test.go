@@ -120,6 +120,14 @@ func TestUploadOptionsHandler(t *testing.T) {
 		t.Fatalf("options not applied: max %d, password ok %v, err %v", m.MaxDownloads, m.passwordMatches("pw"), err)
 	}
 
+	if code := patch("del456", `{"maxDownloads":5}`); code != http.StatusNoContent {
+		t.Fatalf("keep password: expected 204, got %d", code)
+	}
+	m, _ = s.checkMetadata(context.Background(), "tok123", "doc.txt", false)
+	if m.MaxDownloads != 5 || !m.passwordMatches("pw") {
+		t.Fatalf("omitted password not kept: max %d, password ok %v", m.MaxDownloads, m.passwordMatches("pw"))
+	}
+
 	if code := patch("del456", `{"maxDownloads":0,"password":""}`); code != http.StatusNoContent {
 		t.Fatalf("clear options: expected 204, got %d", code)
 	}

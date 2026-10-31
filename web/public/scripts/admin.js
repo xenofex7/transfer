@@ -107,6 +107,113 @@
       });
   }
 
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.options-btn');
+    if (!btn) return;
+    editOptions(btn);
+  });
+
+  function field(label, input, hint) {
+    var wrap = document.createElement('div');
+    wrap.className = 'settings-field';
+    var caption = document.createElement('label');
+    caption.className = 'settings-label';
+    caption.htmlFor = input.id;
+    caption.textContent = label;
+    var note = document.createElement('p');
+    note.className = 'settings-hint';
+    note.textContent = hint;
+    wrap.appendChild(caption);
+    wrap.appendChild(input);
+    wrap.appendChild(note);
+    return wrap;
+  }
+
+  function editOptions(btn) {
+    var url = btn.getAttribute('data-options') || '';
+    var max = parseInt(btn.getAttribute('data-max'), 10);
+    var isProtected = btn.getAttribute('data-protected') === 'true';
+    if (!url) return;
+
+    var form = document.createElement('form');
+    form.className = 'options-form';
+    form.noValidate = true;
+
+    var maxInput = document.createElement('input');
+    maxInput.id = 'options-max';
+    maxInput.className = 'field-input';
+    maxInput.type = 'number';
+    maxInput.min = '1';
+    maxInput.step = '1';
+    maxInput.placeholder = 'unlimited';
+    maxInput.value = max > 0 ? String(max) : '';
+    form.appendChild(field('Max downloads', maxInput, 'Counts all downloads, including past ones. Leave empty for unlimited.'));
+
+    var pwInput = document.createElement('input');
+    pwInput.id = 'options-password';
+    pwInput.className = 'field-input';
+    pwInput.type = 'text';
+    pwInput.maxLength = 256;
+    pwInput.autocomplete = 'off';
+    pwInput.spellcheck = false;
+    pwInput.placeholder = isProtected ? 'unchanged' : 'none';
+    form.appendChild(field('Password', pwInput, isProtected
+      ? 'Leave empty to keep the current password.'
+      : 'Leave empty for no password.'));
+
+    var remove = null;
+    if (isProtected) {
+      var check = document.createElement('label');
+      check.className = 'field-check';
+      remove = document.createElement('input');
+      remove.type = 'checkbox';
+      remove.addEventListener('change', function () {
+        pwInput.disabled = remove.checked;
+        if (remove.checked) pwInput.value = '';
+      });
+      check.appendChild(remove);
+      check.appendChild(document.createTextNode('Remove password'));
+      form.appendChild(check);
+    }
+
+    form.addEventListener('submit', function (e) { e.preventDefault(); });
+    form.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.target.type === 'checkbox') return;
+      e.preventDefault();
+      var confirm = document.querySelector('.modal-backdrop .modal-actions .btn-primary');
+      if (confirm) confirm.click();
+    });
+
+    window.dialog.confirm({
+      title: 'Options for ' + (btn.getAttribute('data-name') || 'file'),
+      body: form,
+      confirmLabel: 'Save',
+    }).then(function (ok) {
+      if (!ok) return;
+      var next = parseInt(maxInput.value, 10);
+      var body = { maxDownloads: next > 0 ? next : 0 };
+      if (pwInput.value) body.password = pwInput.value;
+      else if (remove && remove.checked) body.password = '';
+      else if (!isProtected) body.password = '';
+      saveOptions(url, body);
+    });
+  }
+
+  function saveOptions(url, body) {
+    fetch(url, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(function (resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      if (window.toast) window.toast.success('Options saved');
+      setTimeout(function () { window.location.reload(); }, 600);
+    }).catch(function (err) {
+      if (window.toast) window.toast.error('Could not save options (' + err.message + ')');
+    });
+  }
+
   function updateCount(delta) {
     var counter = document.querySelector('.admin-count');
     if (!counter) return;
