@@ -1596,10 +1596,7 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 			}
 		}
 
-		passwordMatched := false
-		if !authorized && s.authUser != "" && s.authPass != "" && username == s.authUser && password == s.authPass {
-			passwordMatched = true
-		}
+		passwordMatched := !authorized && s.authUser != "" && s.authPass != "" && username == s.authUser && password == s.authPass
 
 		if !authorized && !passwordMatched {
 			s.htpasswdMu.RLock()
