@@ -93,8 +93,8 @@ func (s *Server) adminSecretsDeleteHandler(w http.ResponseWriter, r *http.Reques
 		s.secretsFlashAndRedirect(w, r, "Invalid request", true)
 		return
 	}
-	if sess, ok := s.sessionForRequest(r); ok && !csrfCheck(r.PostForm.Get("csrf"), sess.ID) {
-		s.secretsFlashAndRedirect(w, r, "Invalid form token, please try again", true)
+	if !s.sessionCSRFValid(r) {
+		s.secretsFlashAndRedirect(w, r, invalidFormToken, true)
 		return
 	}
 	id := mux.Vars(r)["id"]

@@ -316,6 +316,7 @@ type Server struct {
 	authRequireTOTP    bool
 	authBgTasks        sync.WaitGroup
 	authIPFilter       *ipFilter
+	authThrottle       *authThrottle
 
 	logger *log.Logger
 
@@ -479,6 +480,7 @@ func New(options ...OptionFn) (*Server, error) {
 
 	s.sessions = newSessionStore(s.authSessionTTL, s.authSessionMaxLife)
 	s.sessions.Start()
+	s.authThrottle = newAuthThrottle()
 
 	// Eager-load the htpasswd matcher so the first /login attempt
 	// after a cold start does not have to wait on (or worse, fail

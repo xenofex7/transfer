@@ -15,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -118,13 +117,14 @@ func TestAdminSettingsSaveKeepsHeartbeatChoice(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := &Server{settings: store, logger: log.New(io.Discard, "", 0)}
+	sess := startTestSession(t, s, "alice")
 
 	for _, form := range []url.Values{
 		{"tagline": {"new"}, "theme": {DefaultTheme}},
 		{"reset": {"1"}},
 	} {
-		req := httptest.NewRequest("POST", "/admin/settings", strings.NewReader(form.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		form.Set("csrf", csrfTokenFor(sess.ID))
+		req := sessionPost("/admin/settings", form, sess)
 		rec := httptest.NewRecorder()
 		s.adminSettingsPostHandler(rec, req)
 		if rec.Code != http.StatusSeeOther {
@@ -132,6 +132,9 @@ func TestAdminSettingsSaveKeepsHeartbeatChoice(t *testing.T) {
 		}
 		if got := store.Get().HeartbeatEnabled; got == nil || *got {
 			t.Fatalf("heartbeat opt-out lost after saving %v: %v", form, got)
+		}
+		if store.Get().Tagline == "old" {
+			t.Fatalf("settings were not saved for %v", form)
 		}
 	}
 }

@@ -57,8 +57,8 @@ func realIPFromRequest(r *http.Request) string {
 		}
 	}
 
-	if real := r.Header.Get("X-Real-Ip"); real != "" {
-		return real
+	if ip := net.ParseIP(strings.TrimSpace(r.Header.Get("X-Real-Ip"))); ip != nil {
+		return ip.String()
 	}
 
 	return remote

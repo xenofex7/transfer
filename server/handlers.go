@@ -203,7 +203,12 @@ func (s *Server) previewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !passwordSatisfied(r, metadata, token, filename) {
+	if ok, throttled := s.passwordSatisfied(r, metadata, token, filename); !ok {
+		if throttled {
+			w.WriteHeader(http.StatusTooManyRequests)
+			s.renderLockedPage(w, r, filename, tooManyAttempts)
+			return
+		}
 		s.renderLockedPage(w, r, filename, "")
 		return
 	}
@@ -1138,7 +1143,7 @@ func (s *Server) zipHandler(w http.ResponseWriter, r *http.Request) {
 		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
 			continue
-		} else if !passwordSatisfied(r, m, token, filename) {
+		} else if ok, _ := s.passwordSatisfied(r, m, token, filename); !ok {
 			s.logger.Printf("skipping password protected %s/%s", token, filename)
 			continue
 		} else if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
@@ -1213,7 +1218,7 @@ func (s *Server) tarGzHandler(w http.ResponseWriter, r *http.Request) {
 		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
 			continue
-		} else if !passwordSatisfied(r, m, token, filename) {
+		} else if ok, _ := s.passwordSatisfied(r, m, token, filename); !ok {
 			s.logger.Printf("skipping password protected %s/%s", token, filename)
 			continue
 		} else if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
@@ -1276,7 +1281,7 @@ func (s *Server) tarHandler(w http.ResponseWriter, r *http.Request) {
 		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
 			continue
-		} else if !passwordSatisfied(r, m, token, filename) {
+		} else if ok, _ := s.passwordSatisfied(r, m, token, filename); !ok {
 			s.logger.Printf("skipping password protected %s/%s", token, filename)
 			continue
 		} else if _, err := s.checkMetadata(r.Context(), token, filename, true); err != nil {
@@ -1330,7 +1335,11 @@ func (s *Server) headHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	if !passwordSatisfied(r, metadata, token, filename) {
+	if ok, throttled := s.passwordSatisfied(r, metadata, token, filename); !ok {
+		if throttled {
+			http.Error(w, tooManyAttempts, http.StatusTooManyRequests)
+			return
+		}
 		http.Error(w, "Password required", http.StatusUnauthorized)
 		return
 	}
@@ -1374,7 +1383,11 @@ func (s *Server) getHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	if !passwordSatisfied(r, metadata, token, filename) {
+	if ok, throttled := s.passwordSatisfied(r, metadata, token, filename); !ok {
+		if throttled {
+			http.Error(w, tooManyAttempts, http.StatusTooManyRequests)
+			return
+		}
 		http.Error(w, "Password required", http.StatusUnauthorized)
 		return
 	}
@@ -1546,6 +1559,18 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 			http.Error(w, "Not authorized", http.StatusUnauthorized)
 			return
 		}
+		var attempt *authAttempt
+		if !authorized {
+			keys := []string{ipKey(r)}
+			if !looksLikeAPIToken(password) {
+				keys = append(keys, userKey(username))
+			}
+			var allowed bool
+			if attempt, allowed = s.authThrottle.begin(keys...); !allowed {
+				http.Error(w, tooManyAttempts, http.StatusTooManyRequests)
+				return
+			}
+		}
 
 		// API-token path: when the presented credential is shaped like
 		// a token, route it exclusively through the token store and
@@ -1571,23 +1596,34 @@ func (s *Server) basicAuthHandler(h http.Handler) http.HandlerFunc {
 			}
 		}
 
+		passwordMatched := false
 		if !authorized && s.authUser != "" && s.authPass != "" && username == s.authUser && password == s.authPass {
-			authorized = true
+			passwordMatched = true
 		}
 
-		if !authorized {
+		if !authorized && !passwordMatched {
 			s.htpasswdMu.RLock()
 			f := s.htpasswdFile
 			s.htpasswdMu.RUnlock()
 			if f != nil {
-				authorized = f.Match(username, password)
+				passwordMatched = f.Match(username, password)
 			}
+		}
+
+		if passwordMatched {
+			if !s.passwordAuthAllowed(username) {
+				attempt.succeeded()
+				http.Error(w, "Two-factor authentication is required for this account, use an API token instead of the password", http.StatusUnauthorized)
+				return
+			}
+			authorized = true
 		}
 
 		if !authorized {
 			http.Error(w, "Not authorized", http.StatusUnauthorized)
 			return
 		}
+		attempt.succeeded()
 
 		if username != "" {
 			r = r.WithContext(withAuthUser(r.Context(), username))

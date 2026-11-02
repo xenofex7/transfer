@@ -105,6 +105,11 @@ func (s *Server) loginPostHandler(w http.ResponseWriter, r *http.Request) {
 	pw := r.PostForm.Get("password")
 	next := safeNext(r.PostForm.Get(loginRedirectParam))
 
+	attempt, allowed := s.authThrottle.begin(ipKey(r), userKey(name))
+	if !allowed {
+		s.flashAndBackTo(w, r, "/login", tooManyAttempts, true, next)
+		return
+	}
 	if name == "" || pw == "" || !s.verifyPassword(name, pw) {
 		// Sleep a beat to flatten the timing signal between
 		// missing-user and wrong-password.
@@ -112,6 +117,7 @@ func (s *Server) loginPostHandler(w http.ResponseWriter, r *http.Request) {
 		s.flashAndBackTo(w, r, "/login", "Invalid credentials", true, next)
 		return
 	}
+	attempt.succeeded()
 
 	hasTOTP := false
 	if s.userMeta != nil {
@@ -185,6 +191,15 @@ func (s *Server) loginTOTPPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	next := safeNext(r.PostForm.Get(loginRedirectParam))
+	totpDest := "/login/totp"
+	if next != "" {
+		totpDest += "?" + loginRedirectParam + "=" + url.QueryEscape(next)
+	}
+	throttled, allowed := s.authThrottle.begin(ipKey(r), userKey(sess.Username))
+	if !allowed {
+		s.flashAndBackTo(w, r, totpDest, tooManyAttempts, true, next)
+		return
+	}
 	attempts := s.sessions.RecordMFAAttempt(sess.ID)
 	if attempts == 0 || attempts > maxMFAAttempts {
 		s.abortMFA(w, r, sess.ID)
@@ -209,13 +224,10 @@ func (s *Server) loginTOTPPostHandler(w http.ResponseWriter, r *http.Request) {
 			s.abortMFA(w, r, sess.ID)
 			return
 		}
-		dest := "/login/totp"
-		if next != "" {
-			dest += "?" + loginRedirectParam + "=" + url.QueryEscape(next)
-		}
-		s.flashAndBackTo(w, r, dest, "Invalid code", true, next)
+		s.flashAndBackTo(w, r, totpDest, "Invalid code", true, next)
 		return
 	}
+	throttled.succeeded()
 
 	promoted, err := s.sessions.Promote(sess.ID)
 	if err != nil {
@@ -382,6 +394,13 @@ func csrfCheck(presented, sessionID string) bool {
 		return false
 	}
 	return hmac.Equal(a, b)
+}
+
+const invalidFormToken = "Invalid form token, reload the page and try again"
+
+func (s *Server) sessionCSRFValid(r *http.Request) bool {
+	sess, ok := s.sessionForRequest(r)
+	return ok && csrfCheck(r.PostFormValue("csrf"), sess.ID)
 }
 
 

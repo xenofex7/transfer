@@ -55,6 +55,7 @@
 
         <section class="card">
           <form method="POST" action="/admin/settings" class="settings-form" novalidate>
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
             <div class="settings-field">
               <label for="tagline" class="settings-label">Tagline</label>
               <input id="tagline" name="tagline" type="text" maxlength="200" value="{{.Tagline}}" autocomplete="off">
@@ -94,6 +95,7 @@
               <img class="branding-preview" src="{{logo_url}}" alt="Current logo preview">
               <p class="settings-hint">PNG / JPG / SVG / WebP / GIF, max 1 MiB. Replaces the embedded logo across the whole site.</p>
               <form method="POST" action="/admin/branding/logo" enctype="multipart/form-data" class="branding-form" novalidate>
+                <input type="hidden" name="csrf" value="{{.CSRFToken}}">
                 <div class="file-picker">
                   <input class="file-input" type="file" name="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" required data-max-bytes="1048576" hidden>
                   <button type="button" class="btn-secondary file-picker-btn">Choose file</button>
@@ -109,6 +111,7 @@
               <img class="branding-preview branding-preview-small" src="{{favicon_url}}" alt="Current favicon preview">
               <p class="settings-hint">ICO / PNG / SVG, max 1 MiB. Browsers may cache aggressively.</p>
               <form method="POST" action="/admin/branding/favicon" enctype="multipart/form-data" class="branding-form" novalidate>
+                <input type="hidden" name="csrf" value="{{.CSRFToken}}">
                 <div class="file-picker">
                   <input class="file-input" type="file" name="file" accept="image/x-icon,image/png,image/svg+xml,.ico" required data-max-bytes="1048576" hidden>
                   <button type="button" class="btn-secondary file-picker-btn">Choose file</button>
@@ -150,6 +153,7 @@
           </p>
           {{else}}
           <form method="POST" action="/admin/settings/heartbeat" class="settings-actions">
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
             {{if .HeartbeatActive}}
             <button type="submit" name="enabled" value="false" class="btn-secondary">Disable</button>
             {{else}}

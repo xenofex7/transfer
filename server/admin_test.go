@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -174,7 +175,8 @@ func TestAdminSecretsHandlerListsAndDeletes(t *testing.T) {
 		t.Fatal("GET: secret id missing from the page")
 	}
 
-	req := httptest.NewRequest("POST", "/admin/secrets/secretaaaa/delete", nil)
+	sess := startTestSession(t, s, "alice")
+	req := sessionPost("/admin/secrets/secretaaaa/delete", url.Values{"csrf": {csrfTokenFor(sess.ID)}}, sess)
 	req = mux.SetURLVars(req, map[string]string{"id": "secretaaaa"})
 	rec = httptest.NewRecorder()
 	s.adminSecretsDeleteHandler(rec, req)

@@ -56,8 +56,17 @@ Out of scope:
   removed from the user's record as it is consumed.
 - API tokens (per user, revocable, optional expiry) are the only way
   to authenticate `curl` / scripts when the password owner has TOTP
-  enabled. The token's secret is bcrypt-hashed; the cleartext is
+  enabled or `--auth-require-2fa` is on; HTTP Basic Auth rejects the
+  account password in that case. The token's secret is bcrypt-hashed; the cleartext is
   shown exactly once at creation and never logged.
 - CSRF tokens on every state-changing POST are HMAC-SHA256 of the
   session ID under a per-process random key; the key rotates on
   every restart, which intentionally invalidates pending forms.
+- Failed password and TOTP attempts (login, Basic Auth, the TOTP
+  re-checks on `/account`) are throttled per client IP and per
+  account: 10 failures within 15 minutes, then one attempt every 90
+  seconds. Each attempt takes its slot before the credential is
+  checked, so parallel requests cannot overshoot the budget; a
+  successful attempt hands it back. Wrong API tokens count only
+  against the client IP, wrong download passwords only against the
+  file. The counters are in-memory and reset on restart.

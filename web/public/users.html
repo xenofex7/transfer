@@ -63,6 +63,7 @@
         <section class="card">
           <h2 class="settings-section-title">Add user</h2>
           <form method="POST" action="/admin/users" class="settings-form" autocomplete="off" novalidate>
+            <input type="hidden" name="csrf" value="{{.CSRFToken}}">
             <div class="settings-field">
               <label for="new-username" class="settings-label">Username</label>
               <input id="new-username" name="username" type="text" maxlength="64" required pattern="[A-Za-z0-9._-]+" autocomplete="off" data-error="Only letters, digits, dots, dashes and underscores">
@@ -99,11 +100,13 @@
                 <td>
                   <div class="users-actions">
                   <form method="POST" action="/admin/users/{{.Name}}/password" class="users-inline-form" autocomplete="off" novalidate>
+                    <input type="hidden" name="csrf" value="{{$.CSRFToken}}">
                     <input type="password" name="password" placeholder="New password" minlength="8" maxlength="256" required autocomplete="new-password">
                     <button type="submit" class="btn-secondary">Reset</button>
                   </form>
                   {{if not .IsCurrent}}
                   <form method="POST" action="/admin/users/{{.Name}}/delete" class="users-inline-form" data-confirm="Delete user {{.Name}}? This cannot be undone." data-confirm-title="Delete user" data-confirm-label="Delete" data-confirm-danger>
+                    <input type="hidden" name="csrf" value="{{$.CSRFToken}}">
                     <button type="submit" class="btn-danger">Delete</button>
                   </form>
                   {{end}}

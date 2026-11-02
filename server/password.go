@@ -45,18 +45,27 @@ func unlockValue(m metadata, token, filename string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-// passwordSatisfied reports whether the request may access a protected
-// upload: no password set, a matching X-Password header (curl), or the
-// unlock cookie issued after the browser form.
-func passwordSatisfied(r *http.Request, m metadata, token, filename string) bool {
+func (s *Server) passwordSatisfied(r *http.Request, m metadata, token, filename string) (satisfied, throttled bool) {
 	if m.PasswordHash == "" {
-		return true
-	}
-	if m.passwordMatches(r.Header.Get(passwordHeader)) {
-		return true
+		return true, false
 	}
 	c, err := r.Cookie(unlockCookieName(token))
-	return err == nil && hmac.Equal([]byte(c.Value), []byte(unlockValue(m, token, filename)))
+	if err == nil && hmac.Equal([]byte(c.Value), []byte(unlockValue(m, token, filename))) {
+		return true, false
+	}
+	pw := r.Header.Get(passwordHeader)
+	if pw == "" {
+		return false, false
+	}
+	attempt, allowed := s.authThrottle.begin(fileKey(token, filename))
+	if !allowed {
+		return false, true
+	}
+	if !m.passwordMatches(pw) {
+		return false, false
+	}
+	attempt.succeeded()
+	return true, false
 }
 
 func (s *Server) renderLockedPage(w http.ResponseWriter, r *http.Request, filename, errMsg string) {
@@ -95,6 +104,12 @@ func (s *Server) unlockHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 		return
 	}
+	attempt, allowed := s.authThrottle.begin(fileKey(token, filename))
+	if !allowed {
+		w.WriteHeader(http.StatusTooManyRequests)
+		s.renderLockedPage(w, r, filename, tooManyAttempts)
+		return
+	}
 	pw := ""
 	if err := r.ParseForm(); err == nil {
 		pw = r.PostForm.Get("password")
@@ -104,6 +119,7 @@ func (s *Server) unlockHandler(w http.ResponseWriter, r *http.Request) {
 		s.renderLockedPage(w, r, filename, "Wrong password")
 		return
 	}
+	attempt.succeeded()
 	http.SetCookie(w, &http.Cookie{
 		Name:     unlockCookieName(token),
 		Value:    unlockValue(m, token, filename),

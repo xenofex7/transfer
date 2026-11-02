@@ -128,8 +128,9 @@ codes (bcrypt-hashed) and API token records live in
 ### Authentication model
 
 - **Passwords**: bcrypt-hashed in the standard htpasswd file. Used at
-  the `/login` form and as the password component of HTTP Basic Auth
-  for uploads.
+  the `/login` form. HTTP Basic Auth accepts the password only for
+  accounts without TOTP while `--auth-require-2fa=false`; everyone
+  else authenticates `curl` / scripts with an API token.
 - **TOTP (recommended)**: enrol at `/account/2fa/setup`; works with any
   RFC 6238 authenticator app (Google Authenticator, 1Password, Authy,
   etc.). Ten one-shot recovery codes are issued at enrolment.
@@ -146,6 +147,14 @@ codes (bcrypt-hashed) and API token records live in
 
 Set `--auth-require-2fa=false` if you want to allow password-only
 browser sessions (not recommended for publicly reachable instances).
+
+Failed sign-ins are throttled per client IP and per account: after
+10 failures within 15 minutes, further password and TOTP attempts
+(`/login`, `/login/totp`, the TOTP re-checks on `/account`, HTTP Basic
+Auth) are rejected until the budget refills at one attempt every 90
+seconds; Basic Auth answers `429`. Wrong API tokens only count against
+the client IP, so password guessing cannot lock out a user's tokens.
+Wrong passwords for a protected download count per file, from any IP.
 
 ---
 

@@ -55,6 +55,10 @@ func (s *Server) adminUsersAddHandler(w http.ResponseWriter, r *http.Request) {
 		s.usersFlashAndRedirect(w, r, "Invalid form submission", true)
 		return
 	}
+	if !s.sessionCSRFValid(r) {
+		s.usersFlashAndRedirect(w, r, invalidFormToken, true)
+		return
+	}
 	name := strings.TrimSpace(r.PostForm.Get("username"))
 	pw := r.PostForm.Get("password")
 	if err := s.users.Add(name, pw); err != nil {
@@ -71,6 +75,10 @@ func (s *Server) adminUsersResetHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := r.ParseForm(); err != nil {
 		s.usersFlashAndRedirect(w, r, "Invalid form submission", true)
+		return
+	}
+	if !s.sessionCSRFValid(r) {
+		s.usersFlashAndRedirect(w, r, invalidFormToken, true)
 		return
 	}
 	name := mux.Vars(r)["name"]
@@ -93,6 +101,10 @@ func (s *Server) adminUsersResetHandler(w http.ResponseWriter, r *http.Request) 
 func (s *Server) adminUsersDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if s.users == nil {
 		s.usersFlashAndRedirect(w, r, errStoreUnavailable.Error(), true)
+		return
+	}
+	if !s.sessionCSRFValid(r) {
+		s.usersFlashAndRedirect(w, r, invalidFormToken, true)
 		return
 	}
 	name := mux.Vars(r)["name"]

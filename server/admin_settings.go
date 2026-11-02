@@ -63,6 +63,10 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 		s.flashAndRedirect(w, r, "Invalid form submission", true)
 		return
 	}
+	if !s.sessionCSRFValid(r) {
+		s.flashAndRedirect(w, r, invalidFormToken, true)
+		return
+	}
 
 	var next Settings
 	if r.PostForm.Get("reset") != "" {
@@ -145,6 +149,10 @@ func (s *Server) adminHeartbeatHandler(w http.ResponseWriter, r *http.Request) {
 		s.flashAndRedirect(w, r, "Invalid form submission", true)
 		return
 	}
+	if !s.sessionCSRFValid(r) {
+		s.flashAndRedirect(w, r, invalidFormToken, true)
+		return
+	}
 	want := strings.ToLower(strings.TrimSpace(r.PostForm.Get("enabled")))
 	val := want == "true" || want == "on" || want == "1"
 
@@ -188,6 +196,10 @@ func (s *Server) adminBrandingUploadHandler(w http.ResponseWriter, r *http.Reque
 
 	if err := r.ParseMultipartForm(MaxBrandingBytes + 1<<10); err != nil {
 		s.flashAndRedirect(w, r, "Could not parse upload: "+err.Error(), true)
+		return
+	}
+	if !s.sessionCSRFValid(r) {
+		s.flashAndRedirect(w, r, invalidFormToken, true)
 		return
 	}
 	file, header, err := r.FormFile("file")

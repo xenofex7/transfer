@@ -225,6 +225,11 @@ func (s *Server) account2FADisablePostHandler(w http.ResponseWriter, r *http.Req
 	}
 	// Re-auth: require a currently valid TOTP code (or a recovery
 	// code) so a session hijacker can't disable 2FA on its own.
+	attempt, allowed := s.authThrottle.begin(ipKey(r), userKey(sess.Username))
+	if !allowed {
+		s.flashAndBackTo(w, r, "/account", tooManyAttempts, true, "")
+		return
+	}
 	code := strings.TrimSpace(r.PostForm.Get("code"))
 	recovery := strings.TrimSpace(r.PostForm.Get("recovery"))
 	switch {
@@ -239,9 +244,11 @@ func (s *Server) account2FADisablePostHandler(w http.ResponseWriter, r *http.Req
 			return
 		}
 	default:
+		attempt.succeeded()
 		s.flashAndBackTo(w, r, "/account", "Provide a code to confirm disabling 2FA", true, "")
 		return
 	}
+	attempt.succeeded()
 	if err := s.disableTOTP(sess.Username); err != nil {
 		s.flashAndBackTo(w, r, "/account", "Disable failed: "+err.Error(), true, "")
 		return
@@ -265,11 +272,22 @@ func (s *Server) account2FARecoveryRegenPostHandler(w http.ResponseWriter, r *ht
 	}
 	// Same re-auth gate as disable: present a current code so a
 	// hijacked session can't print a fresh sheet and walk off with it.
+	attempt, allowed := s.authThrottle.begin(ipKey(r), userKey(sess.Username))
+	if !allowed {
+		s.flashAndBackTo(w, r, "/account", tooManyAttempts, true, "")
+		return
+	}
 	code := strings.TrimSpace(r.PostForm.Get("code"))
-	if code == "" || s.verifyUserTOTP(sess.Username, code) != nil {
+	if code == "" {
+		attempt.succeeded()
+		s.flashAndBackTo(w, r, "/account", "Provide a code to regenerate recovery codes", true, "")
+		return
+	}
+	if s.verifyUserTOTP(sess.Username, code) != nil {
 		s.flashAndBackTo(w, r, "/account", "Regenerate failed: invalid code", true, "")
 		return
 	}
+	attempt.succeeded()
 	codes, err := s.regenerateRecoveryCodes(sess.Username)
 	if err != nil {
 		s.flashAndBackTo(w, r, "/account", "Regenerate failed: "+err.Error(), true, "")

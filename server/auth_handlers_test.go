@@ -308,8 +308,7 @@ func TestAdminPasswordResetDestroysUserSessions(t *testing.T) {
 	a := newAuthTestSetup(t)
 	sess, _ := a.server.sessions.Create("alice", false)
 
-	req := httptest.NewRequest("POST", "/admin/users/alice/reset", strings.NewReader(url.Values{"password": {"anotherlongpw"}}.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req := sessionPost("/admin/users/alice/reset", url.Values{"password": {"anotherlongpw"}, "csrf": {csrfTokenFor(sess.ID)}}, sess)
 	req = mux.SetURLVars(req, map[string]string{"name": "alice"})
 	rec := httptest.NewRecorder()
 	a.server.adminUsersResetHandler(rec, req)
