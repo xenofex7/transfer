@@ -7,6 +7,19 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-11-02
+
+### Added
+- Require the session CSRF token on every admin POST (users, settings, heartbeat, branding, secrets)
+- Throttle failed password and TOTP attempts per IP and account, API token guesses per IP and download password attempts per file (10 per 15 minutes)
+- Return 429 for throttled download password attempts
+
+### Changed
+- Reject the account password over Basic Auth when TOTP is enabled or required; API tokens keep working
+
+### Fixed
+- Validate the X-Real-Ip header before using it as the client address
+
 ## [1.8.0] - 2026-10-31
 
 ### Added
