@@ -1052,6 +1052,7 @@ img.qr {
 .admin-table .row-expired td { color: var(--ink-mute); text-decoration: line-through; }
 .admin-table .row-expired .cell-links { text-decoration: none; }
 .muted { color: var(--ink-mute); }
+.text-danger { color: var(--danger); }
 
 .admin-table-wrap { padding: 0; overflow-x: auto; border-radius: var(--radius-lg); }
 .admin-toolbar    { padding: var(--space-sm) var(--space-md); }

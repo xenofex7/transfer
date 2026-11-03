@@ -32,6 +32,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
@@ -167,8 +168,15 @@ func contactHref(contact string) string {
 // page's <head>. It runs synchronously before paint so the right theme
 // is already applied on the first frame (no flash of wrong theme).
 func themeBootstrap() htmlTemplate.HTML {
-	return htmlTemplate.HTML(`<script>(function(){try{var k='transfersh_theme',v=localStorage.getItem(k);if(v!=='light'&&v!=='dark'&&v!=='system')v=document.documentElement.getAttribute('data-theme-default')||'system';if(v==='light'||v==='dark')document.documentElement.setAttribute('data-theme',v);}catch(e){}})();</script>`)
+	return htmlTemplate.HTML("<script>" + themeBootstrapJS + "</script>")
 }
+
+const themeBootstrapJS = `(function(){var d=document.documentElement;if(location.hash==='#secret')d.dataset.tab='secret';try{var k='transfersh_theme',v=localStorage.getItem(k);if(v!=='light'&&v!=='dark'&&v!=='system')v=d.getAttribute('data-theme-default')||'system';if(v==='light'||v==='dark')d.setAttribute('data-theme',v);}catch(e){}})();`
+
+var themeBootstrapHash = func() string {
+	sum := sha256.Sum256([]byte(themeBootstrapJS))
+	return "'sha256-" + base64.StdEncoding.EncodeToString(sum[:]) + "'"
+}()
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write([]byte("Approaching Neutral Zone, all systems normal and functioning."))
@@ -1521,8 +1529,27 @@ func securityHeaders(h http.Handler) http.HandlerFunc {
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 		w.Header().Set("Referrer-Policy", "same-origin")
 		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000")
+		w.Header().Set("Content-Security-Policy", contentSecurityPolicy())
 		h.ServeHTTP(w, r)
 	}
+}
+
+func contentSecurityPolicy() string {
+	scripts, connect := "'self' "+themeBootstrapHash, "'self'"
+	if cfg := activeUmami.Load(); cfg != nil {
+		if u, err := url.Parse(cfg.scriptURL); err == nil && u.Host != "" {
+			origin := u.Host
+			if u.Scheme == "http" || u.Scheme == "https" {
+				origin = u.Scheme + "://" + u.Host
+			}
+			scripts += " " + origin
+			connect += " " + origin
+		}
+	}
+	return "default-src 'self'; script-src " + scripts + "; style-src 'self'; img-src 'self' data:; " +
+		"connect-src " + connect + "; frame-src 'self'; frame-ancestors 'self'; " +
+		"base-uri 'self'; form-action 'self'"
 }
 
 // LoveHandler Create a log handler for every request it receives.

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{{asset "/styles/main.css"}}">
   {{theme_bootstrap}}
 </head>
-<body>
+<body{{with .Flash}} data-flash="{{.}}"{{end}}{{with .FlashError}} data-flash-error="{{.}}"{{end}}>
   <button class="theme-toggle" type="button" aria-label="Switch theme"><i data-lucide="monitor"></i></button>
   <div class="app">
     <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
@@ -125,15 +125,6 @@
       </main>
     </div>
   </div>
-  {{if or .Flash .FlashError}}
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      if (!window.toast) return;
-      {{with .Flash}}window.toast.success({{.}});{{end}}
-      {{with .FlashError}}window.toast.error({{.}});{{end}}
-    });
-  </script>
-  {{end}}
   <script src="{{asset "/scripts/sidebar.js"}}" defer></script>
   <script src="{{asset "/scripts/lucide.min.js"}}" defer></script>
   <script src="{{asset "/scripts/toast.js"}}" defer></script>

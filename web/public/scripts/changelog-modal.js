@@ -33,7 +33,7 @@
           '<h2 class="modal-title" id="modal-title">Changelog</h2>' +
           '<button type="button" class="modal-close" aria-label="Close" data-tooltip="Close"><i data-lucide="x"></i></button>' +
         '</header>' +
-        '<div class="modal-body" id="modal-body"><p style="color:var(--ink-mute)">Loading...</p></div>' +
+        '<div class="modal-body" id="modal-body"><p class="muted">Loading...</p></div>' +
       '</div>';
     document.body.appendChild(backdrop);
     modal = backdrop.querySelector('.modal');
@@ -88,7 +88,7 @@
         })
         .catch(function (err) {
           if (!body) return;
-          body.innerHTML = '<p style="color:var(--danger)">Could not load changelog: ' + err.message + '</p>';
+          body.innerHTML = '<p class="text-danger">Could not load changelog: ' + err.message + '</p>';
         });
     }
   }

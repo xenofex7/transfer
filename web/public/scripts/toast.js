@@ -172,4 +172,10 @@
     info:    function (msg, opts) { return show(msg, Object.assign({ kind: 'neutral' }, opts || {})); },
     error:   function (msg, opts) { return show(msg, Object.assign({ kind: 'danger'  }, opts || {})); },
   };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var data = document.body.dataset;
+    if (data.flash) window.toast.success(data.flash);
+    if (data.flashError) window.toast.error(data.flashError);
+  });
 })();
