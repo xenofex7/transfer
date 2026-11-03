@@ -897,7 +897,7 @@ img.qr {
   font-size: 12px;
 }
 .footer-version { justify-self: start; }
-.footer-mid     { justify-self: center; }
+.footer-mid     { justify-self: center; display: inline-flex; gap: var(--space-md); }
 .footer-link {
   justify-self: end;
   display: inline-flex;

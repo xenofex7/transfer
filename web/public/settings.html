@@ -69,6 +69,12 @@
             </div>
 
             <div class="settings-field">
+              <label for="privacy_url" class="settings-label">Privacy policy</label>
+              <input id="privacy_url" name="privacy_url" type="text" maxlength="200" value="{{.PrivacyURL}}" autocomplete="off" placeholder="https://example.com/privacy">
+              <p class="settings-hint">https:// link for the "privacy" link in the footer. Leave empty to hide.</p>
+            </div>
+
+            <div class="settings-field">
               <label for="theme" class="settings-label">Default theme</label>
               <select id="theme" name="theme" class="settings-select">
                 <option value="system" {{if eq .Theme "system"}}selected{{end}}>Follow OS preference</option>

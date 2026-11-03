@@ -97,6 +97,7 @@ func initHTMLTemplates() *htmlTemplate.Template {
 		"theme_bootstrap": themeBootstrap,
 		"build_version":   func() string { return BuildVersion },
 		"contact_url":     contactURL,
+		"privacy_url":     privacyURL,
 		"umami_script":    func() htmlTemplate.HTML { return htmlTemplate.HTML(umamiScript()) },
 	}
 
@@ -145,6 +146,14 @@ func contactURL() string {
 		return ""
 	}
 	return contactHref(s.Get().EmailContact)
+}
+
+func privacyURL() string {
+	s := activeSettings.Load()
+	if s == nil {
+		return ""
+	}
+	return s.Get().PrivacyURL
 }
 
 func contactHref(contact string) string {

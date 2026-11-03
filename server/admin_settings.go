@@ -24,6 +24,7 @@ type adminSettingsData struct {
 	CSRFToken       string
 	Tagline         string
 	EmailContact    string
+	PrivacyURL      string
 	Theme           string
 	HasLogo         bool
 	HasFavicon      bool
@@ -46,7 +47,7 @@ type adminSettingsData struct {
 
 func (s *Server) adminSettingsGetHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := s.settings.Get()
-	data := s.settingsData(r, cfg.Tagline, cfg.EmailContact, cfg.Theme)
+	data := s.settingsData(r, cfg)
 	if c, err := r.Cookie("settings_flash_ok"); err == nil && c.Value != "" {
 		data.Flash = c.Value
 		http.SetCookie(w, &http.Cookie{Name: "settings_flash_ok", Value: "", Path: "/admin/settings", MaxAge: -1})
@@ -74,6 +75,7 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 	} else {
 		next.Tagline = strings.TrimSpace(r.PostForm.Get("tagline"))
 		next.EmailContact = strings.TrimSpace(r.PostForm.Get("email_contact"))
+		next.PrivacyURL = strings.TrimSpace(r.PostForm.Get("privacy_url"))
 		next.Theme = strings.TrimSpace(r.PostForm.Get("theme"))
 		if !ValidThemes[next.Theme] {
 			next.Theme = DefaultTheme
@@ -81,12 +83,16 @@ func (s *Server) adminSettingsPostHandler(w http.ResponseWriter, r *http.Request
 	}
 	next.HeartbeatEnabled = s.settings.Get().HeartbeatEnabled
 
-	if len(next.Tagline) > 200 || len(next.EmailContact) > 200 {
+	if len(next.Tagline) > 200 || len(next.EmailContact) > 200 || len(next.PrivacyURL) > 200 {
 		s.flashAndRedirect(w, r, "Values must be 200 characters or fewer.", true)
 		return
 	}
 	if next.EmailContact != "" && !validContact(next.EmailContact) {
 		s.flashAndRedirect(w, r, "Contact must be an email address or an https:// link.", true)
+		return
+	}
+	if next.PrivacyURL != "" && !validHTTPSURL(next.PrivacyURL) {
+		s.flashAndRedirect(w, r, "Privacy policy must be an https:// link.", true)
 		return
 	}
 
@@ -112,13 +118,14 @@ func (s *Server) renderSettings(w http.ResponseWriter, _ *http.Request, data adm
 
 // settingsData centralises the template-context construction so every code
 // path renders the same hostname / branding-state info.
-func (s *Server) settingsData(r *http.Request, tagline, email, theme string) adminSettingsData {
+func (s *Server) settingsData(r *http.Request, cfg Settings) adminSettingsData {
 	d := adminSettingsData{
 		Hostname:        getURL(r, s.proxyPort).Host,
 		CurrentUser:     currentUserFromRequest(r),
-		Tagline:         tagline,
-		EmailContact:    email,
-		Theme:           theme,
+		Tagline:         cfg.Tagline,
+		EmailContact:    cfg.EmailContact,
+		PrivacyURL:      cfg.PrivacyURL,
+		Theme:           cfg.Theme,
 		BrandingEnabled: s.branding != nil && s.brandingDir != "",
 	}
 	if sess, ok := s.sessionForRequest(r); ok {
@@ -252,9 +259,13 @@ func (s *Server) flashAndRedirect(w http.ResponseWriter, r *http.Request, msg st
 
 func validContact(contact string) bool {
 	if strings.HasPrefix(contact, "https://") {
-		u, err := url.Parse(contact)
-		return err == nil && u.Host != ""
+		return validHTTPSURL(contact)
 	}
 	_, err := mail.ParseAddress(contact)
 	return err == nil
+}
+
+func validHTTPSURL(link string) bool {
+	u, err := url.Parse(link)
+	return err == nil && u.Scheme == "https" && u.Host != ""
 }

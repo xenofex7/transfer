@@ -164,3 +164,48 @@ func TestValidContact(t *testing.T) {
 		}
 	}
 }
+
+func TestAdminSettingsPrivacyURL(t *testing.T) {
+	store, err := newSettingsStore(filepath.Join(t.TempDir(), ".settings.json"), Settings{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := &Server{settings: store, logger: log.New(io.Discard, "", 0)}
+	sess := startTestSession(t, s, "alice")
+
+	post := func(privacy string) {
+		t.Helper()
+		form := url.Values{"theme": {DefaultTheme}, "privacy_url": {privacy}, "csrf": {csrfTokenFor(sess.ID)}}
+		rec := httptest.NewRecorder()
+		s.adminSettingsPostHandler(rec, sessionPost("/admin/settings", form, sess))
+		if rec.Code != http.StatusSeeOther {
+			t.Fatalf("expected 303, got %d", rec.Code)
+		}
+	}
+
+	post(" https://example.com/privacy/ ")
+	if got := store.Get().PrivacyURL; got != "https://example.com/privacy/" {
+		t.Fatalf("privacy URL not saved: %q", got)
+	}
+	for _, bad := range []string{"http://example.com/privacy", "javascript:alert(1)", "ops@example.com"} {
+		post(bad)
+		if got := store.Get().PrivacyURL; got != "https://example.com/privacy/" {
+			t.Fatalf("%q replaced the privacy URL with %q", bad, got)
+		}
+	}
+	post("")
+	if got := store.Get().PrivacyURL; got != "" {
+		t.Fatalf("privacy URL not cleared: %q", got)
+	}
+}
+
+func TestValidHTTPSURL(t *testing.T) {
+	if !validHTTPSURL("https://example.com/privacy") {
+		t.Error("expected https link to be valid")
+	}
+	for _, c := range []string{"", "http://example.com", "https://", "javascript:alert(1)", "//example.com"} {
+		if validHTTPSURL(c) {
+			t.Errorf("expected %q to be rejected", c)
+		}
+	}
+}

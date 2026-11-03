@@ -35,6 +35,7 @@ var ValidThemes = map[string]bool{"system": true, "light": true, "dark": true}
 type Settings struct {
 	Tagline      string `json:"tagline"`
 	EmailContact string `json:"email_contact"`
+	PrivacyURL   string `json:"privacy_url,omitempty"`
 	Theme        string `json:"theme"`
 	// HeartbeatEnabled tri-states the optional anonymous instance ping.
 	// nil  -> operator never made a choice; the built-in default applies.

@@ -39,7 +39,7 @@
 
     <footer class="footer">
       <span class="footer-version">{{if build_version}}{{build_version}}{{end}}</span>
-      <span class="footer-mid">{{with contact_url}}<a href="{{.}}">contact</a>{{end}}</span>
+      <span class="footer-mid">{{with contact_url}}<a href="{{.}}">contact</a>{{end}}{{with privacy_url}}<a href="{{.}}">privacy</a>{{end}}</span>
       <a class="footer-link" href="https://github.com/xenofex7/transfer" target="_blank" rel="noopener">
         <i data-lucide="git-branch"></i><span>source on github</span>
       </a>
