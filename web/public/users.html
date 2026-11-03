@@ -20,7 +20,7 @@
       </div>
       <nav class="sidebar-nav">
         <a class="sidebar-link" href="/admin/files"><i data-lucide="files"></i><span>Files</span></a>
-        <a class="sidebar-link is-active" href="/admin/users"><i data-lucide="users"></i><span>Users</span></a>
+        <a class="sidebar-link is-active" href="/admin/users" aria-current="page"><i data-lucide="users"></i><span>Users</span></a>
         <a class="sidebar-link" href="/admin/settings"><i data-lucide="settings"></i><span>Settings</span></a>
         <a class="sidebar-link" href="/account"><i data-lucide="user"></i><span>Account</span></a>
         <div class="sidebar-sep" role="separator"></div>
@@ -44,7 +44,7 @@
 
     <div class="app-main">
       <header class="topbar">
-        <button class="topbar-menu" id="sidebar-open" type="button" aria-label="Open menu" data-tooltip="Open menu"><i data-lucide="menu"></i></button>
+        <button class="topbar-menu" id="sidebar-open" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false" data-tooltip="Open menu"><i data-lucide="menu"></i></button>
         <a class="topbar-brand" href="/" aria-label="Home"><img class="logo logo-small" src="{{logo_url}}" alt=""></a>
       </header>
 
