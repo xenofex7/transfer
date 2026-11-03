@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -254,5 +255,28 @@ func TestLocalStoragePurgeWithoutAgeCap(t *testing.T) {
 	}
 	if _, err := s.Head(ctx, "tokold", "old.txt"); err != nil {
 		t.Errorf("old file without MaxDate must survive when the age cap is disabled: %v", err)
+	}
+}
+
+func TestLocalStoragePutIsGroupReadable(t *testing.T) {
+	s := newTestStorage(t)
+	if err := s.Put(context.Background(), "tok", "a.txt", strings.NewReader("x"), "text/plain", 1); err != nil {
+		t.Fatalf("Put: %v", err)
+	}
+	for path, groupBits := range map[string]os.FileMode{
+		filepath.Join(s.basedir, "tok"):          0o050,
+		filepath.Join(s.basedir, "tok", "a.txt"): 0o040,
+	} {
+		fi, err := os.Stat(path)
+		if err != nil {
+			t.Fatalf("Stat %s: %v", path, err)
+		}
+		perm := fi.Mode().Perm()
+		if perm&groupBits != groupBits {
+			t.Errorf("%s: mode %v lacks group bits %v", path, perm, groupBits)
+		}
+		if perm&0o007 != 0 {
+			t.Errorf("%s: mode %v grants access to others", path, perm)
+		}
 	}
 }
