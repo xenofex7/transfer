@@ -588,8 +588,8 @@ func (s *Server) Run() {
 	})
 
 	r.PathPrefix("/images/").Handler(cachedAssets).Methods("GET")
-	r.PathPrefix("/styles/").Handler(cachedAssets).Methods("GET")
-	r.PathPrefix("/scripts/").Handler(cachedAssets).Methods("GET")
+	r.PathPrefix("/styles/").Handler(gorillaHandlers.CompressHandler(cachedAssets)).Methods("GET")
+	r.PathPrefix("/scripts/").Handler(gorillaHandlers.CompressHandler(cachedAssets)).Methods("GET")
 	r.PathPrefix("/fonts/").Handler(cachedAssets).Methods("GET")
 	r.PathPrefix("/ico/").Handler(cachedShort).Methods("GET")
 	r.HandleFunc("/favicon.ico", cachedShort.ServeHTTP).Methods("GET")
