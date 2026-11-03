@@ -7,6 +7,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.3] - 2026-11-03
+
+### Added
+- Add an "Auto-delete after ... days" field to Edit options so signed-in users can change an upload's retention
+- Accept `maxDays` in the options PATCH endpoint, capped at the tier TTL; values that would put the expiry in the past are rejected
+
+### Changed
+- Store the upload time in the metadata and count Max-Days from it
+- Show plain-text server errors in the save toast, with the HTTP status as fallback
+
 ## [1.8.2] - 2026-11-03
 
 ### Changed
