@@ -7,6 +7,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-11-03
+
+### Changed
+- Create upload directories with 0750 and files with 0640 so host backup processes running under the group can read them
+- Shrink the embedded logos to 600 px wide, from 822 KB and 314 KB down to 15 KB and 7 KB
+
 ## [1.8.1] - 2026-11-02
 
 ### Added
