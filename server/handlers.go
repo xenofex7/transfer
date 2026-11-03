@@ -594,6 +594,7 @@ type metadata struct {
 	// PasswordHash is the bcrypt hash of the optional download password.
 	// Empty means the link alone grants access.
 	PasswordHash string
+	UploadedAt   time.Time
 }
 
 func (s *Server) metadataForRequest(contentType string, contentLength int64, r *http.Request) (metadata, error) {
@@ -605,6 +606,7 @@ func (s *Server) metadataForRequest(contentType string, contentLength int64, r *
 		MaxDownloads:  -1,
 		DeletionToken: token(s.randomTokenLength) + token(s.randomTokenLength),
 		Uploader:      currentUserFromRequest(r),
+		UploadedAt:    time.Now(),
 	}
 
 	if v := r.Header.Get("Max-Downloads"); v == "" {
@@ -613,27 +615,8 @@ func (s *Server) metadataForRequest(contentType string, contentLength int64, r *
 		metadata.MaxDownloads = v
 	}
 
-	// Tier retention: anonymous uploads expire after the anon TTL,
-	// signed-in uploads after the auth TTL. A smaller Max-Days request
-	// wins; anything above the tier TTL is capped to it.
-	maxTTL := s.authUploadTTL
-	if metadata.Uploader == "" {
-		maxTTL = s.anonUploadTTL
-	}
-
-	if v := r.Header.Get("Max-Days"); v == "" {
-	} else if v, err := strconv.Atoi(v); err != nil {
-	} else if v > 0 {
-		d := time.Hour * 24 * time.Duration(v)
-		if maxTTL > 0 && d > maxTTL {
-			d = maxTTL
-		}
-		metadata.MaxDate = time.Now().Add(d)
-	}
-
-	if metadata.MaxDate.IsZero() && maxTTL > 0 {
-		metadata.MaxDate = time.Now().Add(maxTTL)
-	}
+	maxDays, _ := strconv.Atoi(r.Header.Get("Max-Days"))
+	metadata.MaxDate = expiryAfter(metadata.UploadedAt, maxDays, s.uploadTTLFor(metadata.Uploader))
 
 	if pw := r.Header.Get(passwordHeader); pw != "" {
 		if len(pw) > maxUploadPassLen {
@@ -647,6 +630,24 @@ func (s *Server) metadataForRequest(contentType string, contentLength int64, r *
 	}
 
 	return metadata, nil
+}
+
+func (s *Server) uploadTTLFor(uploader string) time.Duration {
+	if uploader == "" {
+		return s.anonUploadTTL
+	}
+	return s.authUploadTTL
+}
+
+func expiryAfter(uploadedAt time.Time, days int, maxTTL time.Duration) time.Time {
+	ttl := maxTTL
+	if days > 0 && (maxTTL <= 0 || time.Duration(days) <= maxTTL/(24*time.Hour)) {
+		ttl = time.Duration(days) * 24 * time.Hour
+	}
+	if ttl <= 0 {
+		return time.Time{}
+	}
+	return uploadedAt.Add(ttl)
 }
 
 // effectiveMaxUploadSize picks the size cap for this request's tier:
@@ -1065,6 +1066,7 @@ func (s *Server) uploadOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		MaxDownloads int     `json:"maxDownloads"`
 		Password     *string `json:"password"`
+		MaxDays      *int    `json:"maxDays"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -1107,6 +1109,17 @@ func (s *Server) uploadOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Password != nil {
 		meta.PasswordHash = passwordHash
+	}
+	if req.MaxDays != nil {
+		if meta.UploadedAt.IsZero() {
+			meta.UploadedAt = time.Now()
+		}
+		maxDate := expiryAfter(meta.UploadedAt, *req.MaxDays, s.uploadTTLFor(meta.Uploader))
+		if !maxDate.IsZero() && time.Now().After(maxDate) {
+			http.Error(w, "Auto-delete date would already be in the past", http.StatusBadRequest)
+			return
+		}
+		meta.MaxDate = maxDate
 	}
 
 	buffer := &bytes.Buffer{}

@@ -156,6 +156,7 @@
         var optionsUrl = xhr.getResponseHeader('X-Url-Delete');
         if (optionsUrl) {
           addOptionsEditor(item, result, optionsUrl, {
+            maxDays: maxDays > 0 ? maxDays : 0,
             maxDownloads: maxDownloads > 0 ? maxDownloads : 0,
             password: password || ''
           });
@@ -185,10 +186,14 @@
     var downloads = opts.maxDownloads > 0
       ? 'Max ' + opts.maxDownloads + (opts.maxDownloads === 1 ? ' download' : ' downloads')
       : 'Unlimited downloads';
-    return downloads + ' \u00b7 ' + (opts.password ? 'password' : 'no password');
+    var summary = downloads + ' \u00b7 ' + (opts.password ? 'password' : 'no password');
+    if (opts.maxDays > 0) {
+      summary += ' \u00b7 auto-delete after ' + opts.maxDays + (opts.maxDays === 1 ? ' day' : ' days');
+    }
+    return summary;
   }
 
-  function optionField(label, input) {
+  function optionField(label, input, suffix) {
     var wrap = document.createElement('label');
     wrap.className = 'upload-option';
     var caption = document.createElement('span');
@@ -197,6 +202,12 @@
     var box = document.createElement('span');
     box.className = 'upload-option-input';
     box.appendChild(input);
+    if (suffix) {
+      var unit = document.createElement('span');
+      unit.className = 'upload-option-suffix';
+      unit.textContent = suffix;
+      box.appendChild(unit);
+    }
     wrap.appendChild(caption);
     wrap.appendChild(box);
     return wrap;
@@ -223,6 +234,17 @@
     form.noValidate = true;
     form.hidden = true;
 
+    var daysInput = null;
+    if (optMaxDays) {
+      daysInput = document.createElement('input');
+      daysInput.type = 'number';
+      daysInput.min = '1';
+      daysInput.max = optMaxDays.getAttribute('max');
+      daysInput.step = '1';
+      daysInput.placeholder = optMaxDays.getAttribute('placeholder');
+      daysInput.autocomplete = 'off';
+    }
+
     var maxInput = document.createElement('input');
     maxInput.type = 'number';
     maxInput.min = '1';
@@ -239,6 +261,7 @@
 
     var grid = document.createElement('div');
     grid.className = 'upload-options-grid';
+    if (daysInput) grid.appendChild(optionField('Auto-delete after', daysInput, 'days'));
     grid.appendChild(optionField('Max downloads', maxInput));
     grid.appendChild(optionField('Password', pwInput));
     form.appendChild(grid);
@@ -262,9 +285,10 @@
       form.hidden = !open;
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       if (open) {
+        if (daysInput) daysInput.value = opts.maxDays > 0 ? String(opts.maxDays) : '';
         maxInput.value = opts.maxDownloads > 0 ? String(opts.maxDownloads) : '';
         pwInput.value = opts.password;
-        maxInput.focus();
+        (daysInput || maxInput).focus();
       }
     }
 
@@ -280,13 +304,23 @@
         maxDownloads: parseInt(maxInput.value, 10) > 0 ? parseInt(maxInput.value, 10) : 0,
         password: pwInput.value
       };
+      if (daysInput) {
+        var days = parseInt(daysInput.value, 10);
+        var daysCap = parseInt(daysInput.max, 10) || 365;
+        next.maxDays = days > 0 ? Math.min(days, daysCap) : 0;
+      }
       save.disabled = true;
       fetch(optionsUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(next)
       }).then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) {
+          var plain = (res.headers.get('Content-Type') || '').indexOf('text/plain') === 0;
+          return (plain ? res.text() : Promise.resolve('')).then(function (text) {
+            throw new Error(text.trim() || 'HTTP ' + res.status);
+          });
+        }
         opts = next;
         meta.textContent = describeOptions(opts);
         setOpen(false);

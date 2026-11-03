@@ -200,14 +200,17 @@ curl --upload-file ./hello.txt https://your-instance.example.com/hello.txt \
 curl https://your-instance.example.com/<token>/hello.txt -H "X-Password: s3cret" -O
 ```
 
-Change the download limit and password of an existing upload with the delete
-token. `maxDownloads` 0 means unlimited. An empty `password` removes it, and
-leaving `password` out keeps the current one.
+Change the download limit, password and retention of an existing upload with
+the delete token. `maxDownloads` 0 means unlimited. An empty `password`
+removes it, and leaving `password` out keeps the current one. `maxDays` counts
+from the upload time and is capped at the tier TTL; 0 resets it to the tier
+TTL, leaving it out keeps the current expiry, and a date already in the past
+is rejected.
 
 ```bash
 curl -X PATCH https://your-instance.example.com/<token>/hello.txt/<delete-token> \
   -H "Content-Type: application/json" \
-  -d '{"maxDownloads": 3, "password": "s3cret"}'
+  -d '{"maxDownloads": 3, "password": "s3cret", "maxDays": 7}'
 ```
 
 ### Link aliases
