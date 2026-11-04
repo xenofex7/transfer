@@ -8,7 +8,7 @@
 <h1 align="center">transfer</h1>
 
 <p align="center">
-  A self-hosted file transfer service. From one place to another - simple, secure, fast, no limits.
+  Self-hosted file transfer service: uploads via browser or <code>curl</code>, one-time secrets, htpasswd users with TOTP, admin UI.
 </p>
 
 <p align="center">
@@ -18,8 +18,6 @@
   <a href="https://github.com/xenofex7/transfer/pkgs/container/transfer"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ed?logo=docker&logoColor=white" alt="container image"></a>
   <a href="https://github.com/xenofex7/transfer/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/xenofex7/transfer/test.yml?branch=main&label=tests" alt="tests"></a>
   <a href="https://github.com/xenofex7/transfer/actions/workflows/docker.yml"><img src="https://img.shields.io/github/actions/workflow/status/xenofex7/transfer/docker.yml?branch=main&label=docker%20build" alt="docker build"></a>
-  <img src="https://img.shields.io/github/last-commit/xenofex7/transfer" alt="last commit">
-  <img src="https://img.shields.io/github/commit-activity/y/xenofex7/transfer" alt="commit activity">
 </p>
 
 > Originally based on [dutchcoders/transfer.sh](https://github.com/dutchcoders/transfer.sh);
@@ -61,19 +59,20 @@ contains the deletion URL - keep both.
 
 > **Heads-up for the bare quick start:** this command starts the
 > container with **no authentication** - anything that can reach port
-> 8080 can upload, download and delete. It also fires the
-> [anonymous instance heartbeat](#anonymous-instance-heartbeat-on-by-default-easy-to-disable)
-> within 30 s. For anything beyond a local kick-the-tyres run, use the
+> 8080 can upload (anonymous tier), and nobody can sign in, so the admin
+> UI is unreachable. It also fires the
+> [anonymous instance heartbeat](#anonymous-instance-heartbeat) after
+> 30 s. For anything beyond a local test run, use the
 > [docker compose stack](#self-hosting-with-docker-compose) below, which
 > wires up htpasswd auth and an external reverse proxy.
 
-The container image bakes in sensible defaults (`LISTENER=:8080`,
-`BASEDIR=/data`, `TEMP_PATH=/tmp`, `PURGE_DAYS=360`,
-`PURGE_INTERVAL=1`); override them via env or CLI flags as needed.
+The container image presets `LISTENER=:8080`, `BASEDIR=/data`,
+`TEMP_PATH=/tmp`, `PURGE_DAYS=360` and `PURGE_INTERVAL=1`; override them via
+env or CLI flags as needed.
 
-Multi-arch images (`linux/amd64`, `linux/arm64`) are published on GHCR with
-`latest`, semver (`X.Y.Z`, `X.Y`, `X`) and per-commit (`sha-<short>`) tags.
-Pin to a specific version in production.
+Multi-arch images (`linux/amd64`, `linux/arm64`) are built on release tags
+and published on GHCR as `latest` and semver (`X.Y.Z`, `X.Y`, `X`). Pin to a
+specific version in production.
 
 ---
 
@@ -95,14 +94,37 @@ sudo chown -R 65532:65532 auth
 docker compose up -d
 ```
 
-After the stack is up, open the [admin UI](#admin-ui) to manage users,
-inspect uploads, and tweak branding without touching files by hand.
+After the stack is up, sign in at `/login`. With `AUTH_REQUIRE_2FA=true`
+(the default) the first sign-in redirects to TOTP enrolment. Then open the
+[admin UI](#admin-ui) to manage users, inspect uploads, and change branding.
 
-The transfer container exposes port 8080 only inside the compose network.
-TLS and the public hostname are expected to be handled by your reverse proxy
-of choice (nginx, Caddy, Traefik). Pass standard proxy headers
-(`X-Forwarded-Host`, `X-Forwarded-Proto`) and set `client_max_body_size` to at
-least the value of `MAX_UPLOAD_SIZE`.
+### Reverse proxy
+
+The transfer container exposes port 8080 only inside the compose network,
+which joins the external Docker network named by `PROXY_NETWORK`. TLS and
+the public hostname are handled by your reverse proxy (nginx, Caddy,
+Traefik). It must:
+
+- forward the original `Host` header and set `X-Forwarded-Proto`; both build
+  the returned download URLs, and `X-Forwarded-Proto: https` sets the
+  `Secure` cookie flag
+- set `X-Forwarded-For` (or `X-Real-Ip`); the client IP for throttling, rate
+  limit, IP filters and logs is only taken from these headers when the
+  direct peer is a private or loopback address
+- allow request bodies of at least `MAX_UPLOAD_SIZE` (given in KB), e.g.
+  nginx `client_max_body_size`
+
+### Upgrades and backups
+
+Pin `TRANSFER_IMAGE` in `.env` to a release tag, then
+`docker compose pull && docker compose up -d`. Release notes are in
+[`CHANGELOG.md`](CHANGELOG.md); migration notes for older layouts are in the
+header of [`docker-compose.yml`](docker-compose.yml).
+
+All state lives in two host directories: `DATA_DIR` (uploads plus
+`.settings.json`, `.branding/`, `.secrets/`, `.deletions.jsonl`) and
+`AUTH_DIR` (`htpasswd` and `htpasswd.meta.json` with TOTP secrets and API
+tokens). Back up both.
 
 ---
 
@@ -110,7 +132,8 @@ least the value of `MAX_UPLOAD_SIZE`.
 
 Browser routes live behind a cookie-based login at `/login`. After
 signing in (password + TOTP if 2FA is enabled) the following pages
-become reachable:
+become reachable. There are no roles: every signed-in user has full admin
+access.
 
 | Path | Purpose |
 |---|---|
@@ -227,29 +250,27 @@ Inline (open in browser instead of download):
 https://your-instance.example.com/inline/<token>/hello.txt
 ```
 
+### One-time secrets
+
+The homepage also shares short texts (passwords, credentials) that can be
+opened exactly once. Encryption (AES-256-GCM) happens in the browser and the
+key travels in the URL fragment, so the server only stores ciphertext.
+Unopened secrets expire after 24 h (anonymous) or 7 days (signed in).
+
 For shell helpers, encryption, bulk archives and more, see [`examples.md`](examples.md).
 
 ---
 
 ## Configuration
 
-All flags can be set via CLI args or the matching environment variable.
-
-### Network
-
-| Flag | Env | Default | Description |
-|---|---|---|---|
-| `--listener` | `LISTENER` | `127.0.0.1:8080` (binary) / `:8080` (container) | Address the HTTP server binds to |
-| `--proxy-path` | `PROXY_PATH` | - | Path prefix when behind a reverse proxy |
-| `--proxy-port` | `PROXY_PORT` | - | External port of the reverse proxy |
-| `--cors-domains` | `CORS_DOMAINS` | - | Comma-separated list of CORS origins |
-
-### Storage
-
-| Flag | Env | Default | Description |
-|---|---|---|---|
-| `--basedir` | `BASEDIR` | *required* (the container image presets it to `/data`) | Path to the local storage directory |
-| `--temp-path` | `TEMP_PATH` | OS temp dir (`/tmp` in the container) | Path used for in-flight uploads |
+Every option is a CLI flag with a matching environment variable.
+`transfer --help` (or `docker run --rm ghcr.io/xenofex7/transfer:latest --help`)
+lists all flags with their env names and binary defaults;
+[`.env.example`](.env.example) documents the values used by the compose
+stack. Note that the binary defaults differ from the compose defaults in a
+few places, e.g. `LISTENER` (`127.0.0.1:8080` vs. `:8080`) and
+`MAX_UPLOAD_SIZE` (`0` = no limit vs. `10485760` KB = 10 GiB). `BASEDIR` is
+required.
 
 ### Upload tiers & lifecycle
 
@@ -268,8 +289,6 @@ files from disk.
 | `--auth-upload-ttl` | `AUTH_UPLOAD_TTL` | `4320h` (180 days) | Default and maximum retention for signed-in uploads; `0` disables the forced expiry |
 | `--purge-days` | `PURGE_DAYS` | `360` | Hard age cap: uploads older than this are purged regardless of expiry; `0` disables the cap, per-upload expiry still applies |
 | `--purge-interval` | `PURGE_INTERVAL` | `1` | Hours between purge runs |
-| `--rate-limit` | `RATE_LIMIT` | `0` (off) | Requests per minute |
-| `--random-token-length` | `RANDOM_TOKEN_LENGTH` | `10` | URL token length |
 
 A `Max-Days` request header shortens the retention per upload; values
 above the tier TTL are capped to it.
@@ -279,52 +298,23 @@ gets the anonymous limits. Raise `ANON_MAX_UPLOAD_SIZE` and
 `ANON_UPLOAD_TTL` (or set them to `0` for no limit) on such an
 instance.
 
+`RATE_LIMIT` caps file downloads per client IP and minute (`0` = off); it
+does not apply to uploads.
+
 ### Authentication & access control
 
-| Flag | Env | Description |
-|---|---|---|
-| `--http-auth-user` / `--http-auth-pass` | `HTTP_AUTH_USER` / `HTTP_AUTH_PASS` | Single-user basic auth |
-| `--http-auth-htpasswd` | `HTTP_AUTH_HTPASSWD` | Path to a htpasswd file (multi-user) |
-| `--http-auth-ip-whitelist` | `HTTP_AUTH_IP_WHITELIST` | CIDRs that may upload without auth |
-| `--auth-require-2fa` | `AUTH_REQUIRE_2FA` | Force every user to enrol TOTP before reaching protected routes (default `true`) |
-| `--auth-session-ttl` | `AUTH_SESSION_TTL` | Idle timeout for the browser session cookie (default `8h`) |
-| `--auth-session-max-lifetime` | `AUTH_SESSION_MAX_LIFETIME` | Hard upper bound on a session cookie regardless of activity (default `720h`) |
-| `--ip-whitelist` | `IP_WHITELIST` | CIDRs allowed at the connection level |
-| `--ip-blacklist` | `IP_BLACKLIST` | CIDRs denied at the connection level |
-
-### Frontend / misc
-
-| Flag | Env | Description |
-|---|---|---|
-| `--tagline` | `TAGLINE` | Subtitle shown beneath the hostname on the homepage; empty hides it. The admin UI overrides this at runtime. |
-| `--email-contact` | `EMAIL_CONTACT` | Email address or `https://` URL rendered in the "Contact" link |
-| `--web-path` | `WEB_PATH` | Override the bundled web frontend directory (development only) |
-| `--log` | `LOG` | Log file path (defaults to stderr) |
+Multi-user auth uses `HTTP_AUTH_HTPASSWD` (the compose stack sets it to
+`/etc/transfer/htpasswd`); `HTTP_AUTH_USER` / `HTTP_AUTH_PASS` remain as a
+single-user fallback. `HTTP_AUTH_IP_WHITELIST` lets the listed CIDRs upload
+without credentials, `IP_WHITELIST` / `IP_BLACKLIST` filter at the
+connection level.
 
 ### Webhooks
 
-Best-effort, async, no-retry POSTs for upload, download and delete events.
-
-| Flag | Env | Description |
-|---|---|---|
-| `--upload-webhook-url` | `UPLOAD_WEBHOOK_URL` | URL that receives JSON events. Empty disables webhooks. |
-| `--webhook-token` | `WEBHOOK_TOKEN` | Optional bearer token added as `Authorization: Bearer <token>` |
-
-Body shape (`event` is one of `upload`, `download`, `delete`; optional
-fields are omitted when empty):
-
-```json
-{
-  "event": "upload",
-  "filename": "hello.txt",
-  "content_type": "text/plain",
-  "size": 123,
-  "url": "https://your-instance.example.com/<token>/hello.txt",
-  "delete_url": "https://your-instance.example.com/<token>/hello.txt/<delete-token>",
-  "user": "alice",
-  "downloads": 0
-}
-```
+`UPLOAD_WEBHOOK_URL` receives a best-effort, async, no-retry JSON POST for
+upload, download and delete events, optionally with
+`Authorization: Bearer <WEBHOOK_TOKEN>`. The body shape is documented in
+[`.env.example`](.env.example).
 
 ### Analytics
 
@@ -334,11 +324,6 @@ Setting both `UMAMI_SCRIPT_URL` and `UMAMI_WEBSITE_ID` injects the
 Umami tracker into user-facing pages (`/`, download views, 404). Admin
 pages (`/admin/*`) never carry the tag. Self-hosted Umami works as
 well as `umami.is`.
-
-| Flag | Env | Description |
-|---|---|---|
-| `--umami-script-url` | `UMAMI_SCRIPT_URL` | URL to your Umami `script.js` |
-| `--umami-website-id` | `UMAMI_WEBSITE_ID` | Umami site UUID (`data-website-id`) |
 
 #### Anonymous instance heartbeat
 
