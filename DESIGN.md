@@ -273,10 +273,10 @@ No heavy shadows, no neumorphism, no glassmorphism. Overlays (modal backdrop, si
 |---|---|---|
 | `{rounded.xs}` | 4px | Reserved, currently unused |
 | `{rounded.sm}` | 6px | Tooltip, focus-ring corners |
-| `{rounded.md}` | 8px | Buttons, inputs, nav items, category tabs, toasts |
+| `{rounded.md}` | 8px | Buttons, inputs, nav items, toasts |
 | `{rounded.lg}` | 12px | Cards, dropzone, modal, table wrapper |
 | `{rounded.xl}` | 16px | Reserved, currently unused |
-| `{rounded.pill}` | 9999px | Nav-pill-group, badges, progress bars |
+| `{rounded.pill}` | 9999px | Nav-pill-group and its category tabs, badges, progress bars |
 | `{rounded.full}` | 9999px | Circular icon buttons (theme toggle, toast close) |
 
 ## Motion
@@ -353,7 +353,7 @@ Dates `TT.MM.JJJJ`, straight quotes only, plain hyphens, URLs English.
 
 ### Navigation
 
-**`nav-pill-group`** + **`category-tab`** - Upload / Secret switcher on the homepage. Wrapper: `{colors.surface-soft}`, padding 6px, `{rounded.pill}`. Tab: padding 8px × 14px, `{rounded.md}`, inactive `{colors.ink-mute}`. Active: `{colors.canvas}` background, `{colors.ink}` text, `{shadow.sm}`.
+**`nav-pill-group`** + **`category-tab`** - Upload / Secret switcher on the homepage. Wrapper: `{colors.surface-soft}`, padding 6px, `{rounded.pill}`. Tab: padding 8px × 14px, `{rounded.pill}` (pill-in-pill, the tab follows the wrapper's curve), inactive `{colors.ink-mute}`. Active: `{colors.canvas}` background, `{colors.ink}` text, `{shadow.sm}`.
 
 **`sidebar`** - See `App Shell`.
 
