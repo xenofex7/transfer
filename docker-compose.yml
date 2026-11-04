@@ -48,7 +48,7 @@ services:
       PROXY_PATH: "${PROXY_PATH:-}"
       PROXY_PORT: "${PROXY_PORT:-}"
       EMAIL_CONTACT: "${EMAIL_CONTACT:-}"
-      TAGLINE: "${TAGLINE:-Easy and fast file sharing from the command line.}"
+      TAGLINE: "${TAGLINE:-Like WeTransfer - but it stays at your place}"
       UPLOAD_WEBHOOK_URL: "${UPLOAD_WEBHOOK_URL:-}"
       WEBHOOK_TOKEN: "${WEBHOOK_TOKEN:-}"
       UMAMI_SCRIPT_URL: "${UMAMI_SCRIPT_URL:-}"
