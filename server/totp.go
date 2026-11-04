@@ -96,7 +96,8 @@ func (s *Server) finishTOTPEnrollment(username, secret, code string) ([]string, 
 	if s.userMeta == nil {
 		return nil, errUserMetaUnavailable
 	}
-	if !verifyTOTP(secret, code) {
+	step, ok := matchTOTPStep(secret, code, time.Now())
+	if !ok {
 		return nil, errTOTPInvalidCode
 	}
 	codes, hashes, err := newRecoveryCodes(recoveryCodeCount)
@@ -111,6 +112,7 @@ func (s *Server) finishTOTPEnrollment(username, secret, code string) ([]string, 
 		m.TOTPSecret = secret
 		m.TOTPEnabled = true
 		m.TOTPEnabledAt = &now
+		m.TOTPLastStep = step
 		m.RecoveryHashes = hashes
 		return nil
 	})
@@ -176,10 +178,17 @@ func (s *Server) verifyUserTOTP(username, code string) error {
 	if !ok || !m.TOTPEnabled {
 		return errTOTPNotEnrolled
 	}
-	if !verifyTOTP(m.TOTPSecret, code) {
+	step, ok := matchTOTPStep(m.TOTPSecret, code, time.Now())
+	if !ok {
 		return errTOTPInvalidCode
 	}
-	return nil
+	return s.userMeta.Update(username, func(m *userMeta) error {
+		if step <= m.TOTPLastStep {
+			return errTOTPInvalidCode
+		}
+		m.TOTPLastStep = step
+		return nil
+	})
 }
 
 // consumeRecoveryCode walks username's stored hashes, removes the
@@ -211,21 +220,24 @@ func (s *Server) consumeRecoveryCode(username, code string) error {
 	})
 }
 
-// verifyTOTP is the algorithm-agnostic check used by both the login
-// flow and the enrolment confirmation. Splitting it out keeps the
-// pquerna/otp options in one place.
-func verifyTOTP(secret, code string) bool {
+func matchTOTPStep(secret, code string, now time.Time) (int64, bool) {
 	code = strings.TrimSpace(code)
 	if code == "" || secret == "" {
-		return false
+		return 0, false
 	}
-	ok, err := totp.ValidateCustom(code, secret, time.Now().UTC(), totp.ValidateOpts{
-		Period:    totpPeriod,
-		Skew:      totpSkew,
-		Digits:    totpDigits,
-		Algorithm: totpAlgorithm,
-	})
-	return err == nil && ok
+	period := int64(totpPeriod)
+	current := now.Unix() / period
+	for step := current - int64(totpSkew); step <= current+int64(totpSkew); step++ {
+		want, err := totp.GenerateCodeCustom(secret, time.Unix(step*period, 0).UTC(), totp.ValidateOpts{
+			Period:    totpPeriod,
+			Digits:    totpDigits,
+			Algorithm: totpAlgorithm,
+		})
+		if err == nil && subtle.ConstantTimeCompare([]byte(want), []byte(code)) == 1 {
+			return step, true
+		}
+	}
+	return 0, false
 }
 
 // newRecoveryCodes returns count fresh codes (display form) plus their

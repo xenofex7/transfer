@@ -135,7 +135,7 @@ func TestAccount2FASetupWrongCSRF(t *testing.T) {
 func TestAccount2FADisableRequiresValidCode(t *testing.T) {
 	a, sess := newAccountTestSetup(t)
 	enr, _ := a.server.startTOTPEnrollment("alice")
-	c, _ := totp.GenerateCode(enr.Secret, time.Now().UTC())
+	c := previousTOTPCode(t, enr.Secret)
 	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, c); err != nil {
 		t.Fatal(err)
 	}

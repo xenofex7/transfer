@@ -819,6 +819,15 @@ func resolveURL(r *http.Request, u *url.URL, proxyPort string) string {
 	return getURL(r, proxyPort).ResolveReference(u).String()
 }
 
+func archiveEntry(key, proxyPath string) (token, filename string, ok bool) {
+	token, filename, found := strings.Cut(resolveKey(key, proxyPath), "/")
+	if !found || token == "" || strings.Trim(token, SYMBOLS) != "" {
+		return "", "", false
+	}
+	filename = sanitize(filename)
+	return token, filename, filename != "." && filename != ".." && filename != "/"
+}
+
 func resolveKey(key, proxyPath string) string {
 	key = strings.TrimPrefix(key, "/")
 
@@ -1165,10 +1174,10 @@ func (s *Server) zipHandler(w http.ResponseWriter, r *http.Request) {
 	zw := zip.NewWriter(w)
 
 	for _, key := range strings.Split(files, ",") {
-		key = resolveKey(key, s.proxyPath)
-
-		token := strings.Split(key, "/")[0]
-		filename := sanitize(strings.Split(key, "/")[1])
+		token, filename, ok := archiveEntry(key, s.proxyPath)
+		if !ok {
+			continue
+		}
 
 		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
@@ -1195,7 +1204,7 @@ func (s *Server) zipHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		header := &zip.FileHeader{
-			Name:   strings.Split(key, "/")[1],
+			Name:   filename,
 			Method: zip.Store,
 
 			Modified: time.Now().UTC(),
@@ -1240,10 +1249,10 @@ func (s *Server) tarGzHandler(w http.ResponseWriter, r *http.Request) {
 	defer storage.CloseCheck(zw)
 
 	for _, key := range strings.Split(files, ",") {
-		key = resolveKey(key, s.proxyPath)
-
-		token := strings.Split(key, "/")[0]
-		filename := sanitize(strings.Split(key, "/")[1])
+		token, filename, ok := archiveEntry(key, s.proxyPath)
+		if !ok {
+			continue
+		}
 
 		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
@@ -1270,7 +1279,7 @@ func (s *Server) tarGzHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		header := &tar.Header{
-			Name: strings.Split(key, "/")[1],
+			Name: filename,
 			Size: int64(contentLength),
 		}
 
@@ -1303,10 +1312,10 @@ func (s *Server) tarHandler(w http.ResponseWriter, r *http.Request) {
 	defer storage.CloseCheck(zw)
 
 	for _, key := range strings.Split(files, ",") {
-		key = resolveKey(key, s.proxyPath)
-
-		token := strings.Split(key, "/")[0]
-		filename := strings.Split(key, "/")[1]
+		token, filename, ok := archiveEntry(key, s.proxyPath)
+		if !ok {
+			continue
+		}
 
 		if m, err := s.checkMetadata(r.Context(), token, filename, false); err != nil {
 			s.logger.Printf("Error metadata: %s", err.Error())
@@ -1333,7 +1342,7 @@ func (s *Server) tarHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		header := &tar.Header{
-			Name: strings.Split(key, "/")[1],
+			Name: filename,
 			Size: int64(contentLength),
 		}
 

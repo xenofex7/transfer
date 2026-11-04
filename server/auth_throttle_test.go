@@ -421,10 +421,11 @@ func TestLoginTOTPSuccessDoesNotUseUpBudget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, currentTOTPCode(t, enr.Secret)); err != nil {
+	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, previousTOTPCode(t, enr.Secret)); err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < authFailureBurst*2; i++ {
+		forgetTOTPStep(t, a.server, "alice")
 		rec := totpLogin(a, "203.0.113.61:1", currentTOTPCode(t, enr.Secret))
 		if id := sessionIDFromResponse(rec); id == "" {
 			t.Fatalf("valid code %d was refused (Location %q)", i+1, rec.Header().Get("Location"))
@@ -439,7 +440,7 @@ func TestAccountReauthRefundsSuccessAndEmptySubmits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, currentTOTPCode(t, enr.Secret)); err != nil {
+	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, previousTOTPCode(t, enr.Secret)); err != nil {
 		t.Fatal(err)
 	}
 	post := func(path, code string) {
@@ -447,6 +448,7 @@ func TestAccountReauthRefundsSuccessAndEmptySubmits(t *testing.T) {
 		postForm(a.handler, path, form, cookieFor(sess.ID))
 	}
 	for i := 0; i < authFailureBurst*2; i++ {
+		forgetTOTPStep(t, a.server, "alice")
 		post("/account/2fa/recovery/regenerate", currentTOTPCode(t, enr.Secret))
 		post("/account/2fa/recovery/regenerate", "")
 		post("/account/2fa/disable", "")

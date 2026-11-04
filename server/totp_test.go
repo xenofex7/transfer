@@ -43,6 +43,15 @@ func newTestServerWithUser(t *testing.T, name, password string) *Server {
 	return s
 }
 
+func previousTOTPCode(t *testing.T, secret string) string {
+	t.Helper()
+	code, err := totp.GenerateCode(secret, time.Now().UTC().Add(-time.Duration(totpPeriod)*time.Second))
+	if err != nil {
+		t.Fatalf("generate code: %v", err)
+	}
+	return code
+}
+
 func currentTOTPCode(t *testing.T, secret string) string {
 	t.Helper()
 	code, err := totp.GenerateCode(secret, time.Now().UTC())
@@ -121,7 +130,7 @@ func TestFinishTOTPEnrollmentRejectsWrongCode(t *testing.T) {
 func TestStartTOTPEnrollmentRejectsAlreadyEnrolled(t *testing.T) {
 	s := newTestServerWithUser(t, "alice", "longenoughpw")
 	enr, _ := s.startTOTPEnrollment("alice")
-	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, currentTOTPCode(t, enr.Secret)); err != nil {
+	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, previousTOTPCode(t, enr.Secret)); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.startTOTPEnrollment("alice"); !errors.Is(err, errTOTPAlreadyEnrolled) {
@@ -132,7 +141,7 @@ func TestStartTOTPEnrollmentRejectsAlreadyEnrolled(t *testing.T) {
 func TestVerifyUserTOTP(t *testing.T) {
 	s := newTestServerWithUser(t, "alice", "longenoughpw")
 	enr, _ := s.startTOTPEnrollment("alice")
-	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, currentTOTPCode(t, enr.Secret)); err != nil {
+	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, previousTOTPCode(t, enr.Secret)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -150,7 +159,7 @@ func TestVerifyUserTOTP(t *testing.T) {
 func TestDisableTOTP(t *testing.T) {
 	s := newTestServerWithUser(t, "alice", "longenoughpw")
 	enr, _ := s.startTOTPEnrollment("alice")
-	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, currentTOTPCode(t, enr.Secret)); err != nil {
+	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, previousTOTPCode(t, enr.Secret)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.disableTOTP("alice"); err != nil {
@@ -168,7 +177,7 @@ func TestDisableTOTP(t *testing.T) {
 func TestConsumeRecoveryCode(t *testing.T) {
 	s := newTestServerWithUser(t, "alice", "longenoughpw")
 	enr, _ := s.startTOTPEnrollment("alice")
-	codes, err := s.finishTOTPEnrollment("alice", enr.Secret, currentTOTPCode(t, enr.Secret))
+	codes, err := s.finishTOTPEnrollment("alice", enr.Secret, previousTOTPCode(t, enr.Secret))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +208,7 @@ func TestConsumeRecoveryCode(t *testing.T) {
 func TestRegenerateRecoveryCodes(t *testing.T) {
 	s := newTestServerWithUser(t, "alice", "longenoughpw")
 	enr, _ := s.startTOTPEnrollment("alice")
-	original, err := s.finishTOTPEnrollment("alice", enr.Secret, currentTOTPCode(t, enr.Secret))
+	original, err := s.finishTOTPEnrollment("alice", enr.Secret, previousTOTPCode(t, enr.Secret))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +258,7 @@ func TestUserDeleteAlsoWipesTOTP(t *testing.T) {
 		t.Fatal(err)
 	}
 	enr, _ := s.startTOTPEnrollment("bob")
-	if _, err := s.finishTOTPEnrollment("bob", enr.Secret, currentTOTPCode(t, enr.Secret)); err != nil {
+	if _, err := s.finishTOTPEnrollment("bob", enr.Secret, previousTOTPCode(t, enr.Secret)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.users.Delete("bob", "alice"); err != nil {
@@ -257,5 +266,66 @@ func TestUserDeleteAlsoWipesTOTP(t *testing.T) {
 	}
 	if s.userMeta.Has("bob") {
 		t.Fatal("bob's TOTP secret must be gone after user delete")
+	}
+}
+
+func forgetTOTPStep(t *testing.T, s *Server, username string) {
+	t.Helper()
+	if err := s.userMeta.Update(username, func(m *userMeta) error {
+		m.TOTPLastStep = 0
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestVerifyUserTOTPRejectsReplayedCode(t *testing.T) {
+	s := newTestServerWithUser(t, "alice", "longenoughpw")
+	enr, _ := s.startTOTPEnrollment("alice")
+	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, previousTOTPCode(t, enr.Secret)); err != nil {
+		t.Fatal(err)
+	}
+	previous := previousTOTPCode(t, enr.Secret)
+	current := currentTOTPCode(t, enr.Secret)
+	if previous == current {
+		t.Skip("adjacent time steps produced the same code")
+	}
+
+	if err := s.verifyUserTOTP("alice", current); err != nil {
+		t.Fatalf("first use should verify: %v", err)
+	}
+	if err := s.verifyUserTOTP("alice", current); !errors.Is(err, errTOTPInvalidCode) {
+		t.Fatalf("replayed code should fail, got %v", err)
+	}
+	if err := s.verifyUserTOTP("alice", previous); !errors.Is(err, errTOTPInvalidCode) {
+		t.Fatalf("code from an earlier step should fail after a later one was used, got %v", err)
+	}
+}
+
+func TestMatchTOTPStepAcceptsSkewWindowOnly(t *testing.T) {
+	secret := "JBSWY3DPEHPK3PXP"
+	now := time.Unix(1_800_000_000, 0)
+	current := now.Unix() / int64(totpPeriod)
+	for offset, want := range map[int64]bool{-2: false, -1: true, 0: true, 1: true, 2: false} {
+		code, err := totp.GenerateCode(secret, time.Unix((current+offset)*int64(totpPeriod), 0).UTC())
+		if err != nil {
+			t.Fatal(err)
+		}
+		step, ok := matchTOTPStep(secret, code, now)
+		if ok != want || (ok && step != current+offset) {
+			t.Errorf("offset %d: got step %d ok %v, want ok %v", offset, step, ok, want)
+		}
+	}
+}
+
+func TestEnrolmentCodeCannotBeReplayed(t *testing.T) {
+	s := newTestServerWithUser(t, "alice", "longenoughpw")
+	enr, _ := s.startTOTPEnrollment("alice")
+	code := currentTOTPCode(t, enr.Secret)
+	if _, err := s.finishTOTPEnrollment("alice", enr.Secret, code); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.verifyUserTOTP("alice", code); !errors.Is(err, errTOTPInvalidCode) {
+		t.Fatalf("enrolment code replayed at login should fail, got %v", err)
 	}
 }

@@ -37,6 +37,7 @@ type userMeta struct {
 	TOTPSecret     string     `json:"totp_secret,omitempty"`
 	TOTPEnabled    bool       `json:"totp_enabled,omitempty"`
 	TOTPEnabledAt  *time.Time `json:"totp_enabled_at,omitempty"`
+	TOTPLastStep   int64      `json:"totp_last_step,omitempty"`
 	RecoveryHashes []string   `json:"recovery_hashes,omitempty"`
 	APITokens      []apiToken `json:"api_tokens,omitempty"`
 }

@@ -159,7 +159,7 @@ func TestLoginPostNoTOTPGrantsFullSession(t *testing.T) {
 func TestLoginPostWithTOTPGrantsPendingSessionAndRedirects(t *testing.T) {
 	a := newAuthTestSetup(t)
 	enr, _ := a.server.startTOTPEnrollment("alice")
-	code, _ := totp.GenerateCode(enr.Secret, time.Now().UTC())
+	code := previousTOTPCode(t, enr.Secret)
 	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, code); err != nil {
 		t.Fatalf("enrol: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestLoginPostWithTOTPGrantsPendingSessionAndRedirects(t *testing.T) {
 func TestLoginTOTPPostPromotesSessionAndRotatesID(t *testing.T) {
 	a := newAuthTestSetup(t)
 	enr, _ := a.server.startTOTPEnrollment("alice")
-	code, _ := totp.GenerateCode(enr.Secret, time.Now().UTC())
+	code := previousTOTPCode(t, enr.Secret)
 	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, code); err != nil {
 		t.Fatal(err)
 	}
@@ -232,7 +232,7 @@ func TestLoginTOTPPostPromotesSessionAndRotatesID(t *testing.T) {
 func TestLoginTOTPPostInvalidCode(t *testing.T) {
 	a := newAuthTestSetup(t)
 	enr, _ := a.server.startTOTPEnrollment("alice")
-	code, _ := totp.GenerateCode(enr.Secret, time.Now().UTC())
+	code := previousTOTPCode(t, enr.Secret)
 	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, code); err != nil {
 		t.Fatal(err)
 	}
@@ -266,7 +266,7 @@ func TestLoginTOTPPostInvalidCode(t *testing.T) {
 func TestLoginTOTPPostDestroysSessionAfterTooManyFailures(t *testing.T) {
 	a := newAuthTestSetup(t)
 	enr, _ := a.server.startTOTPEnrollment("alice")
-	code, _ := totp.GenerateCode(enr.Secret, time.Now().UTC())
+	code := previousTOTPCode(t, enr.Secret)
 	if _, err := a.server.finishTOTPEnrollment("alice", enr.Secret, code); err != nil {
 		t.Fatal(err)
 	}
@@ -324,7 +324,7 @@ func TestAdminPasswordResetDestroysUserSessions(t *testing.T) {
 func TestLoginTOTPPostRecoveryCode(t *testing.T) {
 	a := newAuthTestSetup(t)
 	enr, _ := a.server.startTOTPEnrollment("alice")
-	code, _ := totp.GenerateCode(enr.Secret, time.Now().UTC())
+	code := previousTOTPCode(t, enr.Secret)
 	recoveryCodes, err := a.server.finishTOTPEnrollment("alice", enr.Secret, code)
 	if err != nil {
 		t.Fatal(err)

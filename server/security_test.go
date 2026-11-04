@@ -251,7 +251,7 @@ func enrolTOTP(t *testing.T, s *Server, user string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.finishTOTPEnrollment(user, enr.Secret, currentTOTPCode(t, enr.Secret)); err != nil {
+	if _, err := s.finishTOTPEnrollment(user, enr.Secret, previousTOTPCode(t, enr.Secret)); err != nil {
 		t.Fatal(err)
 	}
 }

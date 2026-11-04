@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"strings"
 	"time"
 )
 
@@ -23,7 +24,7 @@ func panicRecover(logger *log.Logger, h http.Handler) http.HandlerFunc {
 				if logger != nil {
 					logger.Printf("panic: %v\n%s", rec, debug.Stack())
 				}
-				http.Error(w, fmt.Sprintf("%s", rec), http.StatusInternalServerError)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}()
 		h.ServeHTTP(w, r)
@@ -73,7 +74,7 @@ func accessLog(logger *log.Logger, h http.Handler) http.HandlerFunc {
 			realIPFromRequest(r),
 			start.Format(time.RFC3339),
 			r.Method,
-			r.RequestURI,
+			loggedURI(r),
 			r.Proto,
 			rec.status,
 			contentLength,
@@ -81,4 +82,15 @@ func accessLog(logger *log.Logger, h http.Handler) http.HandlerFunc {
 			r.UserAgent(),
 		)
 	}
+}
+
+func loggedURI(r *http.Request) string {
+	if r.Method != http.MethodDelete && r.Method != http.MethodPatch {
+		return r.RequestURI
+	}
+	path := r.URL.EscapedPath()
+	if strings.HasPrefix(path, "/admin/") || strings.Count(path, "/") != 3 {
+		return r.RequestURI
+	}
+	return path[:strings.LastIndex(path, "/")+1] + "REDACTED"
 }
