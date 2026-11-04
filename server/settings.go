@@ -24,7 +24,7 @@ const DefaultTagline = "Like WeTransfer - but it stays at your place"
 
 // DefaultTheme is the initial theme served to first-time visitors before
 // they pick one for themselves via the toggle.
-const DefaultTheme = "system"
+const DefaultTheme = "dark"
 
 // ValidThemes lists the values Settings.Theme accepts.
 var ValidThemes = map[string]bool{"system": true, "light": true, "dark": true}

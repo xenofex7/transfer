@@ -2,20 +2,20 @@
 
 > Self-hosted file transfer service. UI ist **technisch-präzise, ohne Marketing-Bullshit** - das Tool macht eine Sache (Datei rein, Link raus) und das UI hat die Pflicht, dabei nicht im Weg zu stehen.
 >
-> Basis: Petrol-Baseline (`~/Development/claude-stuff/design/baseline.md`). Token-Namen und Struktur stammen aus der Baseline, Werte und Komponenten sind projektspezifisch. Marketing-Komponenten der Baseline (Pricing, Testimonials, Hero-Mockup, CTA-Band, Feature-Grids, Avatare) nutzt transfer nicht, sie sind bewusst entfernt.
+> **Eigene Marke "Graphit + Limette"** (seit 04.11.2026). transfer folgt nicht mehr der Petrol-Baseline: Farbe und Charakter sind projekteigen. Struktur, Token-Namen, Komponenten-Specs und Regeln (Hover, native Dialoge, Accessibility) stammen weiterhin aus `~/Development/claude-stuff/design/baseline.md` und bleiben mit ihr kompatibel.
 >
 > **Für Codegen + Audits:** Die maschinenlesbare Token-Schicht steht im JSONC-Block unter `## Tokens (machine-readable)`. `/audit-design` liest diesen Block, nicht die Prosa. Bei Änderungen beide synchron halten, der Block gewinnt im Zweifel.
 
 ## Design Principles
 
 1. **Technisch-präzise, ohne Marketing-Bullshit.** Klartext, keine Hero-Claims, keine "simply secure fast"-Phrasen im UI. Wenn ein Wort weg kann, ist es weg.
-2. **Das UI darf den User nicht abschrecken.** Bei einem Self-hosted-Tool sieht "selbstgebastelt" schnell wie "unsicher" aus. Konsequent ausgeführte Tokens sind die Antwort, nicht Dekoration.
-3. **Petrol = Marke, schwarz = Action.** Die 7-Step-Petrol-Skala trägt Links, Focus-Rings, Akzent-Surfaces und Wayfinding. Primary CTA ist **schwarz im Light-Theme** und invertiert im Dark-Theme zu **weisser Background mit dunklem Text**. Petrol wird **nie** die Ruhefarbe einer Action.
-4. **System-Theme als Default.** `prefers-color-scheme` entscheidet, der explizite Toggle überschreibt, der Operator kann einen Default setzen. Beide Themes sind gleichwertig durchgestaltet.
-5. **Die Display-Grenze ist strikt.** Display ist eine Rolle, keine Schrift: Inter 600 mit negativem Tracking für H1-H3. Body borgt sich diese Behandlung nie.
-6. **Tokens sind Pflicht, wo sie existieren.** Farbe, Typo, Spacing, Radius, Schatten und Motion kommen aus dem Token-Block. Komponentenmasse, die der Block nicht trägt (Höhen, Icon-Grössen, Paddings), stehen als px-Wert in der Komponenten-Spec.
-7. **Default und Active führen, Hover ist dezent.** Jede Komponente hat Default und Pressed-State. transfer ist ein Desktop-lastiges Werkzeug und nutzt zusätzlich einen dezenten Pointer-Hover (siehe `Motion` unter `Hover`). Hover ist nie der einzige Hinweis auf eine Affordance, weil es ihn auf Touch nicht gibt.
-8. **Knappheit macht ein Signal.** Im Light-Theme ist die Footer-Leiste die einzige dunkle Fläche.
+2. **Dunkel ist das Original.** Graphit-Dunkel ist das Standard-Theme und die Referenz für jede Entscheidung. Das helle Theme ist eine sauber abgeleitete Variante, kein gleichwertiger Zwilling.
+3. **Limette ist das einzige Signal.** Eine Farbe markiert, was zählt: Primary-CTA, Fortschritt, Focus, Links, aktiver Zustand. Alles andere ist neutral-graphit. Keine zweite Akzentfarbe, keine getönten Flächen.
+4. **Im hellen Theme übernimmt Oliv.** Limette hat auf Weiss keinen Kontrast (1.28:1). Text-Signale (Links, Focus, aktiver Text) werden dort zu `{colors.olive}`, der Primary-CTA wird Graphit mit Limette-Label.
+5. **Die Display-Grenze ist strikt.** Display ist eine Rolle: Inter 600 mit negativem Tracking für H1-H3. Body borgt sich diese Behandlung nie.
+6. **Tokens sind Pflicht, wo sie existieren.** Farbe, Typo, Spacing, Radius, Schatten und Motion kommen aus dem Token-Block. Komponentenmasse, die der Block nicht trägt, stehen als px-Wert in der Komponenten-Spec.
+7. **Default und Active führen, Hover ist dezent.** Jede Komponente hat Default und Pressed-State. Zusätzlich gibt es einen dezenten Pointer-Hover (siehe `Motion` unter `Hover`), nie als einziger Hinweis auf eine Affordance.
+8. **Fläche durch Helligkeit, nicht durch Farbe.** Ebenen unterscheiden sich über Graphit-Stufen (Canvas, Card, Soft, Strong), nicht über Tönung.
 
 ## Tokens (machine-readable)
 
@@ -23,8 +23,8 @@
 {
   "$id": "design-tokens/transfer",
   "meta": {
-    "accent": "petrol",
-    "themeStrategy": "system-default + data-theme override + operator default",
+    "brand": "graphite + lime",
+    "themeStrategy": "dark default (operator setting) + data-theme override + system option",
     "fontStrategy": "Inter 600 (-0.04em) as Display substitute"
   },
   "requirements": {
@@ -33,54 +33,77 @@
     "tokensOnly": true
   },
   "colors": {
-    "canvas": "#ffffff",
-    "primary": "#0a0a0a",
-    "primary-active": "#242424",
-    "on-primary": "#ffffff",
-    "surface": "#ffffff",
-    "surface-card": "#f0f8fb",
-    "surface-soft": "#e0f2f7",
-    "surface-strong": "#e5e7eb",
-    "hairline": "rgb(0 0 0 / 0.10)",
-    "hairline-soft": "rgb(0 0 0 / 0.06)",
-    "ink": "#0a0a0a",
-    "ink-soft": "#404040",
-    "ink-mute": "#6b6b6b",
-    "surface-dark": "#032e3a",
-    "surface-dark-elevated": "#052838",
-    "surface-dark-soft": "#042634",
+    // Markenwerte, theme-unabhängig
+    "lime": "#c6f432",
+    "lime-active": "#b2dc1e",
+    "olive": "#4a6800",
+    "graphite": {
+      "950": "#0b0b0b",
+      "900": "#121212",
+      "850": "#1a1a1a",
+      "800": "#222222",
+      "750": "#2e2e2e"
+    },
+    // Dark (Standard)
+    "dark": {
+      "canvas": "#121212",
+      "surface": "#1a1a1a",
+      "surface-card": "#1a1a1a",
+      "surface-soft": "#222222",
+      "surface-strong": "#2e2e2e",
+      "hairline": "rgb(255 255 255 / 0.09)",
+      "hairline-soft": "rgb(255 255 255 / 0.05)",
+      "ink": "#ededed",
+      "ink-soft": "#bdbdbd",
+      "ink-mute": "#949494",
+      "primary": "#c6f432",
+      "primary-active": "#b2dc1e",
+      "on-primary": "#121212",
+      "signal": "#c6f432",
+      "link": "#c6f432",
+      "focus-ring": "#c6f432",
+      "scrollbar-thumb": "rgb(255 255 255 / 0.18)",
+      "scrollbar-hover": "rgb(255 255 255 / 0.30)",
+      "danger": "#ef7d70"
+    },
+    // Light (Variante)
+    "light": {
+      "canvas": "#ffffff",
+      "surface": "#ffffff",
+      "surface-card": "#f5f5f4",
+      "surface-soft": "#ebebea",
+      "surface-strong": "#dcdcdb",
+      "hairline": "rgb(0 0 0 / 0.10)",
+      "hairline-soft": "rgb(0 0 0 / 0.06)",
+      "ink": "#121212",
+      "ink-soft": "#3f3f3f",
+      "ink-mute": "#666666",
+      "primary": "#121212",
+      "primary-active": "#2a2a2a",
+      "on-primary": "#c6f432",
+      "signal": "#4a6800",
+      "link": "#4a6800",
+      "focus-ring": "#4a6800",
+      "scrollbar-thumb": "rgb(0 0 0 / 0.22)",
+      "scrollbar-hover": "rgb(0 0 0 / 0.38)",
+      "danger": "#c0392b"
+    },
+    // in beiden Themes gleich
+    "surface-dark": "#0b0b0b",
     "hairline-dark": "rgb(255 255 255 / 0.08)",
-    "hairline-soft-dark": "rgb(255 255 255 / 0.05)",
     "on-dark": "#ffffff",
     "on-dark-soft": "rgb(255 255 255 / 0.82)",
     "on-dark-mute": "rgb(255 255 255 / 0.68)",
-    "link": "#086480",
-    "link-dark": "#5bbcd2",
-    "focus-ring": "#0d8fb1",
-    "selection-bg": "#e0f2f7",
-    "selection-text": "#032e3a",
-    "scrollbar-thumb": "#0d8fb1",
-    "scrollbar-hover": "#086480",
-    "emphasis-hover-dark": "#9dd6e4",
+    "selection-bg": "#c6f432",
+    "selection-text": "#121212",
     "success": "#10b981",
     "warning": "#f59e0b",
-    "danger": "#c0392b",
-    "danger-dark": "#ef7d70",
-    "petrol": {
-      "50": "#e0f2f7",
-      "100": "#9dd6e4",
-      "200": "#5bbcd2",
-      "400": "#0d8fb1",
-      "600": "#086480",
-      "800": "#054757",
-      "900": "#032e3a"
-    }
+    "danger-dark": "#ef7d70"
   },
   "typography": {
     "fontFamily": {
       "display": "Inter",
       "body": "Inter",
-      // Projekt-Override: kein Webfont für Code, System-Monospace
       "mono": "ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, monospace",
       "fallback": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
     },
@@ -95,7 +118,7 @@
       "body-md":    { "size": 16, "weight": 400, "lineHeight": 1.5,  "tracking": 0,    "face": "body" },
       "body-sm":    { "size": 14, "weight": 400, "lineHeight": 1.5,  "tracking": 0,    "face": "body" },
       "caption":    { "size": 13, "weight": 500, "lineHeight": 1.4,  "tracking": 0,    "face": "body" },
-      "eyebrow":    { "size": 12, "weight": 500, "lineHeight": 1.0,  "tracking": "0.1em", "transform": "uppercase", "color": "petrol-600", "face": "body" },
+      "eyebrow":    { "size": 12, "weight": 500, "lineHeight": 1.0,  "tracking": "0.1em", "transform": "uppercase", "color": "link", "face": "body" },
       "code":       { "size": 14, "weight": 400, "lineHeight": 1.5,  "tracking": 0,    "face": "mono" },
       "button":     { "size": 14, "weight": 600, "lineHeight": 1.0,  "tracking": 0,    "face": "body" },
       "nav-link":   { "size": 14, "weight": 500, "lineHeight": 1.4,  "tracking": 0,    "face": "body" }
@@ -111,94 +134,74 @@
     "sm": "0 1px 2px rgba(0,0,0,0.05)",
     "md": "0 4px 12px rgba(0,0,0,0.08)"
   },
-  // min-width Breakpoints in px. Mobile = Default (< 768).
   "breakpoints": { "tablet": 768, "desktop": 1024, "wide": 1440 },
-  // Projekt-Override: Werkzeug-Layouts statt 1200px-Marketing-Container
   "container": { "page": 720, "narrow": 460, "shell": 1100 }
 }
 ```
 
 ## Colors
 
-### Brand Scale (Petrol)
-
-A 7-step Türkis-Richtung-Blau scale. Each step has a defined role - don't reach for a Petrol shade unless its role matches.
+### Brand
 
 | Token | Value | Role |
 |---|---|---|
-| `{colors.petrol-50}` | #e0f2f7 | Selection highlight background, surface-card tint base |
-| `{colors.petrol-100}` | #9dd6e4 | Dark-theme emphasis hover, active nav text (dark), footer link hover |
-| `{colors.petrol-200}` | #5bbcd2 | Inline links on dark surfaces, brand-emphasis badge background |
-| `{colors.petrol-400}` | #0d8fb1 | **Primary accent** - scrollbar thumb, focus ring, nav tint, dropzone active border, emphasis-card border |
-| `{colors.petrol-600}` | #086480 | Inline links on light surfaces, eyebrow text, scrollbar hover, active nav text (light) |
-| `{colors.petrol-800}` | #054757 | Deep accent surfaces |
-| `{colors.petrol-900}` | #032e3a | Dark-theme canvas, footer bar background |
+| `{colors.lime}` | #c6f432 | **Das Signal.** Primary-CTA (dark), Primary-Label (light), Fortschritt, Focus, Links und aktiver Zustand im Dark-Theme, Textauswahl, Footer-Link-Hover |
+| `{colors.lime-active}` | #b2dc1e | Press- und Hover-State des Limette-Primary |
+| `{colors.olive}` | #4a6800 | Signal im hellen Theme: Links, Focus, aktiver Text, Fortschritt (6.42:1 auf Weiss) |
+| `{colors.graphite-950}` | #0b0b0b | Footer-Leiste |
+| `{colors.graphite-900}` | #121212 | Dark-Canvas, Light-Primary, Text auf Limette |
+| `{colors.graphite-850}` | #1a1a1a | Cards und Flächen im Dark-Theme |
+| `{colors.graphite-800}` | #222222 | Soft-Fläche im Dark-Theme (Tab-Gruppe, Tabellenkopf, Hover) |
+| `{colors.graphite-750}` | #2e2e2e | Strong-Fläche im Dark-Theme (Fortschrittsspur) |
 
-### Action Layer (Black, not Petrol)
+### Signal Layer
 
-- **Primary** (`{colors.primary}` - #0a0a0a): All primary CTAs. Identical to `{colors.ink}`.
-- **Primary Active** (`{colors.primary-active}` - #242424): Press and hover state for primary buttons.
-- **On Primary** (`{colors.on-primary}` - #ffffff): Text on primary buttons.
+Semantische Rollen, die pro Theme auf Marken-Werte zeigen. Komponenten nutzen nur diese Rollen, nie `lime` oder `olive` direkt (Ausnahme: Footer-Leiste, die in beiden Themes dunkel ist).
 
-**On dark surfaces** the action layer inverts: primary renders with `{colors.on-dark}` background and `{colors.surface-dark}` text; press/hover shifts to `{colors.emphasis-hover-dark}` (Petrol-100). Petrol does **not** become the action color in dark.
+| Role | Dark | Light | Use |
+|---|---|---|---|
+| `{colors.primary}` / `on-primary` | lime / graphite-900 | graphite-900 / lime | Primary-CTA |
+| `{colors.primary-active}` | lime-active | #2a2a2a | Press und Hover |
+| `{colors.signal}` | lime | olive | Fortschritt, Dropzone-Border aktiv, Emphasis-Border, aktiver Nav-Hintergrund (14% Tint) |
+| `{colors.link}` | lime | olive | Links, aktiver Nav-Text, Eyebrow |
+| `{colors.focus-ring}` | lime | olive | Focus-visible-Outline |
 
-### Surface (Light)
+### Surfaces
 
-- **Canvas** (`{colors.canvas}` - #ffffff): The default page floor.
-- **Surface** (`{colors.surface}` - #ffffff): Modal bodies, secondary buttons, toasts. Same hex as canvas, separate token so dark can flip it independently.
-- **Surface Card** (`{colors.surface-card}` - #f0f8fb): Petrol-50 tint. Every `card`, the dropzone, the app-shell sidebar.
-- **Surface Soft** (`{colors.surface-soft}` - #e0f2f7 = Petrol-50): Nav-pill-group background, table header, ghost-control hover. One step stronger than surface-card, so it still reads on a card. ink-mute on it: 4.62:1 (AA).
-- **Surface Strong** (`{colors.surface-strong}` - #e5e7eb): Disabled button background.
-- **Hairline** (`{colors.hairline}` - `rgb(0 0 0 / 0.10)`): Input borders, secondary-button borders, dropzone dash.
-- **Hairline Soft** (`{colors.hairline-soft}` - `rgb(0 0 0 / 0.06)`): Card outlines, table row dividers, sidebar border.
+Drei Helligkeitsstufen über dem Canvas, keine Tönung.
 
-### Surface (Dark)
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `{colors.canvas}` | #121212 | #ffffff | Seitenboden, Input-Hintergrund |
+| `{colors.surface}` / `surface-card` | #1a1a1a | #ffffff / #f5f5f4 | Cards, Modal, Toast, Sidebar, Dropzone |
+| `{colors.surface-soft}` | #222222 | #ebebea | Tab-Gruppe, Tabellenkopf, Ghost-Hover |
+| `{colors.surface-strong}` | #2e2e2e | #dcdcdb | Fortschrittsspur, deaktivierte Flächen |
+| `{colors.hairline}` | white 9% | black 10% | Input-, Button-, Dropzone-Rahmen |
+| `{colors.hairline-soft}` | white 5% | black 6% | Card-Rahmen, Tabellenzeilen, Sidebar-Rand |
+| `{colors.surface-dark}` | #0b0b0b | #0b0b0b | Footer-Leiste (in beiden Themes dunkel) |
 
-Full inversion when the dark theme is active. In the light theme only the footer bar uses this set.
+### Text
 
-- **Canvas Dark** (`{colors.surface-dark}` - #032e3a): Dark canvas, footer bar.
-- **Surface Dark Elevated** (`{colors.surface-dark-elevated}` - #052838): Cards and surfaces inside the dark canvas.
-- **Surface Dark Soft** (`{colors.surface-dark-soft}` - #042634): Secondary surfaces inside the dark canvas.
-- **Hairline Dark** (`{colors.hairline-dark}` - `rgb(255 255 255 / 0.08)`): Border tone on dark surfaces.
-- **Hairline Soft Dark** (`{colors.hairline-soft-dark}` - `rgb(255 255 255 / 0.05)`): `hairline-soft` in the dark theme.
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `{colors.ink}` | #ededed | #121212 | Headlines, Hervorhebung |
+| `{colors.ink-soft}` | #bdbdbd | #3f3f3f | Fliesstext |
+| `{colors.ink-mute}` | #949494 | #666666 | Captions, Meta, Hinweise, Tabellenkopf |
+| `{colors.on-dark}` / `-soft` / `-mute` | white 100 / 82 / 68% | gleich | Text auf der Footer-Leiste; `on-dark` ist ausserdem das theme-unabhängige Weiss (QR-Code) |
 
 ### Theme Activation
 
-- **Default (no `data-theme` attribute):** Theme follows `prefers-color-scheme`.
-- **Explicit override:** `data-theme="light"` or `data-theme="dark"` on `<html>` pins the theme. The toggle persists in `localStorage` under the key **`transfersh_theme`** (legacy name, bewusst namespaced) with values `light` | `dark` | `system`.
-- **Operator default:** `<html data-theme-default="...">` carries the default from the admin settings. It applies when `localStorage` holds no valid value.
-- **Token scoping:** Dark overrides are defined in both `:root[data-theme="dark"]` and `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) }`.
-- **Initial flash:** The attribute is set before first paint by the inline bootstrap script (`server/handlers.go::themeBootstrap`), rendered into every template via `{{theme_bootstrap}}`.
-
-### Text (Light)
-
-- **Ink** (`{colors.ink}` - #0a0a0a): Headlines and emphasis text.
-- **Ink Soft** (`{colors.ink-soft}` - #404040): Default running text.
-- **Ink Mute** (`{colors.ink-mute}` - #6b6b6b): Secondary text, captions, meta, hints.
-
-### Text (Dark)
-
-- **On Dark** (`{colors.on-dark}` - #ffffff): Headlines and emphasis on dark surfaces.
-- **On Dark Soft** (`{colors.on-dark-soft}` - `rgb(255 255 255 / 0.82)`): Body text on dark surfaces.
-- **On Dark Mute** (`{colors.on-dark-mute}` - `rgb(255 255 255 / 0.68)`): Secondary text on dark surfaces, footer bar text.
-
-### Interaction Tokens
-
-- **Link** (`{colors.link}` - #086480 = Petrol-600): Inline links on light surfaces (6.68:1 on canvas).
-- **Link Dark** (`{colors.link-dark}` - #5bbcd2 = Petrol-200): Inline links in the dark theme (6.57:1 on surface-dark).
-- **Focus Ring** (`{colors.focus-ring}` - #0d8fb1 = Petrol-400): Focus-visible outline.
-- **Selection** (`{colors.selection-bg}` / `{colors.selection-text}`): Petrol-50 / Petrol-900.
-- **Scrollbar** (`{colors.scrollbar-thumb}` / `{colors.scrollbar-hover}`): Petrol-400 / Petrol-600.
-- **Emphasis Hover (dark)** (`{colors.emphasis-hover-dark}` - #9dd6e4 = Petrol-100): Hover/press of the inverted primary.
+- **Standard:** Neue Installationen starten in Dark (`DefaultTheme = "dark"` in `server/settings.go`). Der Operator kann in den Settings `dark`, `light` oder `system` als Default wählen; der Wert landet als `data-theme-default` auf `<html>`.
+- **Besucher-Override:** Der Toggle zykliert `system -> light -> dark` und speichert unter dem `localStorage`-Key **`transfersh_theme`**.
+- **Token-Scoping:** `:root` trägt die Light-Werte, Dark-Overrides stehen in `:root[data-theme="dark"]` und `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) }`.
+- **Initial flash:** Das Inline-Bootstrap-Script (`server/handlers.go::themeBootstrap`, via `{{theme_bootstrap}}`) setzt das Attribut vor dem ersten Paint.
+- **Bestehende Installationen** behalten ihren gespeicherten Default aus `.settings.json`.
 
 ### Semantic
 
-- **Success** (`{colors.success}` - #10b981): Confirmation states, copied-state icons.
-- **Warning** (`{colors.warning}` - #f59e0b): Warning callouts.
-- **Danger** (`{colors.danger}` - #c0392b): Validation errors, destructive actions.
-- **Danger Dark** (`{colors.danger-dark}` - #ef7d70): Danger in the dark theme (5.38:1 on surface-dark).
-
-Success and warning never colour message text (2.54:1 / 2.15:1 on canvas): status copy stays in `{colors.ink-soft}`, the semantic colour sits on the border or icon.
+- **Success** (`{colors.success}` - #10b981), **Warning** (`{colors.warning}` - #f59e0b): nur auf Icon oder Border, nie als Textfarbe.
+- **Danger** (`{colors.danger}`): #c0392b im hellen, #ef7d70 im dunklen Theme (6.99:1 auf #121212). Validierungsfehler, destruktive Aktionen.
+- Limette ist **kein** Success-Ersatz: Erfolg bleibt grün, Limette bleibt Marke.
 
 ## Typography
 
@@ -208,7 +211,7 @@ Inter carries both roles, served locally (`/fonts/inter-*.woff2`, `font-display:
 
 ### Hierarchy
 
-The scale is the baseline scale. transfer is a tool, not a marketing site, so headlines sit one step lower than on a landing page:
+The scale matches the baseline scale. transfer is a tool, not a marketing site, so headlines sit one step lower than on a landing page:
 
 | Element | Token | Notes |
 |---|---|---|
@@ -247,7 +250,7 @@ Upload, download, login, secret and 404 pages share one single-column compositio
 ### App Shell (signed-in admin/account area)
 
 - **Sidebar left, content right.** Sidebar 256px, `{colors.surface-card}` background, 1px `{colors.hairline-soft}` right border. Top to bottom: brand row (56px, logo, hairline bottom border), nav list (flex 1, scrollable), foot block (hairline top border: username + sign-out icon, version + GitHub icon).
-- **Nav items:** Inter 14px / 500, icon 16px + label, padding 8px 12px, `{rounded.md}`. Inactive `{colors.ink-mute}`; hover `{colors.surface-soft}` + `{colors.ink}`; active = `petrol-400` at 12% with `petrol-600` text (light) / `petrol-100` (dark). Petrol carries wayfinding, black stays reserved for CTAs.
+- **Nav items:** Inter 14px / 500, icon 16px + label, padding 8px 12px, `{rounded.md}`. Inactive `{colors.ink-mute}`; hover `{colors.surface-soft}` + `{colors.ink}`; active = `{colors.signal}` at 14% with `{colors.link}` text. The signal carries wayfinding; the solid primary stays reserved for CTAs.
 - **Content column:** max `{container.shell}` (1100px) centered, page padding `{spacing.lg}`/`{spacing.xl}`, cards stack with `{spacing.lg}` gaps. Page head = `page-title` + muted count/subtitle inline.
 - **Mobile (< 768px):** sidebar becomes an off-canvas drawer (translateX) behind a 50% black overlay; a sticky 56px topbar carries the hamburger + logo. Close via X, overlay click or Escape.
 - **No footer bar inside the shell** - version and GitHub live in the sidebar foot.
@@ -292,7 +295,7 @@ The system is quiet: no entrance choreographies, no parallax. Motion confirms th
   - **Outlined controls** (secondary button, icon button, theme toggle, copy button): border and text shift to `{colors.ink}`.
   - **Ghost controls** (sidebar nav, sidebar icons, topbar menu, toast/modal close): background shifts to `{colors.surface-soft}` or `{colors.surface-card}`, text to `{colors.ink}`.
   - **Primary and danger buttons:** hover shows the press state early (`primary-active`, danger fill).
-  Text links underline on hover; footer links shift to `{colors.petrol-100}`; the dropzone border shifts to `{colors.petrol-400}`; table rows tint. Nothing else changes on hover - no lifts, no shadows, no scale.
+  Text links underline on hover; footer links shift to `{colors.lime}`; the dropzone border shifts to `{colors.signal}`; table rows tint. Nothing else changes on hover - no lifts, no shadows, no scale.
 - **Focus:** 2px `{colors.focus-ring}` outline, offset 2px (4px on buttons and the dropzone), never animated away.
 - **`prefers-reduced-motion`:** mandatory - all transitions and animations collapse.
 
@@ -316,7 +319,7 @@ Dates `TT.MM.JJJJ`, straight quotes only, plain hyphens, URLs English.
 
 ### Buttons
 
-**`button-primary`** (`.btn-primary`, `.button.primary`) - Background `{colors.primary}`, text `{colors.on-primary}`, `{typography.button}`, padding 12px × 20px, height 40px, `{rounded.md}`. Hover and press: `{colors.primary-active}`. Inverts on dark (see Action Layer).
+**`button-primary`** (`.btn-primary`, `.button.primary`) - Background `{colors.primary}`, text `{colors.on-primary}`, `{typography.button}`, padding 12px × 20px, height 40px, `{rounded.md}`. Hover and press: `{colors.primary-active}`. Lime with graphite label in dark, graphite with lime label in light (see Signal Layer).
 
 **`button-secondary`** (`.btn-secondary`, `.button`) - Background `{colors.surface}`, text `{colors.ink}`, 1px `{colors.hairline}` border, same metrics as primary. Hover: border `{colors.ink}`.
 
@@ -330,9 +333,9 @@ Dates `TT.MM.JJJJ`, straight quotes only, plain hyphens, URLs English.
 
 **`card`** - Background `{colors.surface-card}`, 1px `{colors.hairline-soft}` border, `{rounded.lg}`, padding `{spacing.xl}`. The one container for every content block.
 
-**`card-emphasis`** - A card that needs attention (recovery codes, 2FA result). Border `{colors.petrol-400}`, background `petrol-400` at 6% over `{colors.surface}`. Petrol as accent surface, never as action.
+**`card-emphasis`** - A card that needs attention (recovery codes, 2FA result). Border `{colors.signal}`, background `signal` at 6% over `{colors.surface}`.
 
-**`dropzone`** - The upload surface on the homepage, built on `card`. Min-height 260px, 1.5px dashed `{colors.hairline}` border, centered prompt in `{colors.ink-mute}`. Hover/focus: border `{colors.petrol-400}`. Drag-active: border `{colors.petrol-400}`, background `petrol-400` at 6% over `{colors.surface-card}`.
+**`dropzone`** - The upload surface on the homepage, built on `card`. Min-height 260px, 1.5px dashed `{colors.hairline}` border, centered prompt in `{colors.ink-mute}`. Hover/focus: border `{colors.signal}`. Drag-active: border `{colors.signal}`, background `signal` at 6% over `{colors.surface-card}`. Progress fill `{colors.signal}` on a `{colors.surface-strong}` track.
 
 **`qr-code`** - 240px image, 12px padding, hairline border, `{rounded.md}`. Background stays white in both themes (`{colors.on-dark}`, the theme-independent white) so scanners get full contrast.
 
@@ -369,24 +372,24 @@ Stack bottom-right on desktop (`{spacing.lg}` from the edges, above the footer b
 
 ### Tags / Badges
 
-**`badge-pill`** (`.users-badge`, `.heartbeat-pill`) - Background `{colors.surface-card}` or `{colors.petrol-200}` for brand emphasis, text `{colors.ink}`, `{typography.caption}`, `{rounded.pill}`, padding 4px × 12px.
+**`badge-pill`** (`.users-badge`, `.heartbeat-pill`) - Background `{colors.surface-card}`, text `{colors.ink}`, `{typography.caption}`, `{rounded.pill}`, padding 4px × 12px.
 
-**`eyebrow`** - `{typography.eyebrow}` in `{colors.petrol-600}`. Used for section labels inside the changelog modal.
+**`eyebrow`** - `{typography.eyebrow}` in `{colors.link}`. Used for section labels inside the changelog modal.
 
 ### Footer
 
-**`footer-bar`** (`.footer`) - A slim bar fixed to the bottom of every public page. Background `{colors.surface-dark}`, 1px `{colors.hairline-dark}` top border, padding 10px × `{spacing.md}`, 12px text in `{colors.on-dark-mute}`. Three-column grid: version left (opens the changelog when signed in), contact/privacy links center, "source on github" right. Links hover to `{colors.petrol-100}`. In the light theme it is the only dark surface. Not rendered inside the app shell.
+**`footer-bar`** (`.footer`) - A slim bar fixed to the bottom of every public page. Background `{colors.surface-dark}`, 1px `{colors.hairline-dark}` top border, padding 10px × `{spacing.md}`, 12px text in `{colors.on-dark-mute}`. Three-column grid: version left (opens the changelog when signed in), contact/privacy links center, "source on github" right. Links hover to `{colors.lime}`. Dark in both themes: in the light theme it is the only dark surface, in the dark theme it sits one step below the canvas. Not rendered inside the app shell.
 
 ## Do's and Don'ts
 
 ### Do
-- Reserve `{colors.primary}` for primary CTAs and headlines.
+- Reserve `{colors.primary}` for primary CTAs; headlines stay `{colors.ink}`.
 - Put every content block in a `card`; use `card-emphasis` only when the user must not miss it.
 - Use `dialog`, `tooltip`, `field-error`, `file-picker` and `toast` instead of browser defaults.
 - Reference tokens everywhere. A value missing from the token block is a spec gap, not a licence to inline.
 
 ### Don't
-- Don't use Petrol as the resting colour of an action.
+- Don't introduce a second accent or tinted surfaces. Lime (olive in light) is the only chromatic signal.
 - Don't introduce a second accent palette. Semantic colours appear only in their semantic role.
 - Don't set Display weight above 600 or drop the negative tracking.
 - Don't use a radius above `{rounded.xl}` (16px) on any container.
@@ -417,7 +420,19 @@ Mobile rules use `@media (max-width: 767px)`, tablet and up `@media (min-width: 
 
 ## Accessibility
 
-Contrast pairs and ratios are taken from the baseline (`Accessibility` → `Measured Contrast`); the token values are identical. Project specifics:
+Measured contrast (WCAG relative luminance):
+
+| Pair | Dark | Light |
+|---|---|---|
+| `ink` on `canvas` | 16.00:1 | 18.73:1 |
+| `ink-soft` on `canvas` | 9.97:1 | 10.53:1 |
+| `ink-mute` on `canvas` / `surface-soft` | 6.18 / 5.24:1 | 5.74 / 4.81:1 |
+| `link` / `focus-ring` on `canvas` | 14.62:1 (lime) | 6.42:1 (olive) |
+| `on-primary` on `primary` | 14.62:1 | 14.62:1 |
+| `signal` fill on `surface-strong` | 10.60:1 | 4.68:1 |
+| `danger` on `canvas` | 6.99:1 | 5.44:1 |
+
+Lime is never text on a light surface (1.28:1 on white). Project specifics:
 
 - **Language:** `<html lang="en">` (UI is English).
 - **Focus ring:** always visible. `outline: none` only with a visible replacement (inputs: border + halo).
@@ -433,12 +448,11 @@ Contrast pairs and ratios are taken from the baseline (`Accessibility` → `Meas
 3. Token refs everywhere, never inline hex.
 4. Document Default and Active; Hover only within the three patterns in `Motion`.
 5. When in doubt about emphasis: bigger Display before bolder Display.
-6. A gap every project would hit goes upstream into the baseline first, then into this file.
+6. Structural gaps every project would hit (components, rules) go upstream into the baseline first. Brand values stay here.
 
 ## Known Gaps
 
 - Inter 600 stands in for a Display face. A licensed face would keep weight 600 and the tracking.
-- Petrol mid-stops 300/500/700 are intentionally undefined.
-- Hairlines use rgba notation (composites cleanly on Petrol-tinted surfaces).
+- Hairlines use rgba notation so one value works on every graphite step.
 - No empty-state component spec yet; empty admin lists use a plain `card` with muted text.
 - Media previews (image, video, audio, markdown, sandbox) render the file's own chrome inside a `card`; their internals are out of scope.

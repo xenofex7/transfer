@@ -23,66 +23,55 @@
 /* ----- Design Tokens ----- */
 :root {
   color-scheme: light dark;
-  /* Petrol scale (brand) */
-  --petrol-50:  #e0f2f7;
-  --petrol-100: #9dd6e4;
-  --petrol-200: #5bbcd2;
-  --petrol-400: #0d8fb1;
-  --petrol-600: #086480;
-  --petrol-800: #054757;
-  --petrol-900: #032e3a;
+  --lime:         #c6f432;
+  --lime-active:  #b2dc1e;
+  --olive:        #4a6800;
+  --graphite-950: #0b0b0b;
+  --graphite-900: #121212;
+  --graphite-850: #1a1a1a;
+  --graphite-800: #222222;
+  --graphite-750: #2e2e2e;
 
-  /* Action layer (black, not Petrol) - light defaults */
-  --primary:         #0a0a0a;
-  --primary-active:  #242424;
-  --on-primary:      #ffffff;
+  --primary:         var(--graphite-900);
+  --primary-active:  #2a2a2a;
+  --on-primary:      var(--lime);
 
-  /* Surfaces (light) */
   --canvas:          #ffffff;
   --surface:         #ffffff;
-  --surface-card:    #f0f8fb;
-  --surface-soft:    #e0f2f7;
-  --surface-strong:  #e5e7eb;
+  --surface-card:    #f5f5f4;
+  --surface-soft:    #ebebea;
+  --surface-strong:  #dcdcdb;
   --hairline:        rgb(0 0 0 / 0.10);
   --hairline-soft:   rgb(0 0 0 / 0.06);
 
-  /* Dark surface set (always available - footer/featured use these regardless of theme) */
-  --surface-dark:          #032e3a;
-  --surface-dark-elevated: #052838;
-  --surface-dark-soft:     #042634;
-  --hairline-dark:         rgb(255 255 255 / 0.08);
+  --surface-dark:    var(--graphite-950);
+  --hairline-dark:   rgb(255 255 255 / 0.08);
 
-  /* Text (light) */
-  --ink:        #0a0a0a;
-  --ink-soft:   #404040;
-  --ink-mute:   #6b6b6b;
+  --ink:        var(--graphite-900);
+  --ink-soft:   #3f3f3f;
+  --ink-mute:   #666666;
 
-  /* Text on dark */
   --on-dark:        #ffffff;
   --on-dark-soft:   rgb(255 255 255 / 0.82);
   --on-dark-mute:   rgb(255 255 255 / 0.68);
 
-  /* Interaction tokens */
-  --link:                 var(--petrol-600);
-  --focus-ring:           var(--petrol-400);
-  --selection-bg:         var(--petrol-50);
-  --selection-text:       var(--petrol-900);
-  --scrollbar-thumb:      var(--petrol-400);
-  --scrollbar-hover:      var(--petrol-600);
-  --emphasis-hover-dark:  var(--petrol-100);
+  --signal:          var(--olive);
+  --link:            var(--olive);
+  --focus-ring:      var(--olive);
+  --selection-bg:    var(--lime);
+  --selection-text:  var(--graphite-900);
+  --scrollbar-thumb: rgb(0 0 0 / 0.22);
+  --scrollbar-hover: rgb(0 0 0 / 0.38);
 
-  /* Semantic */
   --success: #10b981;
   --warning: #f59e0b;
   --danger:  #c0392b;
   --danger-dark: #ef7d70;
 
-  /* Typography */
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono:    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Spacing scale (4px base) */
   --space-xxs: 4px;
   --space-xs:  8px;
   --space-sm:  12px;
@@ -92,7 +81,6 @@
   --space-xxl: 48px;
   --space-section: 96px;
 
-  /* Radius scale */
   --radius-xs:   4px;
   --radius-sm:   6px;
   --radius-md:   8px;   /* buttons + inputs */
@@ -110,53 +98,58 @@
   --easing-standard:  cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ----- Dark theme (explicit override) ----- */
 :root[data-theme="light"] { color-scheme: light; }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --canvas:          var(--surface-dark);
-  --surface:         var(--surface-dark-elevated);
-  --surface-card:    var(--surface-dark-elevated);
-  --surface-soft:    var(--surface-dark-soft);
-  --surface-strong:  var(--surface-dark-soft);
-  --hairline:        var(--hairline-dark);
+  --canvas:          var(--graphite-900);
+  --surface:         var(--graphite-850);
+  --surface-card:    var(--graphite-850);
+  --surface-soft:    var(--graphite-800);
+  --surface-strong:  var(--graphite-750);
+  --hairline:        rgb(255 255 255 / 0.09);
   --hairline-soft:   rgb(255 255 255 / 0.05);
 
-  --ink:        var(--on-dark);
-  --ink-soft:   var(--on-dark-soft);
-  --ink-mute:   var(--on-dark-mute);
+  --ink:        #ededed;
+  --ink-soft:   #bdbdbd;
+  --ink-mute:   #949494;
 
-  /* Action layer inverts on dark: primary becomes white-on-dark, NOT petrol */
-  --primary:        var(--on-dark);
-  --primary-active: var(--emphasis-hover-dark);
-  --on-primary:     var(--surface-dark);
+  --primary:        var(--lime);
+  --primary-active: var(--lime-active);
+  --on-primary:     var(--graphite-900);
 
-  --link:   var(--petrol-200);
-  --danger: var(--danger-dark);
+  --signal:          var(--lime);
+  --link:            var(--lime);
+  --focus-ring:      var(--lime);
+  --scrollbar-thumb: rgb(255 255 255 / 0.18);
+  --scrollbar-hover: rgb(255 255 255 / 0.30);
+  --danger:          var(--danger-dark);
 }
 
-/* ----- Dark theme (system preference, when no explicit override) ----- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --canvas:          var(--surface-dark);
-    --surface:         var(--surface-dark-elevated);
-    --surface-card:    var(--surface-dark-elevated);
-    --surface-soft:    var(--surface-dark-soft);
-    --surface-strong:  var(--surface-dark-soft);
-    --hairline:        var(--hairline-dark);
+    --canvas:          var(--graphite-900);
+    --surface:         var(--graphite-850);
+    --surface-card:    var(--graphite-850);
+    --surface-soft:    var(--graphite-800);
+    --surface-strong:  var(--graphite-750);
+    --hairline:        rgb(255 255 255 / 0.09);
     --hairline-soft:   rgb(255 255 255 / 0.05);
 
-    --ink:        var(--on-dark);
-    --ink-soft:   var(--on-dark-soft);
-    --ink-mute:   var(--on-dark-mute);
+    --ink:        #ededed;
+    --ink-soft:   #bdbdbd;
+    --ink-mute:   #949494;
 
-    --primary:        var(--on-dark);
-    --primary-active: var(--emphasis-hover-dark);
-    --on-primary:     var(--surface-dark);
+    --primary:        var(--lime);
+    --primary-active: var(--lime-active);
+    --on-primary:     var(--graphite-900);
 
-    --link:   var(--petrol-200);
-    --danger: var(--danger-dark);
+    --signal:          var(--lime);
+    --link:            var(--lime);
+    --focus-ring:      var(--lime);
+    --scrollbar-thumb: rgb(255 255 255 / 0.18);
+    --scrollbar-hover: rgb(255 255 255 / 0.30);
+    --danger:          var(--danger-dark);
   }
 }
 
@@ -287,8 +280,8 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 }
 
 .card-emphasis {
-  border-color: var(--petrol-400);
-  background: color-mix(in srgb, var(--petrol-400) 6%, var(--surface));
+  border-color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 6%, var(--surface));
 }
 
 .card-intro {
@@ -484,11 +477,11 @@ input.is-invalid,
 .uploads { width: 100%; }
 .dropzone:hover,
 .dropzone:focus-visible {
-  border-color: var(--petrol-400);
+  border-color: var(--signal);
 }
 .dropzone.is-active {
-  border-color: var(--petrol-400);
-  background: color-mix(in srgb, var(--petrol-400) 6%, var(--surface-card));
+  border-color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 6%, var(--surface-card));
 }
 .dropzone.is-active * { pointer-events: none; }
 .dropzone .link {
@@ -540,7 +533,7 @@ input.is-invalid,
 .upload-item .upload-bar-fill {
   height: 100%;
   width: 0;
-  background: var(--petrol-400);
+  background: var(--signal);
   border-radius: var(--radius-full);
   transition: width var(--duration-instant) var(--easing-standard);
 }
@@ -843,7 +836,7 @@ img.qr {
 .prose pre code { padding: 0; background: transparent; }
 .prose a { color: var(--link); word-break: break-all; }
 .prose blockquote {
-  border-left: 3px solid var(--petrol-400);
+  border-left: 3px solid var(--signal);
   margin: var(--space-sm) 0;
   padding: var(--space-xs) var(--space-md);
   color: var(--ink-mute);
@@ -917,11 +910,11 @@ img.qr {
   gap: 6px;
   color: var(--on-dark-mute);
 }
-.footer-link:hover { color: var(--petrol-100); }
+.footer-link:hover { color: var(--lime); }
 .footer-link svg,
 .footer-link i[data-lucide] { width: 14px; height: 14px; }
 .footer a { color: var(--on-dark-mute); }
-.footer a:hover { color: var(--petrol-100); }
+.footer a:hover { color: var(--lime); }
 .footer-version-link {
   background: transparent;
   border: 0;
@@ -932,7 +925,7 @@ img.qr {
   text-decoration: underline dotted;
   text-underline-offset: 3px;
 }
-.footer-version-link:hover { color: var(--petrol-100); }
+.footer-version-link:hover { color: var(--lime); }
 
 /* ----- Branding slots ----- */
 .branding-grid {
@@ -1254,7 +1247,7 @@ details.recovery-toggle { margin-top: var(--space-md); font-size: 14px; }
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
-  background: var(--petrol-400);
+  background: var(--primary);
   color: var(--on-primary);
   font-family: var(--font-display);
   font-size: 13px;
@@ -1389,12 +1382,8 @@ i[data-lucide] { display: inline-block; flex-shrink: 0; }
 }
 .sidebar-link:hover { background: var(--surface-soft); color: var(--ink); }
 .sidebar-link.is-active {
-  background: color-mix(in srgb, var(--petrol-400) 12%, transparent);
-  color: var(--petrol-600);
-}
-:root[data-theme="dark"] .sidebar-link.is-active { color: var(--petrol-100); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .sidebar-link.is-active { color: var(--petrol-100); }
+  background: color-mix(in srgb, var(--signal) 14%, transparent);
+  color: var(--link);
 }
 .sidebar-link svg,
 .sidebar-link i[data-lucide] { width: 16px; height: 16px; flex-shrink: 0; }
@@ -1750,15 +1739,11 @@ body.sidebar-locked { overflow: hidden; }
   font-weight: 600;
   color: var(--ink);
 }
-:root[data-theme="dark"] .modal-body h3 { color: var(--petrol-100); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .modal-body h3 { color: var(--petrol-100); }
-}
 .modal-body h1 { font-size: 18px; }
 .modal-body h2 { font-size: 16px; }
 .modal-body h3 {
   font-size: 12px;
-  color: var(--petrol-600);
+  color: var(--link);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-family: var(--font-body);
