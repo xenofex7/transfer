@@ -1446,11 +1446,7 @@ i[data-lucide] { display: inline-block; flex-shrink: 0; }
   color: var(--ink-mute);
   font-size: 13px;
 }
-.sidebar-meta a { color: var(--ink-mute); display: inline-flex; }
-.sidebar-meta a:hover,
 .sidebar-meta .footer-version-link:hover { color: var(--ink); }
-.sidebar-meta svg,
-.sidebar-meta i[data-lucide] { width: 13px; height: 13px; }
 
 .sidebar-overlay {
   position: fixed;
