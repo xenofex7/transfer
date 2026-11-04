@@ -7,6 +7,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-04
+
+### Changed
+- Replace the Petrol look with a graphite and lime brand, dark theme by default, applied across all pages with slightly cooler graphite and neutral greys
+- Redraw the favicon as a lime "t" on a graphite rounded square and show the logo and wordmark in the dark theme's ink and lime colours
+- Mark the active sidebar item with a lime bar and icon instead of a tint, and round the active category tab as a pill
+- Align styles with the DESIGN.md token and component specs and update the mobile breakpoint
+- Update the README to match the current code and remove duplicated flag tables
+
+### Fixed
+- Harden archive routes, TOTP handling, access logging and panic responses
+- Align the sidebar GitHub icon with the sign-out button
+- Sync the docker-compose tagline default with the other tagline sources
+
 ## [1.8.4] - 2026-11-04
 
 ### Added
