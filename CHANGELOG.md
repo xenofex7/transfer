@@ -7,6 +7,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-11-04
+
+### Changed
+- Reduce the default retention for signed-in uploads from 180 to 30 days
+
 ## [1.9.0] - 2026-11-04
 
 ### Changed
