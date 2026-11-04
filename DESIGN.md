@@ -39,7 +39,7 @@
     "on-primary": "#ffffff",
     "surface": "#ffffff",
     "surface-card": "#f0f8fb",
-    "surface-soft": "#f8f9fa",
+    "surface-soft": "#e0f2f7",
     "surface-strong": "#e5e7eb",
     "hairline": "rgb(0 0 0 / 0.10)",
     "hairline-soft": "rgb(0 0 0 / 0.06)",
@@ -147,7 +147,7 @@ A 7-step Türkis-Richtung-Blau scale. Each step has a defined role - don't reach
 - **Canvas** (`{colors.canvas}` - #ffffff): The default page floor.
 - **Surface** (`{colors.surface}` - #ffffff): Modal bodies, secondary buttons, toasts. Same hex as canvas, separate token so dark can flip it independently.
 - **Surface Card** (`{colors.surface-card}` - #f0f8fb): Petrol-50 tint. Every `card`, the dropzone, the app-shell sidebar.
-- **Surface Soft** (`{colors.surface-soft}` - #f8f9fa): Nav-pill-group background, table header, ghost-control hover.
+- **Surface Soft** (`{colors.surface-soft}` - #e0f2f7 = Petrol-50): Nav-pill-group background, table header, ghost-control hover. One step stronger than surface-card, so it still reads on a card. ink-mute on it: 4.62:1 (AA).
 - **Surface Strong** (`{colors.surface-strong}` - #e5e7eb): Disabled button background.
 - **Hairline** (`{colors.hairline}` - `rgb(0 0 0 / 0.10)`): Input borders, secondary-button borders, dropzone dash.
 - **Hairline Soft** (`{colors.hairline-soft}` - `rgb(0 0 0 / 0.06)`): Card outlines, table row dividers, sidebar border.
