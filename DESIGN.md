@@ -145,7 +145,7 @@
 
 | Token | Value | Role |
 |---|---|---|
-| `{colors.lime}` | #c6f432 | **Das Signal.** Primary-CTA (dark), Primary-Label (light), Fortschritt, Focus, Links und aktiver Zustand im Dark-Theme, Textauswahl, Footer-Link-Hover |
+| `{colors.lime}` | #c6f432 | **Das Signal.** Primary-CTA (dark), Primary-Label (light), Fortschritt, Focus, Links und aktiver Zustand im Dark-Theme, Textauswahl, Footer-Link-Hover, Wortmarke im Dark-Theme |
 | `{colors.lime-active}` | #b2dc1e | Press- und Hover-State des Limette-Primary |
 | `{colors.olive}` | #4a6800 | Signal im hellen Theme: Links, Focus, aktive Icons, Fortschritt (6.42:1 auf Weiss) |
 | `{colors.graphite-950}` | #0b0b0d | Footer-Leiste |
@@ -246,6 +246,7 @@ Upload, download, login, secret and 404 pages share one single-column compositio
 - **`page`** - max-width `{container.page}` (720px), centered, padding `{spacing.xxl}` top, `{spacing.md}` sides, 80px bottom (clears the fixed footer bar), vertical gap `{spacing.xl}`.
 - **`page-narrow`** - max-width `{container.narrow}` (460px) for login, TOTP and 2FA flows.
 - **`hero`** - centered: logo (72px high, max 420px wide), hostname in `display-md`, tagline in `body-md` / `ink-mute`.
+- **Logo** - Wortmarke in `{colors.graphite-900}` im hellen Theme (`images/logo.png`), in `{colors.lime}` im dunklen (`images/logo_dark.png`, per CSS-`content`-Tausch). Gilt für Hero, Sidebar, Topbar und die Branding-Vorschau. Die Wortmarke ist die einzige Stelle, an der Limette als grosse Fläche statt als Signal steht. Ein hochgeladenes Custom-Logo wird nicht getauscht.
 - **Floating controls** - `theme-toggle` fixed top-right (`{spacing.md}` from the edges); `top-auth` cluster (13px, user name + sign-in/out link) left of it.
 
 ### App Shell (signed-in admin/account area)
