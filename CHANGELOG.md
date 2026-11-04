@@ -7,6 +7,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.4] - 2026-11-04
+
+### Added
+- Add a privacy policy link setting; when set, the link is shown in the footer
+- Send an HSTS header and a Content-Security-Policy without `unsafe-inline`
+
+### Changed
+- Serve scripts and styles gzip-compressed
+- Document the missing auth and heartbeat variables in `.env.example`
+
+### Fixed
+- Log the resolved client IP instead of the proxy address
+- Make the mobile admin sidebar accessible
+
 ## [1.8.3] - 2026-11-03
 
 ### Added
