@@ -15,7 +15,7 @@
 5. **Die Display-Grenze ist strikt.** Display ist eine Rolle: Inter 600 mit negativem Tracking für H1-H3. Body borgt sich diese Behandlung nie.
 6. **Tokens sind Pflicht, wo sie existieren.** Farbe, Typo, Spacing, Radius, Schatten und Motion kommen aus dem Token-Block. Komponentenmasse, die der Block nicht trägt, stehen als px-Wert in der Komponenten-Spec.
 7. **Default und Active führen, Hover ist dezent.** Jede Komponente hat Default und Pressed-State. Zusätzlich gibt es einen dezenten Pointer-Hover (siehe `Motion` unter `Hover`), nie als einziger Hinweis auf eine Affordance.
-8. **Fläche durch Helligkeit, nicht durch Farbe.** Ebenen unterscheiden sich über Graphit-Stufen (Canvas, Card, Soft, Strong), nicht über Tönung.
+8. **Fläche durch Helligkeit, nicht durch Farbe.** Ebenen unterscheiden sich über Graphit-Stufen (Canvas, Card, Soft, Strong), nicht über Tönung. Alle Grautöne sind minimal kühl (Blau 2 bis 6 Punkte über Rot/Grün), damit sie neben Limette nicht warm oder bräunlich wirken.
 
 ## Tokens (machine-readable)
 
@@ -38,27 +38,27 @@
     "lime-active": "#b2dc1e",
     "olive": "#4a6800",
     "graphite": {
-      "950": "#0b0b0b",
-      "900": "#121212",
-      "850": "#1a1a1a",
-      "800": "#222222",
-      "750": "#2e2e2e"
+      "950": "#0b0b0d",
+      "900": "#121214",
+      "850": "#1a1a1d",
+      "800": "#222226",
+      "750": "#2e2e33"
     },
     // Dark (Standard)
     "dark": {
-      "canvas": "#121212",
-      "surface": "#1a1a1a",
-      "surface-card": "#1a1a1a",
-      "surface-soft": "#222222",
-      "surface-strong": "#2e2e2e",
+      "canvas": "#121214",
+      "surface": "#1a1a1d",
+      "surface-card": "#1a1a1d",
+      "surface-soft": "#222226",
+      "surface-strong": "#2e2e33",
       "hairline": "rgb(255 255 255 / 0.09)",
       "hairline-soft": "rgb(255 255 255 / 0.05)",
-      "ink": "#ededed",
-      "ink-soft": "#bdbdbd",
-      "ink-mute": "#949494",
+      "ink": "#ededf0",
+      "ink-soft": "#bdbdc2",
+      "ink-mute": "#94949a",
       "primary": "#c6f432",
       "primary-active": "#b2dc1e",
-      "on-primary": "#121212",
+      "on-primary": "#121214",
       "signal": "#c6f432",
       "link": "#c6f432",
       "focus-ring": "#c6f432",
@@ -70,16 +70,16 @@
     "light": {
       "canvas": "#ffffff",
       "surface": "#ffffff",
-      "surface-card": "#f5f5f4",
-      "surface-soft": "#ebebea",
-      "surface-strong": "#dcdcdb",
+      "surface-card": "#f5f5f7",
+      "surface-soft": "#ebebee",
+      "surface-strong": "#dcdce0",
       "hairline": "rgb(0 0 0 / 0.10)",
       "hairline-soft": "rgb(0 0 0 / 0.06)",
-      "ink": "#121212",
-      "ink-soft": "#3f3f3f",
-      "ink-mute": "#666666",
-      "primary": "#121212",
-      "primary-active": "#2a2a2a",
+      "ink": "#121214",
+      "ink-soft": "#3f3f44",
+      "ink-mute": "#66666c",
+      "primary": "#121214",
+      "primary-active": "#2a2a2e",
       "on-primary": "#c6f432",
       "signal": "#4a6800",
       "link": "#4a6800",
@@ -89,13 +89,13 @@
       "danger": "#c0392b"
     },
     // in beiden Themes gleich
-    "surface-dark": "#0b0b0b",
+    "surface-dark": "#0b0b0d",
     "hairline-dark": "rgb(255 255 255 / 0.08)",
     "on-dark": "#ffffff",
     "on-dark-soft": "rgb(255 255 255 / 0.82)",
     "on-dark-mute": "rgb(255 255 255 / 0.68)",
     "selection-bg": "#c6f432",
-    "selection-text": "#121212",
+    "selection-text": "#121214",
     "success": "#10b981",
     "warning": "#f59e0b",
     "danger-dark": "#ef7d70"
@@ -148,11 +148,11 @@
 | `{colors.lime}` | #c6f432 | **Das Signal.** Primary-CTA (dark), Primary-Label (light), Fortschritt, Focus, Links und aktiver Zustand im Dark-Theme, Textauswahl, Footer-Link-Hover |
 | `{colors.lime-active}` | #b2dc1e | Press- und Hover-State des Limette-Primary |
 | `{colors.olive}` | #4a6800 | Signal im hellen Theme: Links, Focus, aktiver Text, Fortschritt (6.42:1 auf Weiss) |
-| `{colors.graphite-950}` | #0b0b0b | Footer-Leiste |
-| `{colors.graphite-900}` | #121212 | Dark-Canvas, Light-Primary, Text auf Limette |
-| `{colors.graphite-850}` | #1a1a1a | Cards und Flächen im Dark-Theme |
-| `{colors.graphite-800}` | #222222 | Soft-Fläche im Dark-Theme (Tab-Gruppe, Tabellenkopf, Hover) |
-| `{colors.graphite-750}` | #2e2e2e | Strong-Fläche im Dark-Theme (Fortschrittsspur) |
+| `{colors.graphite-950}` | #0b0b0d | Footer-Leiste |
+| `{colors.graphite-900}` | #121214 | Dark-Canvas, Light-Primary, Text auf Limette |
+| `{colors.graphite-850}` | #1a1a1d | Cards und Flächen im Dark-Theme |
+| `{colors.graphite-800}` | #222226 | Soft-Fläche im Dark-Theme (Tab-Gruppe, Tabellenkopf, Hover) |
+| `{colors.graphite-750}` | #2e2e33 | Strong-Fläche im Dark-Theme (Fortschrittsspur) |
 
 ### Signal Layer
 
@@ -161,7 +161,7 @@ Semantische Rollen, die pro Theme auf Marken-Werte zeigen. Komponenten nutzen nu
 | Role | Dark | Light | Use |
 |---|---|---|---|
 | `{colors.primary}` / `on-primary` | lime / graphite-900 | graphite-900 / lime | Primary-CTA |
-| `{colors.primary-active}` | lime-active | #2a2a2a | Press und Hover |
+| `{colors.primary-active}` | lime-active | #2a2a2e | Press und Hover |
 | `{colors.signal}` | lime | olive | Fortschritt, Dropzone-Border aktiv, Emphasis-Border, aktiver Nav-Hintergrund (14% Tint) |
 | `{colors.link}` | lime | olive | Links, aktiver Nav-Text, Eyebrow |
 | `{colors.focus-ring}` | lime | olive | Focus-visible-Outline |
@@ -172,21 +172,21 @@ Drei Helligkeitsstufen über dem Canvas, keine Tönung.
 
 | Token | Dark | Light | Use |
 |---|---|---|---|
-| `{colors.canvas}` | #121212 | #ffffff | Seitenboden, Input-Hintergrund |
-| `{colors.surface}` / `surface-card` | #1a1a1a | #ffffff / #f5f5f4 | Cards, Modal, Toast, Sidebar, Dropzone |
-| `{colors.surface-soft}` | #222222 | #ebebea | Tab-Gruppe, Tabellenkopf, Ghost-Hover |
-| `{colors.surface-strong}` | #2e2e2e | #dcdcdb | Fortschrittsspur, deaktivierte Flächen |
+| `{colors.canvas}` | #121214 | #ffffff | Seitenboden, Input-Hintergrund |
+| `{colors.surface}` / `surface-card` | #1a1a1d | #ffffff / #f5f5f7 | Cards, Modal, Toast, Sidebar, Dropzone |
+| `{colors.surface-soft}` | #222226 | #ebebee | Tab-Gruppe, Tabellenkopf, Ghost-Hover |
+| `{colors.surface-strong}` | #2e2e33 | #dcdce0 | Fortschrittsspur, deaktivierte Flächen |
 | `{colors.hairline}` | white 9% | black 10% | Input-, Button-, Dropzone-Rahmen |
 | `{colors.hairline-soft}` | white 5% | black 6% | Card-Rahmen, Tabellenzeilen, Sidebar-Rand |
-| `{colors.surface-dark}` | #0b0b0b | #0b0b0b | Footer-Leiste (in beiden Themes dunkel) |
+| `{colors.surface-dark}` | #0b0b0d | #0b0b0d | Footer-Leiste (in beiden Themes dunkel) |
 
 ### Text
 
 | Token | Dark | Light | Use |
 |---|---|---|---|
-| `{colors.ink}` | #ededed | #121212 | Headlines, Hervorhebung |
-| `{colors.ink-soft}` | #bdbdbd | #3f3f3f | Fliesstext |
-| `{colors.ink-mute}` | #949494 | #666666 | Captions, Meta, Hinweise, Tabellenkopf |
+| `{colors.ink}` | #ededf0 | #121214 | Headlines, Hervorhebung |
+| `{colors.ink-soft}` | #bdbdc2 | #3f3f44 | Fliesstext |
+| `{colors.ink-mute}` | #94949a | #66666c | Captions, Meta, Hinweise, Tabellenkopf |
 | `{colors.on-dark}` / `-soft` / `-mute` | white 100 / 82 / 68% | gleich | Text auf der Footer-Leiste; `on-dark` ist ausserdem das theme-unabhängige Weiss (QR-Code) |
 
 ### Theme Activation
@@ -200,7 +200,7 @@ Drei Helligkeitsstufen über dem Canvas, keine Tönung.
 ### Semantic
 
 - **Success** (`{colors.success}` - #10b981), **Warning** (`{colors.warning}` - #f59e0b): nur auf Icon oder Border, nie als Textfarbe.
-- **Danger** (`{colors.danger}`): #c0392b im hellen, #ef7d70 im dunklen Theme (6.99:1 auf #121212). Validierungsfehler, destruktive Aktionen.
+- **Danger** (`{colors.danger}`): #c0392b im hellen, #ef7d70 im dunklen Theme (6.98:1 auf #121214). Validierungsfehler, destruktive Aktionen.
 - Limette ist **kein** Success-Ersatz: Erfolg bleibt grün, Limette bleibt Marke.
 
 ## Typography
@@ -424,13 +424,13 @@ Measured contrast (WCAG relative luminance):
 
 | Pair | Dark | Light |
 |---|---|---|
-| `ink` on `canvas` | 16.00:1 | 18.73:1 |
-| `ink-soft` on `canvas` | 9.97:1 | 10.53:1 |
-| `ink-mute` on `canvas` / `surface-soft` | 6.18 / 5.24:1 | 5.74 / 4.81:1 |
-| `link` / `focus-ring` on `canvas` | 14.62:1 (lime) | 6.42:1 (olive) |
-| `on-primary` on `primary` | 14.62:1 | 14.62:1 |
-| `signal` fill on `surface-strong` | 10.60:1 | 4.68:1 |
-| `danger` on `canvas` | 6.99:1 | 5.44:1 |
+| `ink` on `canvas` | 16.01:1 | 18.71:1 |
+| `ink-soft` on `canvas` | 10.00:1 | 10.47:1 |
+| `ink-mute` on `canvas` / `surface-soft` | 6.20 / 5.25:1 | 5.70 / 4.79:1 |
+| `link` / `focus-ring` on `canvas` | 14.60:1 (lime) | 6.42:1 (olive) |
+| `on-primary` on `primary` | 14.60:1 | 14.60:1 |
+| `signal` fill on `surface-strong` | 10.54:1 | 4.69:1 |
+| `danger` on `canvas` | 6.98:1 | 5.44:1 |
 
 Lime is never text on a light surface (1.28:1 on white). Project specifics:
 

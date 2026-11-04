@@ -26,21 +26,21 @@
   --lime:         #c6f432;
   --lime-active:  #b2dc1e;
   --olive:        #4a6800;
-  --graphite-950: #0b0b0b;
-  --graphite-900: #121212;
-  --graphite-850: #1a1a1a;
-  --graphite-800: #222222;
-  --graphite-750: #2e2e2e;
+  --graphite-950: #0b0b0d;
+  --graphite-900: #121214;
+  --graphite-850: #1a1a1d;
+  --graphite-800: #222226;
+  --graphite-750: #2e2e33;
 
   --primary:         var(--graphite-900);
-  --primary-active:  #2a2a2a;
+  --primary-active:  #2a2a2e;
   --on-primary:      var(--lime);
 
   --canvas:          #ffffff;
   --surface:         #ffffff;
-  --surface-card:    #f5f5f4;
-  --surface-soft:    #ebebea;
-  --surface-strong:  #dcdcdb;
+  --surface-card:    #f5f5f7;
+  --surface-soft:    #ebebee;
+  --surface-strong:  #dcdce0;
   --hairline:        rgb(0 0 0 / 0.10);
   --hairline-soft:   rgb(0 0 0 / 0.06);
 
@@ -48,8 +48,8 @@
   --hairline-dark:   rgb(255 255 255 / 0.08);
 
   --ink:        var(--graphite-900);
-  --ink-soft:   #3f3f3f;
-  --ink-mute:   #666666;
+  --ink-soft:   #3f3f44;
+  --ink-mute:   #66666c;
 
   --on-dark:        #ffffff;
   --on-dark-soft:   rgb(255 255 255 / 0.82);
@@ -110,9 +110,9 @@
   --hairline:        rgb(255 255 255 / 0.09);
   --hairline-soft:   rgb(255 255 255 / 0.05);
 
-  --ink:        #ededed;
-  --ink-soft:   #bdbdbd;
-  --ink-mute:   #949494;
+  --ink:        #ededf0;
+  --ink-soft:   #bdbdc2;
+  --ink-mute:   #94949a;
 
   --primary:        var(--lime);
   --primary-active: var(--lime-active);
@@ -136,9 +136,9 @@
     --hairline:        rgb(255 255 255 / 0.09);
     --hairline-soft:   rgb(255 255 255 / 0.05);
 
-    --ink:        #ededed;
-    --ink-soft:   #bdbdbd;
-    --ink-mute:   #949494;
+    --ink:        #ededf0;
+    --ink-soft:   #bdbdc2;
+    --ink-mute:   #94949a;
 
     --primary:        var(--lime);
     --primary-active: var(--lime-active);
