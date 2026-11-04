@@ -286,7 +286,7 @@ files from disk.
 | `--anon-max-upload-size` | `ANON_MAX_UPLOAD_SIZE` | `51200` (50 MB) | Per-file limit in KB for anonymous uploads |
 | `--anon-upload-ttl` | `ANON_UPLOAD_TTL` | `24h` | Retention for anonymous uploads |
 | `--max-upload-size` | `MAX_UPLOAD_SIZE` | `0` (no limit) | Per-file limit in KB for signed-in uploads |
-| `--auth-upload-ttl` | `AUTH_UPLOAD_TTL` | `4320h` (180 days) | Default and maximum retention for signed-in uploads; `0` disables the forced expiry |
+| `--auth-upload-ttl` | `AUTH_UPLOAD_TTL` | `720h` (30 days) | Default and maximum retention for signed-in uploads; `0` disables the forced expiry |
 | `--purge-days` | `PURGE_DAYS` | `360` | Hard age cap: uploads older than this are purged regardless of expiry; `0` disables the cap, per-upload expiry still applies |
 | `--purge-interval` | `PURGE_INTERVAL` | `1` | Hours between purge runs |
 

@@ -124,7 +124,7 @@ var globalFlags = []cli.Flag{
 	&cli.DurationFlag{
 		Name:    "auth-upload-ttl",
 		Usage:   "default and maximum retention for uploads by signed-in users; 0 disables the forced expiry",
-		Value:   180 * 24 * time.Hour,
+		Value:   30 * 24 * time.Hour,
 		EnvVars: []string{"AUTH_UPLOAD_TTL"},
 	},
 	&cli.StringFlag{

@@ -34,7 +34,7 @@ services:
       ANON_UPLOADS: "${ANON_UPLOADS:-true}"
       ANON_MAX_UPLOAD_SIZE: "${ANON_MAX_UPLOAD_SIZE:-51200}"  # in KB, default 50 MiB
       ANON_UPLOAD_TTL: "${ANON_UPLOAD_TTL:-24h}"
-      AUTH_UPLOAD_TTL: "${AUTH_UPLOAD_TTL:-4320h}"     # 180 days
+      AUTH_UPLOAD_TTL: "${AUTH_UPLOAD_TTL:-720h}"      # 30 days
       RATE_LIMIT: "${RATE_LIMIT:-0}"
       RANDOM_TOKEN_LENGTH: "${RANDOM_TOKEN_LENGTH:-10}"
       HTTP_AUTH_HTPASSWD: "/etc/transfer/htpasswd"
