@@ -11,7 +11,7 @@
 1. **Technisch-präzise, ohne Marketing-Bullshit.** Klartext, keine Hero-Claims, keine "simply secure fast"-Phrasen im UI. Wenn ein Wort weg kann, ist es weg.
 2. **Dunkel ist das Original.** Graphit-Dunkel ist das Standard-Theme und die Referenz für jede Entscheidung. Das helle Theme ist eine sauber abgeleitete Variante, kein gleichwertiger Zwilling.
 3. **Limette ist das einzige Signal.** Eine Farbe markiert, was zählt: Primary-CTA, Fortschritt, Focus, Links, aktiver Zustand. Alles andere ist neutral-graphit. Keine zweite Akzentfarbe, keine getönten Flächen.
-4. **Im hellen Theme übernimmt Oliv.** Limette hat auf Weiss keinen Kontrast (1.28:1). Text-Signale (Links, Focus, aktiver Text) werden dort zu `{colors.olive}`, der Primary-CTA wird Graphit mit Limette-Label.
+4. **Im hellen Theme übernimmt Oliv.** Limette hat auf Weiss keinen Kontrast (1.28:1). Text-Signale (Links, Focus, aktive Icons) werden dort zu `{colors.olive}`, der Primary-CTA wird Graphit mit Limette-Label.
 5. **Die Display-Grenze ist strikt.** Display ist eine Rolle: Inter 600 mit negativem Tracking für H1-H3. Body borgt sich diese Behandlung nie.
 6. **Tokens sind Pflicht, wo sie existieren.** Farbe, Typo, Spacing, Radius, Schatten und Motion kommen aus dem Token-Block. Komponentenmasse, die der Block nicht trägt, stehen als px-Wert in der Komponenten-Spec.
 7. **Default und Active führen, Hover ist dezent.** Jede Komponente hat Default und Pressed-State. Zusätzlich gibt es einen dezenten Pointer-Hover (siehe `Motion` unter `Hover`), nie als einziger Hinweis auf eine Affordance.
@@ -147,7 +147,7 @@
 |---|---|---|
 | `{colors.lime}` | #c6f432 | **Das Signal.** Primary-CTA (dark), Primary-Label (light), Fortschritt, Focus, Links und aktiver Zustand im Dark-Theme, Textauswahl, Footer-Link-Hover |
 | `{colors.lime-active}` | #b2dc1e | Press- und Hover-State des Limette-Primary |
-| `{colors.olive}` | #4a6800 | Signal im hellen Theme: Links, Focus, aktiver Text, Fortschritt (6.42:1 auf Weiss) |
+| `{colors.olive}` | #4a6800 | Signal im hellen Theme: Links, Focus, aktive Icons, Fortschritt (6.42:1 auf Weiss) |
 | `{colors.graphite-950}` | #0b0b0d | Footer-Leiste |
 | `{colors.graphite-900}` | #121214 | Dark-Canvas, Light-Primary, Text auf Limette |
 | `{colors.graphite-850}` | #1a1a1d | Cards und Flächen im Dark-Theme |
@@ -162,8 +162,8 @@ Semantische Rollen, die pro Theme auf Marken-Werte zeigen. Komponenten nutzen nu
 |---|---|---|---|
 | `{colors.primary}` / `on-primary` | lime / graphite-900 | graphite-900 / lime | Primary-CTA |
 | `{colors.primary-active}` | lime-active | #2a2a2e | Press und Hover |
-| `{colors.signal}` | lime | olive | Fortschritt, Dropzone-Border aktiv, Emphasis-Border, aktiver Nav-Hintergrund (14% Tint) |
-| `{colors.link}` | lime | olive | Links, aktiver Nav-Text, Eyebrow |
+| `{colors.signal}` | lime | olive | Fortschritt, Dropzone-Border aktiv, Emphasis-Border, Balken und Icon des aktiven Nav-Eintrags. Nie als Flächen-Tint (mischt sich auf Graphit zu Oliv-Khaki) |
+| `{colors.link}` | lime | olive | Links, Eyebrow |
 | `{colors.focus-ring}` | lime | olive | Focus-visible-Outline |
 
 ### Surfaces
@@ -250,7 +250,7 @@ Upload, download, login, secret and 404 pages share one single-column compositio
 ### App Shell (signed-in admin/account area)
 
 - **Sidebar left, content right.** Sidebar 256px, `{colors.surface-card}` background, 1px `{colors.hairline-soft}` right border. Top to bottom: brand row (56px, logo, hairline bottom border), nav list (flex 1, scrollable), foot block (hairline top border: username + sign-out icon, version + GitHub icon).
-- **Nav items:** Inter 14px / 500, icon 16px + label, padding 8px 12px, `{rounded.md}`. Inactive `{colors.ink-mute}`; hover `{colors.surface-soft}` + `{colors.ink}`; active = `{colors.signal}` at 14% with `{colors.link}` text. The signal carries wayfinding; the solid primary stays reserved for CTAs.
+- **Nav items:** Inter 14px / 500, icon 16px + label, padding 8px 12px, `{rounded.md}`. Inactive `{colors.ink-mute}`; hover `{colors.surface-soft}` + `{colors.ink}`; active = `{colors.surface-soft}` + `{colors.ink}` text, a 3px `{colors.signal}` bar on the left edge (inset 8px top and bottom, right corners `{rounded.xs}`) and the icon in `{colors.signal}`. The signal carries wayfinding as a mark, never as a fill; the solid primary stays reserved for CTAs.
 - **Content column:** max `{container.shell}` (1100px) centered, page padding `{spacing.lg}`/`{spacing.xl}`, cards stack with `{spacing.lg}` gaps. Page head = `page-title` + muted count/subtitle inline.
 - **Mobile (< 768px):** sidebar becomes an off-canvas drawer (translateX) behind a 50% black overlay; a sticky 56px topbar carries the hamburger + logo. Close via X, overlay click or Escape.
 - **No footer bar inside the shell** - version and GitHub live in the sidebar foot.
@@ -333,9 +333,9 @@ Dates `TT.MM.JJJJ`, straight quotes only, plain hyphens, URLs English.
 
 **`card`** - Background `{colors.surface-card}`, 1px `{colors.hairline-soft}` border, `{rounded.lg}`, padding `{spacing.xl}`. The one container for every content block.
 
-**`card-emphasis`** - A card that needs attention (recovery codes, 2FA result). Border `{colors.signal}`, background `signal` at 6% over `{colors.surface}`.
+**`card-emphasis`** - A card that needs attention (recovery codes, 2FA result). Border `{colors.signal}` on the normal card surface, no tinted fill.
 
-**`dropzone`** - The upload surface on the homepage, built on `card`. Min-height 260px, 1.5px dashed `{colors.hairline}` border, centered prompt in `{colors.ink-mute}`. Hover/focus: border `{colors.signal}`. Drag-active: border `{colors.signal}`, background `signal` at 6% over `{colors.surface-card}`. Progress fill `{colors.signal}` on a `{colors.surface-strong}` track.
+**`dropzone`** - The upload surface on the homepage, built on `card`. Min-height 260px, 1.5px dashed `{colors.hairline}` border, centered prompt in `{colors.ink-mute}`. Hover/focus: border `{colors.signal}`. Drag-active: border turns solid `{colors.signal}`, the fill stays `{colors.surface-card}`. Progress fill `{colors.signal}` on a `{colors.surface-strong}` track.
 
 **`qr-code`** - 240px image, 12px padding, hairline border, `{rounded.md}`. Background stays white in both themes (`{colors.on-dark}`, the theme-independent white) so scanners get full contrast.
 

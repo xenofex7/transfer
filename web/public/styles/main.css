@@ -281,7 +281,6 @@ h4 { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-heig
 
 .card-emphasis {
   border-color: var(--signal);
-  background: color-mix(in srgb, var(--signal) 6%, var(--surface));
 }
 
 .card-intro {
@@ -481,7 +480,7 @@ input.is-invalid,
 }
 .dropzone.is-active {
   border-color: var(--signal);
-  background: color-mix(in srgb, var(--signal) 6%, var(--surface-card));
+  border-style: solid;
 }
 .dropzone.is-active * { pointer-events: none; }
 .dropzone .link {
@@ -1382,9 +1381,22 @@ i[data-lucide] { display: inline-block; flex-shrink: 0; }
 }
 .sidebar-link:hover { background: var(--surface-soft); color: var(--ink); }
 .sidebar-link.is-active {
-  background: color-mix(in srgb, var(--signal) 14%, transparent);
-  color: var(--link);
+  position: relative;
+  background: var(--surface-soft);
+  color: var(--ink);
 }
+.sidebar-link.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-xs);
+  bottom: var(--space-xs);
+  width: 3px;
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  background: var(--signal);
+}
+.sidebar-link.is-active svg,
+.sidebar-link.is-active i[data-lucide] { color: var(--signal); }
 .sidebar-link svg,
 .sidebar-link i[data-lucide] { width: 16px; height: 16px; flex-shrink: 0; }
 .sidebar-sep { height: 1px; background: var(--hairline-soft); margin: var(--space-sm) var(--space-xs); }
