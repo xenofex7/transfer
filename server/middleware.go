@@ -70,7 +70,7 @@ func accessLog(logger *log.Logger, h http.Handler) http.HandlerFunc {
 
 		logger.Printf(
 			`%s - - [%s] "%s %s %s" %d %s "%s" "%s"`,
-			r.RemoteAddr,
+			realIPFromRequest(r),
 			start.Format(time.RFC3339),
 			r.Method,
 			r.RequestURI,
