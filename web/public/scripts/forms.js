@@ -129,4 +129,7 @@
     }
     if (nameEl) nameEl.textContent = names.length ? names.join(', ') : 'No file chosen';
   });
+
+  var serverInvalid = document.querySelectorAll('[aria-invalid="true"]');
+  for (var k = 0; k < serverInvalid.length; k++) bindClear(serverInvalid[k]);
 })();

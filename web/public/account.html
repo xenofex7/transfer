@@ -81,8 +81,8 @@
         <section class="card">
           <h2 class="settings-section-title">Two-factor authentication</h2>
           {{if .TOTPEnabled}}
-            <p>Status: <strong>enabled</strong>{{if .TOTPEnabledAt}} since {{.TOTPEnabledAt}}{{end}}.</p>
-            <p>Recovery codes remaining: <strong>{{.RecoveryLeft}}</strong>.</p>
+            <p>Status: <strong>enabled</strong>{{if .TOTPEnabledAt}} since {{.TOTPEnabledAt}}{{end}}</p>
+            <p>Recovery codes remaining: <strong>{{.RecoveryLeft}}</strong></p>
 
             <details>
               <summary>Disable two-factor authentication</summary>
@@ -117,7 +117,7 @@
               </form>
             </details>
           {{else}}
-            <p>Status: <strong>not enabled</strong>.</p>
+            <p>Status: <strong>not enabled</strong></p>
             <p>A second factor protects this account if your password is ever leaked.</p>
             <a class="btn-primary" href="/account/2fa/setup">Set up 2FA</a>
           {{end}}
@@ -142,8 +142,13 @@
             <button class="btn-primary" type="submit">Create token</button>
           </form>
 
-          {{if .Tokens}}
-          <div class="admin-table-wrap">
+          {{if not .Tokens}}
+          <p class="muted">No tokens yet</p>
+          {{end}}
+        </section>
+
+        {{if .Tokens}}
+        <section class="card admin-table-wrap">
           <table class="admin-table">
             <thead>
               <tr><th>Name</th><th>ID</th><th>Created</th><th>Last used</th><th>Expires</th><th></th></tr>
@@ -167,11 +172,8 @@
               {{end}}
             </tbody>
           </table>
-          </div>
-          {{else}}
-          <p class="muted">No tokens yet.</p>
-          {{end}}
         </section>
+        {{end}}
       </main>
     </div>
   </div>

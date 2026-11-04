@@ -171,7 +171,7 @@ func themeBootstrap() htmlTemplate.HTML {
 	return htmlTemplate.HTML("<script>" + themeBootstrapJS + "</script>")
 }
 
-const themeBootstrapJS = `(function(){var d=document.documentElement;if(location.hash==='#secret')d.dataset.tab='secret';try{var k='transfersh_theme',v=localStorage.getItem(k);if(v!=='light'&&v!=='dark'&&v!=='system')v=d.getAttribute('data-theme-default')||'system';if(v==='light'||v==='dark')d.setAttribute('data-theme',v);}catch(e){}})();`
+const themeBootstrapJS = `(function(){var d=document.documentElement;if(location.hash==='#secret')d.dataset.tab='secret';var v=null;try{v=localStorage.getItem('transfersh_theme');}catch(e){}if(v!=='light'&&v!=='dark'&&v!=='system')v=d.getAttribute('data-theme-default')||'system';if(v==='light'||v==='dark')d.setAttribute('data-theme',v);})();`
 
 var themeBootstrapHash = func() string {
 	sum := sha256.Sum256([]byte(themeBootstrapJS))

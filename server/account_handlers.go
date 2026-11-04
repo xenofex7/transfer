@@ -295,7 +295,7 @@ func (s *Server) account2FARecoveryRegenPostHandler(w http.ResponseWriter, r *ht
 	}
 	data := s.buildAccountData(r, sess.Username)
 	data.NewRecovery = codes
-	data.Flash = "New recovery codes generated. Save them now — they will not be shown again."
+	data.Flash = "New recovery codes generated. Save them now, they will not be shown again."
 	w.Header().Set("Cache-Control", "no-store")
 	if err := htmlTemplates.ExecuteTemplate(w, "account.html", data); err != nil {
 		s.logger.Printf("account: render recovery: %v", err)
@@ -334,7 +334,7 @@ func (s *Server) accountTokenCreatePostHandler(w http.ResponseWriter, r *http.Re
 	}
 	data := s.buildAccountData(r, sess.Username)
 	data.NewToken = wire
-	data.Flash = "Token created. Copy it now — it will not be shown again."
+	data.Flash = "Token created. Copy it now, it will not be shown again."
 	w.Header().Set("Cache-Control", "no-store")
 	if err := htmlTemplates.ExecuteTemplate(w, "account.html", data); err != nil {
 		s.logger.Printf("account: render token: %v", err)

@@ -60,7 +60,8 @@
         </nav>
 
         <section class="card admin-toolbar">
-          <input id="filter" class="filter-input" type="search" placeholder="Filter by name, token or uploader..." autocomplete="off" aria-label="Filter files">
+          <label class="field-label" for="filter">Filter</label>
+          <input id="filter" class="filter-input" type="search" placeholder="Name, token or uploader" autocomplete="off">
         </section>
 
         {{if .Rows}}

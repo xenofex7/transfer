@@ -220,6 +220,7 @@ The scale matches the baseline scale. transfer is a tool, not a marketing site, 
 | `h3` | 22px Display, tracking -0.3px | Section heads inside cards |
 | `h4`, `.settings-section-title` | `{typography.title-md}` (18px) | Inter, not Display |
 | `.not-found h1` | `{typography.display-xl}` (64px) | The single 64px use: the 404 code |
+| `h1.filename` | 22px Display, tracking -0.3px | File name on download pages; long names need the smaller size |
 | Running text | `{typography.body-md}` / `{typography.body-sm}` | 16px default, 14px in cards, tables, toasts |
 | Labels, meta, hints | `{typography.caption}` (13px) | Field labels, badges, file names |
 | Table header | 12px / 500 / uppercase / 0.08em | `ink-mute` on `surface-soft` |
@@ -325,15 +326,19 @@ Dates `TT.MM.JJJJ`, straight quotes only, plain hyphens, URLs English.
 
 **`button-danger`** (`.btn-danger`) - Outlined: transparent background, `{colors.danger}` text and border. Hover and press fill with `{colors.danger}`, text `{colors.on-primary}`. Only for destructive actions, always behind a `dialog`.
 
+**`button-disabled`** (`:disabled` on every button variant) - Background and border `{colors.surface-strong}`, text `{colors.ink-mute}`, `cursor: not-allowed`, no hover change. Used while a request runs (secret create/reveal, upload options save, row delete).
+
 **`button-icon-circular`** (`.theme-toggle`, `.icon-btn`, `.upload-copy`) - 36 × 36px, `{rounded.full}`, hairline border, 16px icon in `{colors.ink-mute}`. Floating (theme toggle) on `{colors.surface}`, inline (table actions, copy) on transparent. `.icon-btn.danger` uses `{colors.danger}` and fills on hover. The toast close button uses the same shape at 24px.
 
-**`text-link`** (`a`, `.link`) - `{colors.link}` / `{colors.link-dark}`, underline on hover. `.link` is the button-as-link variant for inline actions ("browse").
+**`text-link`** (`a`, `.link`) - `{colors.link}` (lime in dark, olive in light). Links **inside running text** (`.link`, `.tier-hint a`, the dropzone "browse") are underlined at rest, offset 2px: next to `ink-mute` text the link colour alone is not a sufficient cue (olive on #66666c is 1.13:1). Standalone links (nav, footer, upload result URL, `.setup-steps` cancel) carry no underline at rest and underline on hover. `.link` is the button-as-link variant for inline actions.
 
 ### Cards & Surfaces
 
 **`card`** - Background `{colors.surface-card}`, 1px `{colors.hairline-soft}` border, `{rounded.lg}`, padding `{spacing.xl}`. The one container for every content block.
 
 **`card-emphasis`** - A card that needs attention (recovery codes, 2FA result). Border `{colors.signal}` on the normal card surface, no tinted fill.
+
+**`setup-steps`** - Numbered steps in the 2FA setup. Counter: 28px circle, `{colors.surface-soft}`, 1px `{colors.hairline}`, `{colors.ink}` digit in Display 13px. Never the solid primary - that stays reserved for CTAs.
 
 **`dropzone`** - The upload surface on the homepage, built on `card`. Min-height 260px, 1.5px dashed `{colors.hairline}` border, centered prompt in `{colors.ink-mute}`. Hover/focus: border `{colors.signal}`. Drag-active: border turns solid `{colors.signal}`, the fill stays `{colors.surface-card}`. Progress fill `{colors.signal}` on a `{colors.surface-strong}` track.
 
@@ -364,7 +369,9 @@ Dates `TT.MM.JJJJ`, straight quotes only, plain hyphens, URLs English.
 - **`toast-success`** / **`toast-warning`** / **`toast-danger`** - Icon and 3px left border in the semantic colour.
 - **`toast-neutral`** - No left border, icon in `{colors.ink-mute}`.
 
-Stack bottom-right on desktop (`{spacing.lg}` from the edges, above the footer bar), bottom-center on mobile (< 768px). Max 3 visible. Auto-dismiss 4s (success, neutral), 6s (warning), never for danger. Hover pauses the timer. No toasts on page load.
+Stack bottom-right on desktop (`{spacing.lg}` from the edges, above the footer bar), bottom-center on mobile (< 768px). Max 3 visible. Auto-dismiss 4s (success, neutral), 6s (warning), never for danger. Hover pauses the timer. No toasts on page load - except the result of the action that caused a post-redirect page (settings saved, secret deleted via `data-flash`).
+
+**`flash`** (`.flash`, `.flash-ok`, `.flash-error`) - Inline page-level result on login, TOTP, account and 2FA pages. `{colors.surface-card}`, 1px border, `{rounded.md}`, padding 12px × 14px, `{typography.body-sm}`. `flash-ok`: `{colors.success}` border, text `{colors.ink-soft}`. `flash-error`: `{colors.danger}` border and text. No semantic tinted fill - the colour sits on the border.
 
 **`tooltip`** - Declared with `data-tooltip="..."`, never the native `title` attribute. One shared bubble: background `{colors.ink}`, text `{colors.canvas}`, 12px / 500, padding 4px × 8px, `{rounded.sm}`, `{shadow.md}`, max-width 280px. Appears above the trigger, flips below near the top edge, no arrow, no animation. Also on keyboard focus; hides on pointer down, click, scroll or Escape. Icon-only controls carry an `aria-label` too.
 
@@ -372,7 +379,7 @@ Stack bottom-right on desktop (`{spacing.lg}` from the edges, above the footer b
 
 ### Tags / Badges
 
-**`badge-pill`** (`.users-badge`, `.heartbeat-pill`) - Background `{colors.surface-card}`, text `{colors.ink}`, `{typography.caption}`, `{rounded.pill}`, padding 4px × 12px.
+**`badge-pill`** (`.users-badge`, `.heartbeat-pill`) - Background `{colors.surface-soft}` (badges sit on cards, so they need the next step up), text `{colors.ink}`, `{typography.caption}`, `{rounded.pill}`, padding 4px × 12px.
 
 **`eyebrow`** - `{typography.eyebrow}` in `{colors.link}`. Used for section labels inside the changelog modal.
 

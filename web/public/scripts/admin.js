@@ -33,7 +33,7 @@
         btn.dataset.tooltip = prevTitle;
         btn.classList.remove('copied');
       }, 1200);
-      if (window.toast) window.toast.success('Link copied to clipboard');
+      if (window.toast) window.toast.neutral('Link copied');
     };
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -85,10 +85,9 @@
       .then(function (resp) {
         if (resp.ok) {
           if (row) {
-            row.style.transition = 'opacity 200ms, transform 200ms';
+            row.style.transition = 'opacity var(--duration-base) var(--easing-standard)';
             row.style.opacity = '0';
-            row.style.transform = 'translateX(8px)';
-            setTimeout(function () { row && row.parentNode && row.parentNode.removeChild(row); }, 220);
+            setTimeout(function () { row && row.parentNode && row.parentNode.removeChild(row); }, 250);
           }
           updateCount(-1);
           if (window.toast) window.toast.success('Deleted ' + name);

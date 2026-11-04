@@ -159,7 +159,7 @@
     if (copyBtn) {
       copyBtn.addEventListener('click', function () {
         copyToClipboard(urlOut.textContent, function () {
-          if (window.toast) window.toast.success('Link copied to clipboard');
+          if (window.toast) window.toast.neutral('Link copied');
         });
       });
     }

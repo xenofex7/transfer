@@ -80,9 +80,9 @@
           </form>
         </section>
 
-        <section class="card">
-          <h2 class="settings-section-title">Existing users</h2>
-          {{if .Users}}
+        {{if .Users}}
+        <h2 class="settings-section-title">Existing users</h2>
+        <section class="card admin-table-wrap">
           <table class="users-table">
             <thead>
               <tr>
@@ -101,7 +101,8 @@
                   <div class="users-actions">
                   <form method="POST" action="/admin/users/{{.Name}}/password" class="users-inline-form" autocomplete="off" novalidate>
                     <input type="hidden" name="csrf" value="{{$.CSRFToken}}">
-                    <input type="password" name="password" placeholder="New password" minlength="8" maxlength="256" required autocomplete="new-password">
+                    <label class="visually-hidden" for="reset-{{.Name}}">New password for {{.Name}}</label>
+                    <input id="reset-{{.Name}}" type="password" name="password" placeholder="New password" minlength="8" maxlength="256" required autocomplete="new-password">
                     <button type="submit" class="btn-secondary">Reset</button>
                   </form>
                   {{if not .IsCurrent}}
@@ -116,10 +117,13 @@
               {{end}}
             </tbody>
           </table>
-          {{else}}
-          <p class="settings-hint">No users yet. Add one above.</p>
-          {{end}}
         </section>
+        {{else}}
+        <section class="card">
+          <h2 class="settings-section-title">Existing users</h2>
+          <p class="settings-hint">No users yet. Add one above.</p>
+        </section>
+        {{end}}
 
         {{end}}
       </main>

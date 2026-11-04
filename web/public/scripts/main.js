@@ -352,7 +352,7 @@
         btn.classList.remove('is-copied');
         btn.dataset.tooltip = 'Copy link';
       }, 1500);
-      if (window.toast) window.toast.success('Link copied to clipboard');
+      if (window.toast) window.toast.neutral('Link copied');
     };
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(done, function () {
