@@ -322,7 +322,7 @@ Dates `TT.MM.JJJJ`, straight quotes only, plain hyphens, URLs English.
 
 **`button-danger`** (`.btn-danger`) - Outlined: transparent background, `{colors.danger}` text and border. Hover and press fill with `{colors.danger}`, text `{colors.on-primary}`. Only for destructive actions, always behind a `dialog`.
 
-**`button-icon-circular`** (`.theme-toggle`) - 36 × 36px, `{rounded.full}`, `{colors.surface}` background, hairline border, 16px icon in `{colors.ink-mute}`. The toast close button uses the same shape at 24px.
+**`button-icon-circular`** (`.theme-toggle`, `.icon-btn`, `.upload-copy`) - 36 × 36px, `{rounded.full}`, hairline border, 16px icon in `{colors.ink-mute}`. Floating (theme toggle) on `{colors.surface}`, inline (table actions, copy) on transparent. `.icon-btn.danger` uses `{colors.danger}` and fills on hover. The toast close button uses the same shape at 24px.
 
 **`text-link`** (`a`, `.link`) - `{colors.link}` / `{colors.link-dark}`, underline on hover. `.link` is the button-as-link variant for inline actions ("browse").
 
@@ -333,6 +333,8 @@ Dates `TT.MM.JJJJ`, straight quotes only, plain hyphens, URLs English.
 **`card-emphasis`** - A card that needs attention (recovery codes, 2FA result). Border `{colors.petrol-400}`, background `petrol-400` at 6% over `{colors.surface}`. Petrol as accent surface, never as action.
 
 **`dropzone`** - The upload surface on the homepage, built on `card`. Min-height 260px, 1.5px dashed `{colors.hairline}` border, centered prompt in `{colors.ink-mute}`. Hover/focus: border `{colors.petrol-400}`. Drag-active: border `{colors.petrol-400}`, background `petrol-400` at 6% over `{colors.surface-card}`.
+
+**`qr-code`** - 240px image, 12px padding, hairline border, `{rounded.md}`. Background stays white in both themes (`{colors.on-dark}`, the theme-independent white) so scanners get full contrast.
 
 **`data-table`** (`.admin-table`, `.users-table`) - `{typography.body-sm}`, cells 12px × 10px, rows divided by `{colors.hairline-soft}`, sticky header in the table-header style on `{colors.surface-soft}`. Wrapped in a `card` with zero padding and horizontal scroll.
 

@@ -23,7 +23,7 @@
   'use strict';
 
   var MAX_VISIBLE = 3;
-  var TRANSITION_MS = 220;
+  var TRANSITION_MS = 250;
   var DEFAULT_TTL = {
     success: 4000,
     neutral: 4000,
